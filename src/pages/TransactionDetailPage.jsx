@@ -1,0 +1,166 @@
+﻿import { useEffect, useState } from "react";
+import { Link, useParams } from "react-router-dom";
+import { getTransactionDetail } from "../data/blockchainApi";
+
+function getEventBadgeClass(eventType) {
+  switch (eventType) {
+    case "DONATION":
+      return "detail-type-badge detail-type-badge--donation";
+    case "SETTLEMENT":
+      return "detail-type-badge detail-type-badge--settlement";
+    case "TOKENIZATION":
+      return "detail-type-badge detail-type-badge--tokenization";
+    case "CASHOUT":
+    case "WITHDRAWAL":
+      return "detail-type-badge detail-type-badge--cashout";
+    default:
+      return "detail-type-badge";
+  }
+}
+
+function DetailCell({ label, value, linkTo }) {
+  return (
+    <tr>
+      <th>{label}</th>
+      <td>
+        {linkTo ? (
+          <Link to={linkTo} className="text-link">
+            {value}
+          </Link>
+        ) : (
+          value
+        )}
+      </td>
+    </tr>
+  );
+}
+
+function TransactionDetailPage() {
+  const { txHash } = useParams();
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    let ignore = false;
+
+    async function load() {
+      try {
+        setLoading(true);
+        setError("");
+        const response = await getTransactionDetail(txHash);
+
+        if (!ignore) {
+          setData(response);
+        }
+      } catch {
+        if (!ignore) {
+          setError("트랜잭션 상세 정보를 불러오지 못했습니다.");
+        }
+      } finally {
+        if (!ignore) {
+          setLoading(false);
+        }
+      }
+    }
+
+    load();
+
+    return () => {
+      ignore = true;
+    };
+  }, [txHash]);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(txHash);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1600);
+    } catch {
+      setCopied(false);
+    }
+  };
+
+  if (loading) {
+    return <div className="panel empty-state">트랜잭션을 불러오는 중입니다.</div>;
+  }
+
+  if (error || !data) {
+    return (
+      <div className="panel empty-state">{error || "트랜잭션을 찾을 수 없습니다."}</div>
+    );
+  }
+
+  return (
+    <section className="detail-page">
+      <div className="detail-header">
+        <div>
+          <p className="hero__eyebrow">Transaction Detail</p>
+          <span className={getEventBadgeClass(data.eventType)}>{data.eventTypeLabel}</span>
+          <div className="detail-title-row">
+            <h2>{data.txHash}</h2>
+            <button type="button" className="copy-button" onClick={handleCopy}>
+              {copied ? "복사됨" : "복사"}
+            </button>
+          </div>
+          <p className="hero__text">트랜잭션 해시와 전송 정보를 확인할 수 있습니다.</p>
+        </div>
+
+        <Link to="/" className="ghost-button">
+          목록으로
+        </Link>
+      </div>
+
+      <div className="detail-table-grid">
+        <div className="panel detail-table-panel">
+          <div className="detail-table-panel__header">
+            <p className="hero__eyebrow">Transaction Info</p>
+            <h3>거래 정보</h3>
+          </div>
+          <table className="detail-table">
+            <tbody>
+              <DetailCell label="트랜잭션 코드" value={data.transactionCode} />
+              <DetailCell label="상태" value={data.status} />
+              <DetailCell label="이벤트 타입" value={data.eventTypeLabel} />
+              <DetailCell label="금액" value={`${data.amount.toLocaleString()} GT`} />
+              <DetailCell label="가스비" value={`${data.gasFee} ETH`} />
+              <DetailCell label="블록 번호" value={String(data.blockNum)} />
+              <DetailCell
+                label="전송 시각"
+                value={new Date(data.sentAt).toLocaleString("ko-KR")}
+              />
+            </tbody>
+          </table>
+        </div>
+
+        <div className="panel detail-table-panel">
+          <div className="detail-table-panel__header">
+            <p className="hero__eyebrow">Wallet Info</p>
+            <h3>지갑 정보</h3>
+          </div>
+          <table className="detail-table">
+            <tbody>
+              <DetailCell label="재단명" value={data.foundationName} />
+              <DetailCell label="캠페인명" value={data.campaignName} />
+              <DetailCell label="보낸 주체" value={data.fromOwnerTypeLabel} />
+              <DetailCell label="받는 주체" value={data.toOwnerTypeLabel} />
+              <DetailCell
+                label="보낸 지갑"
+                value={data.fromWalletAddress}
+                linkTo={`/wallets/${data.fromWalletAddress}`}
+              />
+              <DetailCell
+                label="받는 지갑"
+                value={data.toWalletAddress}
+                linkTo={`/wallets/${data.toWalletAddress}`}
+              />
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export default TransactionDetailPage;
