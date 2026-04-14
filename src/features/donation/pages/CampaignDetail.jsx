@@ -396,30 +396,26 @@ export default function CampaignDetail() {
                 </button>
               </div>
 
-              <div className="relative overflow-hidden rounded-[40px] bg-stone-900 p-10 text-white">
-                <div className="absolute right-0 top-0 h-32 w-32 -mr-16 -mt-16 rounded-full bg-primary/20 blur-3xl" />
-                <h4 className="relative mb-6 text-xl font-display font-bold">다른 기부 방법</h4>
-                <div className="relative space-y-6">
+              <div className="relative overflow-hidden rounded-[40px] bg-white p-10">
+                <h4 className="relative mb-6 text-2xl font-display font-bold text-ink">기부단체 정보</h4>
+                <div className="relative space-y-4">
                   <div>
                     <div className="mb-2 text-[10px] font-bold uppercase tracking-widest text-stone-500">
-                      계좌 이체
+                      기부단체명
                     </div>
-                    <div className="text-sm font-bold">신한은행 110-123-456789</div>
-                    <div className="text-xs text-stone-500">예금주: 기부엔토큰</div>
+                    <div className="mb-2 text-sm font-bold text-ink ">{campaign.organization.name}</div>
+                     <div className="mb-2 text-[10px] font-bold uppercase tracking-widest text-stone-500">
+                      기부단체 소개
+                    </div>
+                    <div className="mb-2 text-sm text-stone-700 ">{campaign.organization.description}</div>
                   </div>
-                  <div className="h-px bg-white/10" />
                   <div>
-                    <div className="mb-2 text-[10px] font-bold uppercase tracking-widest text-stone-500">
-                      간편 결제
-                    </div>
-                    <div className="flex gap-3">
-                      <div className="rounded-lg bg-white/5 px-3 py-1 text-[10px] font-bold">
-                        카카오페이
-                      </div>
-                      <div className="rounded-lg bg-white/5 px-3 py-1 text-[10px] font-bold">
-                        네이버페이
-                      </div>
-                    </div>
+                    <img
+                  src={campaign.organization.image}
+                  alt={campaign.organization.name}
+                  className="w-full h-20 object-cover rounded-xl"
+                  referrerPolicy="no-referrer"
+                />
                   </div>
                 </div>
               </div>

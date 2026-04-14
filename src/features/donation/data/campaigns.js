@@ -24,6 +24,11 @@ export const campaigns = [
     summary: "오염된 식수로 고통받는 마을에 우물과 위생 교육을 지원합니다.",
     description:
       "아프리카 사하라 이남 지역의 마을들은 여전히 깨끗한 물을 구하기 위해 매일 먼 길을 걸어야 합니다. 오염된 물로 인해 수많은 아이들이 질병에 노출되어 있습니다. 우리는 이 마을들에 지속 가능한 우물을 설치하고 위생 교육을 함께 지원해 아이들의 건강한 일상을 지키고자 합니다.",
+    organization: {
+    name: "글로벌 워터 파운데이션",
+    description: "깨끗한 식수 접근이 어려운 지역에 지속 가능한 물 인프라와 위생 교육을 지원하는 국제 비영리 단체입니다.",
+    image: "https://images.unsplash.com/photo-1526256262350-7da7584cf5eb?q=80&w=300&auto=format&fit=crop"
+  },
     recruitStartDate: "2026-03-01",
     recruitEndDate: "2026-05-31",
     projectStartDate: "2026-06-10",
@@ -82,6 +87,11 @@ export const campaigns = [
     summary: "교재, 멘토링, 디지털 학습 기회를 연결해 아이들의 학습 격차를 줄입니다.",
     description:
       "경제적 이유로 충분한 배움의 기회를 누리지 못하는 아이들에게 맞춤형 교육 지원을 제공합니다. 교재와 학습 기기, 정서적 멘토링을 함께 연결해 아이들이 스스로의 가능성을 발견하고 배움을 이어갈 수 있도록 돕습니다.",
+      organization: {
+      name: "희망교육재단",
+      description: "교육 격차 해소를 위해 학습 지원과 멘토링 프로그램을 운영하는 비영리 기관입니다.",
+      image: "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?q=80&w=300&auto=format&fit=crop"
+    },
     recruitStartDate: "2026-04-01",
     recruitEndDate: "2026-06-30",
     projectStartDate: "2026-07-10",
@@ -135,6 +145,11 @@ export const campaigns = [
     summary: "긴급 수술비와 치료비, 회복기 돌봄 비용을 함께 지원합니다.",
     description:
       "중증 질환으로 장기 치료가 필요한 아이들과 가족은 의료비뿐 아니라 생활비, 돌봄 공백까지 함께 감당해야 합니다. 우리는 긴급 수술비와 입원 치료비, 회복기 지원을 연결해 가족이 치료에만 집중할 수 있도록 돕고자 합니다.",
+      organization: {
+      name: "세이브칠드런 의료지원팀",
+      description: "의료 사각지대에 놓인 아동들에게 치료비와 긴급 의료 지원을 제공하는 단체입니다.",
+      image: "https://images.unsplash.com/photo-1584515933487-779824d29309?q=80&w=300&auto=format&fit=crop"
+    },
     recruitStartDate: "2026-02-15",
     recruitEndDate: "2026-04-30",
     projectStartDate: "2026-05-01",
