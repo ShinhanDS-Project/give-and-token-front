@@ -6,10 +6,11 @@ function DonationReturnPage() {
       <div className="donation-return__hero">
         <div className="donation-return__content">
           <p className="donation-return__eyebrow">Give Again</p>
-          <h2>작은 기부가 누군가의 하루를 바꿉니다</h2>
+          <h2>작은 기부가 누군가의 하루를 바꿉니다.</h2>
           <p className="donation-return__text">
-            이 페이지는 실제 기부 메인으로 연결될 자리입니다. 지금은 임시 화면이지만,
-            대시보드와는 전혀 다른 분위기의 후원 랜딩 페이지처럼 보이도록 구성했습니다.
+            이 페이지는 실제 기부 메인으로 연결될 자리입니다. 지금은 임시
+            화면이지만, 대시보드와는 전혀 다른 분위기의 후원 랜딩 페이지처럼
+            보이도록 구성했습니다.
           </p>
 
           <div className="donation-return__actions">
