@@ -4,6 +4,7 @@ import DonationApp from "./features/donation/DonationApp";
 import TransactionDashboardPage from "./features/blockchain/pages/TransactionDashboardPage";
 import WalletDetailPage from "./features/blockchain/pages/WalletDetailPage";
 import TransactionDetailPage from "./features/blockchain/pages/TransactionDetailPage";
+import CampaignSearchPage from "./pages/CampaignSearchPage";
 
 function ThemeToggleIcon({ theme }) {
   if (theme === "dark") {
@@ -100,6 +101,10 @@ function App() {
 
   if (isBlockchainRoute) {
     return <DashboardLayout theme={theme} onToggleTheme={handleToggleTheme} />;
+  }
+
+  if (location.pathname === "/campaign-search") {
+    return <CampaignSearchPage />;
   }
 
   return <DonationApp />;
