@@ -58,14 +58,15 @@ export default function OrganizationApplyPage() {
             ))}
           </div>
 
+          {/*[가빈] 기부단체 가입하기 버튼으로 변경하려고 수정했습니다*/}
           <div className="mt-10 flex flex-wrap gap-4">
-            <a
-              href="mailto:partnership@giventoken.org"
+            <Link
+              to="/organization/apply/form"
               className="btn-fairytale inline-flex items-center gap-3 px-8 py-4 text-sm"
             >
-              담당자에게 메일 보내기
+              가입신청서 작성하기
               <ArrowRight size={18} />
-            </a>
+            </Link>
             <Link
               to="/guide"
               className="btn-fairytale-outline inline-flex items-center gap-3 px-8 py-4 text-sm"

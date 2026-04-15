@@ -27,6 +27,7 @@ export default function Navbar() {
             </Link>
           </div>
 
+          {/*가빈- 알림 버튼 추가*/}
           <div className="flex items-center gap-4">
             <Link to="/campaigns" className="bg-primary text-white px-8 py-3 rounded-full text-sm font-bold shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all">
               마이페이지

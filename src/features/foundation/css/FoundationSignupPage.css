@@ -1,0 +1,278 @@
+/* ===== 페이지 래퍼 ===== */
+.fs-wrapper {
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 150px 24px 80px;
+}
+
+.fs-card {
+  width: 100%;
+}
+
+/* ===== 섹션 타이틀 ===== */
+.fs-section-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #000;
+  margin: 0 0 20px;
+  padding-bottom: 12px;
+  border-bottom: 1.5px solid #e5e7eb;
+}
+
+/* ===== 필드 라벨 ===== */
+.fs-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: #000;
+  margin-bottom: 6px;
+}
+
+/* ===== 공통 입력 ===== */
+.fs-input {
+  display: block;
+  width: 100%;
+  height: 48px;
+  padding: 0 2px;
+  border: none;
+  border-bottom: 1.5px solid #d1d5db;
+  background: transparent;
+  font-size: 14px;
+  font-weight: 500;
+  color: #000;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.fs-input::placeholder {
+  color: #9ca3af;
+  font-weight: 400;
+}
+
+.fs-input:focus {
+  border-bottom-color: #FF8A65;
+}
+
+/* ===== select 전용 ===== */
+.fs-select {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 6px center;
+  cursor: pointer;
+}
+
+/* ===== 텍스트에어리어 ===== */
+.fs-textarea {
+  display: block;
+  width: 100%;
+  min-height: 120px;
+  padding: 10px 2px;
+  border: none;
+  border-bottom: 1.5px solid #d1d5db;
+  background: transparent;
+  font-size: 14px;
+  font-weight: 500;
+  color: #000;
+  outline: none;
+  resize: none;
+  transition: border-color 0.15s;
+}
+
+.fs-textarea::placeholder {
+  color: #9ca3af;
+  font-weight: 400;
+}
+
+.fs-textarea:focus {
+  border-bottom-color: #FF8A65;
+}
+
+/* ===== 사업자등록번호 중복확인 버튼 ===== */
+.fs-check-button {
+  flex-shrink: 0;
+  height: 48px;
+  padding: 0 16px;
+  border: none;
+  border-bottom: 1.5px solid #d1d5db;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 700;
+  color: #FF8A65;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.fs-check-button:hover:not(:disabled) {
+  color: #000;
+  border-bottom-color: #6b7280;
+}
+
+.fs-check-button:disabled {
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+/* ===== BRN 상태 메시지 ===== */
+.fs-status-available {
+  margin-top: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #16a34a;
+}
+
+.fs-status-duplicate {
+  margin-top: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #FF8A65;
+}
+
+.fs-status-error {
+  margin-top: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #FF8A65;
+}
+
+/* ===== 동의 체크박스 행 ===== */
+.fs-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #000;
+  margin-top: 40px;
+  margin-bottom: 24px;
+  cursor: pointer;
+}
+
+/* ===== 에러 메시지 ===== */
+.fs-error-message {
+  font-size: 13px;
+  font-weight: 700;
+  color: #ef4444;
+  margin-bottom: 12px;
+}
+
+/* ===== 제출 버튼 ===== */
+.fs-submit-button {
+  width: 100%;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: rgb(251 233 231);
+  color: black;
+  border: none;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  letter-spacing: 0.02em;
+  transition: background 0.15s;
+}
+
+.fs-submit-button:hover:not(:disabled) {
+  background: #FF8A65;
+  color: white;
+}
+
+.fs-submit-button:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+}
+
+/* ===== 라디오 버튼 ===== */
+.fs-radio-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+  margin-top: 4px;
+}
+
+.fs-radio-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #000;
+  cursor: pointer;
+}
+
+.fs-radio-label input[type="radio"] {
+  accent-color: #FF8A65;
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+/* ===== 파일 업로드 ===== */
+.fs-file-input {
+  display: none;
+}
+
+.fs-file-button {
+  display: inline-flex;
+  align-items: center;
+  height: 40px;
+  padding: 0 16px;
+  border: 1.5px solid #d1d5db;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+  margin-top: 4px;
+}
+
+.fs-file-button:hover {
+  border-color: #FF8A65;
+  color: #FF8A65;
+}
+
+/* ===== 이미지 썸네일 미리보기 ===== */
+.fs-preview-wrap {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.fs-preview-img {
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+  border: 1.5px solid #e5e7eb;
+}
+
+.fs-preview-remove {
+  height: 28px;
+  padding: 0 12px;
+  border: 1.5px solid #d1d5db;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.fs-preview-remove:hover {
+  border-color: #ef4444;
+  color: #ef4444;
+}
+
+/* ===== 하단 안내 텍스트 ===== */
+.fs-footer-note {
+  text-align: center;
+  font-size: 12px;
+  color: #6b7280;
+  margin-top: 16px;
+}

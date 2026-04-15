@@ -17,6 +17,10 @@ import NotFoundPage from "./pages/NotFoundPage";
 import OrganizationApplyPage from "./pages/OrganizationApplyPage";
 import TransparencyPage from "./pages/TransparencyPage";
 import ScrollToTop from "./components/ScrollToTop";
+import TestCampaignPage from "../foundation/pages/GabeenCampaignPageTest";
+import FoundationDetailPage from "../foundation/pages/FoundationDetailPage";
+import FoundationListPage from "../foundation/pages/FoundationListPage";
+import FoundationSignupPage from "../foundation/pages/FoundationSignupPage";
 
 function HomePage() {
   return (
@@ -42,7 +46,7 @@ function HomePage() {
                 아이들을 웃게 합니다
               </h2>
               <p className="text-white/80 text-base md:text-lg mb-8 max-w-xl mx-auto leading-relaxed font-medium">
-                지금 바로 기부엔토큰의 후원 흐름을 만나보세요. <br/>
+                지금 바로 기부엔토큰의 후원 흐름을 만나보세요. <br />
                 작은 실천이 모여 누군가의 일상에 더 큰 빛이 됩니다.
               </p>
               <div className="flex flex-wrap justify-center gap-4">
@@ -56,7 +60,7 @@ function HomePage() {
                   to="/campaigns"
                   className="bg-white/10 backdrop-blur-md border-2 border-white/30 px-8 py-3.5 rounded-full text-base font-bold hover:bg-white/20 transition-all"
                 >
-                 지금 참여하기
+                  지금 참여하기
                 </Link>
               </div>
             </div>
@@ -84,9 +88,13 @@ export default function DonationApp() {
           <Route path="/guide" element={<DonationGuidePage />} />
           <Route path="/ledger" element={<LedgerPage />} />
           <Route path="/organization/apply" element={<OrganizationApplyPage />} />
+          <Route path="/organization/apply/form" element={<FoundationSignupPage />} />
           <Route path="/terms" element={<LegalPage />} />
           <Route path="/privacy" element={<LegalPage />} />
           <Route path="/policy" element={<LegalPage />} />
+          <Route path="/test/campaign" element={<TestCampaignPage />} />
+          <Route path="/foundation/:foundationNo" element={<FoundationDetailPage />} />
+          <Route path="/foundation/:foundationNo/campaigns" element={<FoundationListPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </main>
