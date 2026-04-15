@@ -1,4 +1,6 @@
-import React, { useState } from "react";
+// give-and-token-front/src/features/signUp/pages/SignupPage.jsx
+
+import React, { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import SignupRoleSelector from "../components/SignupRoleSelector";
 import SignupFormFields from "../components/SignupFormFields";
@@ -9,36 +11,61 @@ import {
   submitSignup,
 } from "../api/signupApi";
 
+// 모든 필드를 포함하는 초기 상태
+const initialFormData = {
+  role: "user",
+  profileImage: null,
+  // User & Beneficiary 공통
+  email: "",
+  password: "",
+  password2: "",
+  name: "",
+  phone: "",
+  // User 전용
+  nameHash: "",
+  birth: "",
+  // Beneficiary 전용
+  account: "",
+  beneficiaryType: "",
+};
+
 const SignupPage = () => {
   const navigate = useNavigate();
 
-  const [formData, setFormData] = useState({
-    role: "user",
-    photo: null,
-    name: "",
-    nickname: "",
-    email: "",
-    password: "",
-    password2: "",
-    phone: "",
-    birth: "",
-  });
-
+  const [formData, setFormData] = useState(initialFormData);
   const [isNicknameChecked, setIsNicknameChecked] = useState(false);
   const [verificationCode, setVerificationCode] = useState("");
   const [showVerificationInput, setShowVerificationInput] = useState(false);
   const [isEmailVerified, setIsEmailVerified] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
+  // 역할 변경 시 상태 초기화
+  const handleRoleChange = (newRole) => {
+    setFormData({
+      ...initialFormData,
+      role: newRole,
+    });
+    // 인증 상태 초기화
+    setIsNicknameChecked(false);
+    setIsEmailVerified(false);
+    setShowVerificationInput(false);
+    setVerificationCode("");
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
+
+    if (name === "role") {
+      handleRoleChange(value);
+      return;
+    }
 
     setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
 
-    if (name === "nickname") {
+    if (name === "nameHash") {
       setIsNicknameChecked(false);
     }
 
@@ -52,143 +79,126 @@ const SignupPage = () => {
   const handleFileChange = (e) => {
     setFormData((prev) => ({
       ...prev,
-      photo: e.target.files?.[0] ?? null,
+      profileImage: e.target.files?.[0] ?? null,
     }));
   };
 
-  const handleNicknameCheck = async () => {
-    if (!formData.nickname.trim()) {
+  const handleNicknameCheck = useCallback(async () => {
+    if (!formData.nameHash.trim()) {
       alert("닉네임을 입력해주세요.");
       return;
     }
-
     try {
-      const response = await checkNickname(formData.nickname);
-
+      const response = await checkNickname(formData.nameHash);
       if (response.ok) {
         alert("사용 가능한 닉네임입니다.");
         setIsNicknameChecked(true);
       } else {
-        const text = await response.text();
-        alert(text || "이미 사용 중인 닉네임입니다.");
+        const errorData = await response.json();
+        alert(errorData.message || "이미 사용 중인 닉네임입니다.");
       }
     } catch (error) {
-      console.error("닉네임 체크 중 오류 발생:", error);
       alert("닉네임 체크 중 오류가 발생했습니다.");
     }
-  };
+  }, [formData.nameHash]);
 
-  const handleSendVerification = async () => {
-    if (!formData.email.trim()) {
+  const handleSendVerification = useCallback(async () => {
+    const { email } = formData;
+    if (!email.trim()) {
       alert("이메일을 입력해주세요.");
       return;
     }
-
     try {
-      const response = await sendEmailVerification(formData.email);
-
+      const response = await sendEmailVerification(email);
       if (response.ok) {
-        const data = await response.json();
-        alert(data?.message || "인증 메일이 발송되었습니다.");
+        alert("인증 메일이 발송되었습니다.");
         setShowVerificationInput(true);
       } else {
-        const text = await response.text();
-        alert(text || "발송 실패. 이메일을 확인해주세요.");
+        const errorData = await response.json();
+        alert(errorData.message || "인증 요청 중 오류가 발생했습니다.");
       }
     } catch (error) {
-      console.error("인증 요청 중 오류 발생:", error);
       alert("인증 요청 중 오류가 발생했습니다.");
     }
-  };
+  }, [formData.email]);
 
-  const handleVerifyCode = async () => {
+  const handleVerifyCode = useCallback(async () => {
+    const { email } = formData;
     if (!verificationCode.trim()) {
       alert("인증코드를 입력해주세요.");
       return;
     }
-
     try {
-      const response = await verifyEmailCode({
-        email: formData.email,
-        code: verificationCode,
-      });
-
-      if (!response.ok) {
-        const text = await response.text();
-        alert(text || "인증 확인 중 오류가 발생했습니다.");
-        return;
-      }
-
-      const result = await response.json();
-
-      if (result === true) {
-        alert("인증에 성공했습니다.");
-        setIsEmailVerified(true);
+      const response = await verifyEmailCode({ email, code: verificationCode });
+      if (response.ok) {
+        const result = await response.json();
+        if (result === true) {
+          alert("인증에 성공했습니다.");
+          setIsEmailVerified(true);
+        } else {
+          alert("인증에 실패했습니다. 코드를 확인해주세요.");
+        }
       } else {
-        alert("인증에 실패했습니다.");
+        const errorData = await response.json();
+        alert(errorData.message || "인증 확인 중 오류가 발생했습니다.");
       }
     } catch (error) {
-      console.error("인증코드 확인 중 오류 발생:", error);
       alert("인증코드 확인 중 오류가 발생했습니다.");
     }
-  };
+  }, [verificationCode, formData.email]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!isNicknameChecked) {
+    // 공통 유효성 검사
+    if (formData.role === "user" && !isEmailVerified) {
+      alert("이메일 인증이 필요합니다.");
+      return;
+    }
+    if (formData.password !== formData.password2) {
+      alert("비밀번호가 일치하지 않습니다.");
+      return;
+    }
+    if (formData.role === "user" && !isNicknameChecked) {
       alert("닉네임 중복 확인이 필요합니다.");
       return;
     }
 
-    if (!isEmailVerified) {
-      alert("이메일 인증이 필요합니다.");
-      return;
-    }
-
-    if (!formData.password.trim()) {
-      alert("비밀번호를 입력해주세요.");
-      return;
-    }
-
-    if (!formData.password2.trim()) {
-      alert("비밀번호 확인을 입력해주세요.");
-      return;
-    }
-
-    if (formData.password !== formData.password2) {
-      alert("비밀번호와 비밀번호 확인이 일치하지 않습니다.");
-      return;
-    }
+    setSubmitting(true);
 
     try {
-      setSubmitting(true);
+      let payload = {};
+      const { role, profileImage } = formData;
 
-      const signupPayload = {
-        email: formData.email,
-        password: formData.password,
-        name: formData.name,
-        phone: formData.phone,
-        birth: formData.birth,
-        loginType: "LOCAL",
-        nameHash: formData.nickname,
-      };
-
-      const response = await submitSignup(signupPayload);
-
-      if (!response.ok) {
-        const text = await response.text();
-        alert(text || "회원가입에 실패했습니다.");
-        return;
+      if (role === "user") {
+        payload = {
+          email: formData.email,
+          password: formData.password,
+          name: formData.name,
+          phone: formData.phone,
+          birth: formData.birth,
+          nameHash: formData.nameHash,
+          loginType: "LOCAL",
+        };
+      } else if (role === "beneficiary") {
+        payload = {
+          email: formData.email,
+          password: formData.password,
+          name: formData.name,
+          phone: formData.phone,
+          account: formData.account,
+          beneficiaryType: formData.beneficiaryType,
+        };
       }
 
-      alert("회원가입이 완료되었습니다.");
-
-      if (formData.photo) {
-        console.log("현재 DTO 기준으로 사진 업로드는 아직 회원가입 요청에 포함되지 않았어.");
+      const response = await submitSignup(role, payload, profileImage);
+      if (response.ok) {
+        alert("회원가입이 완료되었습니다.");
+        navigate("/login");
+      } else {
+        const errorData = await response.json();
+        alert(errorData.message || "회원가입 중 오류가 발생했습니다.");
       }
-
-      navigate("/login");
     } catch (error) {
       console.error("회원가입 중 오류 발생:", error);
       alert("회원가입 중 오류가 발생했습니다.");
@@ -198,35 +208,31 @@ const SignupPage = () => {
   };
 
   return (
-    <div>
-      <h1>회원가입</h1>
-
-      <form onSubmit={handleSubmit}>
-        <SignupRoleSelector
-          role={formData.role}
-          onChange={handleChange}
-        />
-
-        <SignupFormFields
-          formData={formData}
-          onChange={handleChange}
-          onFileChange={handleFileChange}
-          onNicknameCheck={handleNicknameCheck}
-          onSendVerification={handleSendVerification}
-          verificationCode={verificationCode}
-          onVerificationCodeChange={(e) =>
-            setVerificationCode(e.target.value)
-          }
-          onVerifyCode={handleVerifyCode}
-          showVerificationInput={showVerificationInput}
-          isEmailVerified={isEmailVerified}
-        />
-
-        <button type="submit" disabled={submitting}>
-          {submitting ? "가입 중..." : "가입 완료"}
-        </button>
-      </form>
-    </div>
+      <div>
+        <h1>회원가입</h1>
+        <form onSubmit={handleSubmit}>
+          <SignupRoleSelector
+              role={formData.role}
+              onChange={handleChange}
+          />
+          <SignupFormFields
+              role={formData.role}
+              formData={formData}
+              onChange={handleChange}
+              onFileChange={handleFileChange}
+              onNicknameCheck={handleNicknameCheck}
+              onSendVerification={handleSendVerification}
+              verificationCode={verificationCode}
+              onVerificationCodeChange={(e) => setVerificationCode(e.target.value)}
+              onVerifyCode={handleVerifyCode}
+              showVerificationInput={showVerificationInput}
+              isEmailVerified={isEmailVerified}
+          />
+          <button type="submit" disabled={submitting}>
+            {submitting ? "가입 중..." : "가입 완료"}
+          </button>
+        </form>
+      </div>
   );
 };
 

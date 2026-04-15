@@ -5,35 +5,53 @@ export default function LoginForm({
   errorMessage,
 }) {
   return (
-    <form onSubmit={onSubmit}>
-      <div>
-        <p>
-          이메일:
+    <form className="mt-8 space-y-6" onSubmit={onSubmit}>
+      <div className="-space-y-px rounded-md shadow-sm">
+        <div>
+          <label htmlFor="email-address" className="sr-only">
+            이메일 주소
+          </label>
           <input
-            type="email"
+            id="email-address"
             name="email"
+            type="email"
+            autoComplete="email"
+            required
+            className="relative block w-full appearance-none rounded-none rounded-t-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:z-10 focus:border-primary focus:outline-none focus:ring-primary sm:text-sm"
+            placeholder="이메일 주소"
             value={loginData.email}
             onChange={onChange}
-            required
           />
-        </p>
-
-        <p>
-          비밀번호:
+        </div>
+        <div>
+          <label htmlFor="password" className="sr-only">
+            비밀번호
+          </label>
           <input
-            type="password"
+            id="password"
             name="password"
+            type="password"
+            autoComplete="current-password"
+            required
+            className="relative block w-full appearance-none rounded-none rounded-b-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:z-10 focus:border-primary focus:outline-none focus:ring-primary sm:text-sm"
+            placeholder="비밀번호"
             value={loginData.password}
             onChange={onChange}
-            required
           />
-        </p>
+        </div>
       </div>
 
-      {errorMessage && <p>{errorMessage}</p>}
+      {errorMessage && (
+        <p className="mt-2 text-center text-sm text-red-600">{errorMessage}</p>
+      )}
 
       <div>
-        <button type="submit">로그인</button>
+        <button
+          type="submit"
+          className="group relative flex w-full justify-center rounded-md border border-transparent bg-primary py-2 px-4 text-sm font-medium text-white hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+        >
+          로그인
+        </button>
       </div>
     </form>
   );

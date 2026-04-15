@@ -17,6 +17,12 @@ import NotFoundPage from "./pages/NotFoundPage";
 import OrganizationApplyPage from "./pages/OrganizationApplyPage";
 import TransparencyPage from "./pages/TransparencyPage";
 import ScrollToTop from "./components/ScrollToTop";
+import LoginPage from "../login/pages/LoginPage";
+import SignupPage from "../signUp/pages/SignupPage";
+import MyPageMain from "../myPageUser/pages/MyPageMain";
+import MyPageDonationHistory from "../myPageUser/pages/MyPageDonationHistory";
+import MyPagePasswordChange from "../myPageUser/pages/MyPagePasswordChange";
+import MyPageProfileEdit from "../myPageUser/pages/MyPageProfileEdit";
 
 function HomePage() {
   return (
@@ -87,6 +93,14 @@ export default function DonationApp() {
           <Route path="/terms" element={<LegalPage />} />
           <Route path="/privacy" element={<LegalPage />} />
           <Route path="/policy" element={<LegalPage />} />
+
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/signup" element={<SignupPage />} />
+          <Route path="/mypage" element={<MyPageMain />} />
+          <Route path="/mypage/history" element={<MyPageDonationHistory />} />
+          <Route path="/mypage/password" element={<MyPagePasswordChange />} />
+          <Route path="/mypage/profile" element={<MyPageProfileEdit />} />
+
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </main>

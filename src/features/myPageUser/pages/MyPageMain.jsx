@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import ProfileCard from "../components/ProfileCard";
-import WalletCard from "../components/WalletCard";
-import DonationSummaryCard from "../components/DonationSummaryCard";
+import ProfileCard from "../components/ProfileCardPage";
+import WalletCard from "../components/MyWalletCard";
+import DonationSummaryCard from "../components/MyDonationSummaryCard";
 import DonationHistorySection from "../components/DonationHistorySection";
 import {
   getMyPageInfo,
