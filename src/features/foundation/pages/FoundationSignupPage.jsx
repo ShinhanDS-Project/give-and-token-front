@@ -140,7 +140,8 @@ export default function FoundationSignupPage() {
         const message = await res.text();
         throw new Error(message || "신청에 실패했습니다.");
       }
-      navigate("/organization/apply");
+      const result = await res.json();
+      navigate("/organization/apply/complete", { state: { result } });  //응답 값ㅇ르 가지고 완료 페이지로 네비게이팅
     } catch (err) {
       setSubmitError(err.message);
     } finally {
