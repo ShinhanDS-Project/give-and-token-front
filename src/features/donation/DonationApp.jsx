@@ -1,9 +1,9 @@
+import { useEffect } from "react";
 import { Link, Navigate, Route, Routes } from "react-router-dom";
 import { Heart } from "lucide-react";
 import Navbar from "./components/Navbar";
 import Hero from "./components/Hero";
-import Stats from "./components/Stats";
-import Campaigns from "./components/Campaigns";
+import HomeCampaignHub from "./components/HomeCampaignHub";
 import TransparencyReport from "./components/TransparencyReport";
 import Footer from "./components/Footer";
 import CampaignList from "./pages/CampaignList";
@@ -19,11 +19,81 @@ import TransparencyPage from "./pages/TransparencyPage";
 import ScrollToTop from "./components/ScrollToTop";
 
 function HomePage() {
+  useEffect(() => {
+    document.documentElement.classList.add("home-scroll-snap");
+    document.body.classList.add("home-scroll-snap");
+    let isSnapping = false;
+    let lastY = window.scrollY;
+    let lastSnapAt = 0;
+    const SNAP_COOLDOWN = 520;
+    const SNAP_DEAD_ZONE = 56;
+
+    const forceSnapToHub = () => {
+      if (isSnapping) {
+        return;
+      }
+
+      const hub = document.getElementById("home-hub");
+      if (!hub) {
+        return;
+      }
+
+      const hubTop = hub.getBoundingClientRect().top + window.scrollY;
+      const currentY = window.scrollY;
+      const now = Date.now();
+      if (now - lastSnapAt < SNAP_COOLDOWN) {
+        lastY = currentY;
+        return;
+      }
+
+      const isGoingDown = currentY > lastY;
+      const isGoingUp = currentY < lastY;
+      const downTriggerPoint = hubTop * 0.20;
+      const upTriggerPoint = hubTop * 0.75;
+      lastY = currentY;
+
+      if (
+        isGoingDown &&
+        currentY > downTriggerPoint &&
+        currentY < hubTop - SNAP_DEAD_ZONE
+      ) {
+        isSnapping = true;
+        lastSnapAt = now;
+        window.scrollTo({ top: hubTop, behavior: "smooth" });
+        window.setTimeout(() => {
+          isSnapping = false;
+        }, SNAP_COOLDOWN);
+        return;
+      }
+
+      if (
+        isGoingUp &&
+        currentY < upTriggerPoint &&
+        currentY > SNAP_DEAD_ZONE &&
+        currentY < hubTop + SNAP_DEAD_ZONE
+      ) {
+        isSnapping = true;
+        lastSnapAt = now;
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        window.setTimeout(() => {
+          isSnapping = false;
+        }, SNAP_COOLDOWN);
+      }
+    };
+
+    window.addEventListener("scroll", forceSnapToHub, { passive: true });
+
+    return () => {
+      document.documentElement.classList.remove("home-scroll-snap");
+      document.body.classList.remove("home-scroll-snap");
+      window.removeEventListener("scroll", forceSnapToHub);
+    };
+  }, []);
+
   return (
     <>
       <Hero />
-      <Stats />
-      <Campaigns />
+      <HomeCampaignHub />
       <TransparencyReport />
 
       <section className="pt-28 pb-44 bg-white relative overflow-hidden">
