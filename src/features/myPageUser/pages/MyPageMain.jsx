@@ -31,12 +31,14 @@ export default function MyPageMain() {
     try {
       const res = await getMicroTracking(campaignNo);
       setTrackingData(res.data);
+      console.log(res.data);
     } catch (error) {
       console.error("Failed to fetch micro tracking data", error);
       setTrackingData(null); // Clear previous data on error
     } finally {
       setTrackingLoading(false);
     }
+
   };
 
   const handleCloseTrackingModal = () => {
