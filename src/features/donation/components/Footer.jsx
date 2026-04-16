@@ -28,18 +28,6 @@ export default function Footer() {
               <br />
               투명한 나눔으로 더 따뜻한 내일을 함께 만들어가요.
             </p>
-
-            <div className="flex gap-5">
-              {[Instagram, Twitter, Youtube].map((Icon, index) => (
-                <a
-                  key={index}
-                  href="#"
-                  className="flex h-14 w-14 items-center justify-center rounded-2xl border-4 border-line bg-white text-stone-400 shadow-sm transition-all hover:border-primary/20 hover:bg-primary hover:text-white"
-                >
-                  <Icon size={24} />
-                </a>
-              ))}
-            </div>
           </div>
 
           <div className="lg:col-span-2">

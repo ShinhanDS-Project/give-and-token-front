@@ -1,9 +1,40 @@
+import { useEffect, useState } from "react";
 import { motion } from "motion/react";
 import { ArrowRight, Heart, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
-import { featuredCampaigns } from "../data/campaigns";
+import { getCampaignCards } from "../api/campaignApi";
 
 export default function Campaigns() {
+  const [featuredCampaigns, setFeaturedCampaigns] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let isMounted = true;
+
+    (async () => {
+      try {
+        const campaigns = await getCampaignCards({ sort: "deadline" });
+
+        if (isMounted) {
+          setFeaturedCampaigns(campaigns.slice(0, 3));
+        }
+      } catch {
+        if (isMounted) {
+          setError("캠페인 목록을 불러오지 못했습니다.");
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    })();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   return (
     <section className="relative bg-[#FFFDFB] py-32">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -24,7 +55,20 @@ export default function Campaigns() {
           </p>
         </div>
 
-        <div className="grid gap-12 md:grid-cols-3">
+        {isLoading && (
+          <div className="rounded-[2rem] border-2 border-line bg-white p-10 text-center text-stone-500">
+            캠페인 목록을 불러오는 중입니다.
+          </div>
+        )}
+
+        {error && !isLoading && (
+          <div className="rounded-[2rem] border-2 border-line bg-white p-10 text-center text-stone-500">
+            {error}
+          </div>
+        )}
+
+        {!isLoading && !error && (
+          <div className="grid gap-12 md:grid-cols-3">
           {featuredCampaigns.map((camp) => (
             <Link
               key={camp.id}
@@ -83,6 +127,7 @@ export default function Campaigns() {
             </Link>
           ))}
         </div>
+        )}
 
         <div className="mt-20 flex justify-end">
           <Link

@@ -2,4 +2,6 @@ node_modules/
 dist/
 .env
 
+vite.err.log
+vite.out.log
 CLAUDE.md 
