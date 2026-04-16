@@ -19,6 +19,7 @@ function formatDate(dateValue) {
 export default function DonationHistorySection({
   donationHistory = [],
   onViewAll,
+  onOpenTracking,
 }) {
   return (
     <section className="mypage-card">
@@ -61,6 +62,13 @@ export default function DonationHistorySection({
 
               <div className="flex flex-col items-center md:items-end gap-2 mt-4 md:mt-0">
                 <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => onOpenTracking(item.campaignNo)}
+                    className="text-xs font-bold text-primary hover:underline"
+                  >
+                    마이크로트래킹
+                  </button>
                   <span className={`status-tag-clean ${
                     item.transaction?.status === 'SUCCESS' ? 'text-emerald-500 border-emerald-100' : 
                     item.transaction?.status === 'PENDING' ? 'text-amber-500 border-amber-100' : 'text-rose-500 border-rose-100'
