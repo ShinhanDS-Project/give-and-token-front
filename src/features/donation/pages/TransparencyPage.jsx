@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { motion } from "motion/react";
 import {
   CheckCircle2,
@@ -50,7 +51,7 @@ function PageSection({ className = "", children }) {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={viewport}
       transition={{ duration: 0.8, ease: "easeOut" }}
-      className={`min-h-[88vh] flex items-center ${className}`}
+      className={`page-snap-target min-h-[88vh] flex items-center ${className}`}
     >
       {children}
     </motion.section>
@@ -58,11 +59,83 @@ function PageSection({ className = "", children }) {
 }
 
 export default function TransparencyPage() {
+  useEffect(() => {
+    document.documentElement.classList.add("page-scroll-snap");
+    document.body.classList.add("page-scroll-snap");
+    let isSnapping = false;
+    let lastY = window.scrollY;
+    let lastSnapAt = 0;
+    const SNAP_COOLDOWN = 420;
+    const DOWN_TRIGGER_RATIO = 0.4;
+    const UP_TRIGGER_RATIO = 0.5;
+
+    const snapByProgress = () => {
+      if (isSnapping) return;
+
+      const sections = Array.from(document.querySelectorAll(".page-snap-target"));
+      if (sections.length < 2) return;
+
+      const currentY = window.scrollY;
+      const now = Date.now();
+      if (now - lastSnapAt < SNAP_COOLDOWN) {
+        lastY = currentY;
+        return;
+      }
+
+      const isGoingDown = currentY > lastY;
+      const isGoingUp = currentY < lastY;
+      lastY = currentY;
+
+      for (let i = 0; i < sections.length; i += 1) {
+        const section = sections[i];
+        const top = section.getBoundingClientRect().top + window.scrollY;
+        const height = section.offsetHeight || window.innerHeight;
+        const bottom = top + height;
+
+        if (currentY < top || currentY >= bottom) {
+          continue;
+        }
+
+        const progress = (currentY - top) / Math.max(1, height);
+
+        if (isGoingDown && progress >= DOWN_TRIGGER_RATIO && i < sections.length - 1) {
+          const nextTop = sections[i + 1].getBoundingClientRect().top + window.scrollY;
+          isSnapping = true;
+          lastSnapAt = now;
+          window.scrollTo({ top: nextTop, behavior: "smooth" });
+          window.setTimeout(() => {
+            isSnapping = false;
+          }, SNAP_COOLDOWN);
+          return;
+        }
+
+        if (isGoingUp && progress <= UP_TRIGGER_RATIO && i > 0) {
+          const prevTop = sections[i - 1].getBoundingClientRect().top + window.scrollY;
+          isSnapping = true;
+          lastSnapAt = now;
+          window.scrollTo({ top: prevTop, behavior: "smooth" });
+          window.setTimeout(() => {
+            isSnapping = false;
+          }, SNAP_COOLDOWN);
+          return;
+        }
+      }
+    };
+
+    window.addEventListener("scroll", snapByProgress, { passive: true });
+
+    return () => {
+      document.documentElement.classList.remove("page-scroll-snap");
+      document.body.classList.remove("page-scroll-snap");
+      window.removeEventListener("scroll", snapByProgress);
+    };
+  }, []);
+
   return (
     <div className="pt-52 pb-32 watercolor-bg min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <PageSection className="min-h-[72vh] lg:min-h-[calc(100svh-12rem)]">
-          <div className="w-full space-y-7">
+        <PageSection className="min-h-[calc(100svh-14rem)] lg:min-h-[calc(100svh-13rem)]">
+          <div className="w-full space-y-5">
             <div className="max-w-4xl">
               <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-white border-2 border-line text-primary text-sm font-bold shadow-sm mb-5">
                 <ShieldCheck size={16} fill="currentColor" />
@@ -125,7 +198,7 @@ export default function TransparencyPage() {
           </div>
         </PageSection>
 
-        <PageSection className="mt-24 md:mt-32">
+        <PageSection className="mt-10 md:mt-14">
           <div className="grid lg:grid-cols-2 gap-16 items-center w-full">
             <div>
               <div className="inline-flex items-center gap-2 px-6 py-2 rounded-full bg-primary/5 text-primary text-sm font-bold mb-8 border border-primary/10">
@@ -180,7 +253,7 @@ export default function TransparencyPage() {
           </div>
         </PageSection>
 
-        <PageSection className="mt-24 md:mt-32">
+        <PageSection className="mt-10 md:mt-14 min-h-[calc(100svh-12rem)]">
           <div className="w-full space-y-5">
             <div className="max-w-4xl">
               <div className="inline-flex items-center gap-2 px-6 py-2 rounded-full bg-white border-2 border-line text-primary text-sm font-bold shadow-sm mb-6">
@@ -192,7 +265,7 @@ export default function TransparencyPage() {
                 <br />
                 <span className="text-primary italic">실시간으로 확인</span>하세요
               </h2>
-              <p className="text-lg text-stone-500 leading-relaxed max-w-3xl">
+              <p className="text-base md:text-lg text-stone-500 leading-relaxed max-w-3xl">
                 실제 서비스에서는 캠페인별 후원과 집행 흐름이 이 영역에서 이어집니다. <br/>
                 모든 기부 내역은 암호화되어 공공 장부에 기록됩니다.  <br/>
                 수정이나 삭제가 불가능한 블록체인 기술로 100% 신뢰할 수 있는 기부 문화를 만듭니다.
@@ -204,6 +277,7 @@ export default function TransparencyPage() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.08 }}
               transition={{ duration: 0.85, ease: "easeOut" }}
+              className="-mb-16 md:-mb-12"
             >
               <BlockchainLedger />
             </motion.div>

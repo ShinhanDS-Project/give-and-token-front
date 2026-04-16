@@ -332,7 +332,7 @@ export default function DonatePage() {
           </h1>
           {error && <p className="mb-6 text-sm text-stone-400">{error}</p>}
           <Link to="/campaigns" className="btn-fairytale inline-flex">
-            캠페인 목록으로 가기
+            Back to campaigns
           </Link>
         </div>
       </div>

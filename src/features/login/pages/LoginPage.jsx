@@ -32,7 +32,7 @@ const LoginPage = () => {
   const redirectByRole = (role) => {
     switch (role) {
       case "foundation":
-        navigate("/foundation/dashboard");
+        navigate("/foundation/me");
         break;
       case "beneficiary":
         navigate("/beneficiary/main");
@@ -55,16 +55,40 @@ const LoginPage = () => {
 
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(errorText || "로그인에 실패했어.");
+        throw new Error(errorText || "로그인에 실패했습니다.");
       }
 
       const data = await response.json().catch(() => null);
       console.log("로그인 성공:", data);
-      localStorage.setItem('accessToken', data.accessToken);
+
+      // 토큰 및 사용자 역할 저장
+      const rawToken = String(data?.accessToken || "")
+        .replace(/^Bearer\s+/i, "")
+        .trim();
+
+      if (rawToken) {
+        window.localStorage.setItem("accessToken", rawToken);
+      }
+
+      window.localStorage.setItem("userRole", loginData.role);
+
+      if (loginData.role === "foundation") {
+        window.localStorage.setItem("foundationAccessToken", rawToken);
+        window.localStorage.setItem(
+          "foundationAuthInfo",
+          JSON.stringify({
+            foundationNo: data?.foundationNo ?? null,
+            foundationName: data?.foundationName ?? "",
+            email: data?.email ?? loginData.email,
+            tokenType: data?.tokenType ?? "Bearer",
+          }),
+        );
+      }
+
       redirectByRole(loginData.role);
     } catch (error) {
       console.error("로그인 중 오류 발생:", error);
-      setLoginError(error.message || "로그인 중 오류가 발생했어.");
+      setLoginError(error.message || "로그인 중 오류가 발생했습니다.");
     }
   };
 
@@ -97,18 +121,22 @@ const LoginPage = () => {
           onOpenPasswordReset={() => setIsPasswordResetOpen(true)}
         />
 
-        <div className="relative flex py-5 items-center">
-          <div className="flex-grow border-t border-gray-300"></div>
-          <span className="flex-shrink mx-4 text-gray-400 text-xs">
-            또는
-          </span>
-          <div className="flex-grow border-t border-gray-300"></div>
-        </div>
+        {loginData.role === "user" && (
+          <>
+            <div className="relative flex py-5 items-center">
+              <div className="flex-grow border-t border-gray-300"></div>
+              <span className="flex-shrink mx-4 text-gray-400 text-xs">
+                또는
+              </span>
+              <div className="flex-grow border-t border-gray-300"></div>
+            </div>
 
-        <SocialLoginSection
-          onGoToSignUp={goToSignUp}
-          onGoogleLogin={handleGoogleLogin}
-        />
+            <SocialLoginSection
+              onGoToSignUp={goToSignUp}
+              onGoogleLogin={handleGoogleLogin}
+            />
+          </>
+        )}
 
         {isEmailFindOpen && (
           <EmailFindModal onClose={() => setIsEmailFindOpen(false)} />

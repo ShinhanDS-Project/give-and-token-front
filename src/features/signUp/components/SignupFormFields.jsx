@@ -12,6 +12,7 @@ export default function SignupFormFields({
                                              onVerifyCode,
                                              showVerificationInput,
                                              isEmailVerified,
+                                             isGoogleSignup
                                          }) {
     const isUser = role === "user";
     const isBeneficiary = role === "beneficiary";
@@ -22,14 +23,12 @@ export default function SignupFormFields({
             <p>
                 이메일:{" "}
                 <input
-                    type="email"
                     name="email"
                     value={formData.email}
                     onChange={onChange}
-                    required
-                    disabled={isEmailVerified && isUser}
+                    disabled={isGoogleSignup}
                 />
-                {isUser && (
+                {isUser && !isGoogleSignup && (
                     <button
                         type="button"
                         onClick={onSendVerification}
@@ -40,7 +39,7 @@ export default function SignupFormFields({
                 )}
             </p>
 
-            {isUser && showVerificationInput && !isEmailVerified && (
+            {isUser && !isGoogleSignup && showVerificationInput && !isEmailVerified && (
                 <p>
                     인증코드:{" "}
                     <input
@@ -97,11 +96,10 @@ export default function SignupFormFields({
                     <p>
                         이름:{" "}
                         <input
-                            type="text"
                             name="name"
                             value={formData.name}
                             onChange={onChange}
-                            required
+                            disabled={isGoogleSignup}
                         />
                     </p>
                     <p>
