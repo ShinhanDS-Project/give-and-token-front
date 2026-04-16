@@ -1,19 +1,29 @@
-const FOUNDATION_BASE_PATH = "/api/foundation";
+﻿const FOUNDATION_BASE_PATH = "/api/foundation";
 const FOUNDATION_CAMPAIGN_BASE_PATH = "/api/foundation/campaigns";
 
 export const FOUNDATION_AUTH_STORAGE_KEY = "foundationAccessToken";
 export const FOUNDATION_INFO_STORAGE_KEY = "foundationAuthInfo";
 
 async function parseErrorResponse(response) {
+  const toKoreanMessage = (message) => {
+    const normalized = String(message || "").toLowerCase();
+    if (normalized.includes("insufficient token balance")) {
+      return "토큰 잔액이 부족합니다.";
+    }
+    return message;
+  };
+
   const contentType = response.headers.get("content-type") || "";
 
   if (contentType.includes("application/json")) {
     const data = await response.json();
-    return data.message || data.error || "?붿껌 泥섎━ 以??ㅻ쪟媛 諛쒖깮?덉뒿?덈떎.";
+    return toKoreanMessage(
+      data.message || data.error || "요청 처리 중 오류가 발생했습니다.",
+    );
   }
 
   const text = await response.text();
-  return text || "?붿껌 泥섎━ 以??ㅻ쪟媛 諛쒖깮?덉뒿?덈떎.";
+  return toKoreanMessage(text || "요청 처리 중 오류가 발생했습니다.");
 }
 
 function getStoredAccessToken() {
@@ -58,7 +68,10 @@ function getFoundationNoForGuard() {
 }
 
 function saveFoundationAuth(authResponse) {
-  window.localStorage.setItem(FOUNDATION_AUTH_STORAGE_KEY, authResponse.accessToken);
+  window.localStorage.setItem(
+    FOUNDATION_AUTH_STORAGE_KEY,
+    authResponse.accessToken,
+  );
   window.localStorage.setItem("accessToken", authResponse.accessToken);
   window.localStorage.setItem(
     FOUNDATION_INFO_STORAGE_KEY,
@@ -67,7 +80,7 @@ function saveFoundationAuth(authResponse) {
       foundationName: authResponse.foundationName,
       email: authResponse.email,
       tokenType: authResponse.tokenType,
-    })
+    }),
   );
 }
 
@@ -75,7 +88,7 @@ function buildAuthorizedHeaders() {
   const accessToken = getStoredAccessToken();
 
   if (!accessToken) {
-    throw new Error("癒쇱? 湲곕??⑥껜 濡쒓렇???좏겙????ν빐二쇱꽭??");
+    throw new Error("로그인이 필요합니다. 먼저 로그인해주세요.");
   }
 
   return {
@@ -148,7 +161,7 @@ export async function checkBeneficiary(entryCode) {
     `${FOUNDATION_CAMPAIGN_BASE_PATH}/beneficiary-check?${query.toString()}`,
     {
       headers: buildAuthorizedHeaders(),
-    }
+    },
   );
 
   if (!response.ok) {
@@ -158,11 +171,21 @@ export async function checkBeneficiary(entryCode) {
   return response.json();
 }
 
+export function getFoundationNoFromAccessToken() {
+  const payload = parseJwtPayload(getStoredAccessToken());
+  if (payload?.no) {
+    return Number(payload.no);
+  }
+  return null;
+}
+
 export async function checkFoundationWalletAvailability() {
   const foundationNo = getFoundationNoForGuard();
 
   if (!foundationNo) {
-    throw new Error("기부단체 로그인 정보를 확인할 수 없습니다. 다시 로그인해주세요.");
+    throw new Error(
+      "기부단체 로그인 정보를 확인할 수 없습니다. 다시 로그인해주세요.",
+    );
   }
 
   const query = new URLSearchParams({
@@ -173,7 +196,7 @@ export async function checkFoundationWalletAvailability() {
     `${FOUNDATION_CAMPAIGN_BASE_PATH}/foundation-check?${query.toString()}`,
     {
       headers: buildAuthorizedHeaders(),
-    }
+    },
   );
 
   if (!response.ok) {
@@ -189,6 +212,62 @@ export async function fetchFoundationMyInfo() {
 
 export async function fetchFoundationPublicDetail(foundationNo) {
   const response = await fetch(`${FOUNDATION_BASE_PATH}/${foundationNo}`);
+
+  if (!response.ok) {
+    throw new Error(await parseErrorResponse(response));
+  }
+
+  return response.json();
+}
+
+export async function fetchFoundationWalletInfo(foundationNo) {
+  const response = await fetch(
+    `${FOUNDATION_BASE_PATH}/${foundationNo}/wallet`,
+  );
+
+  if (!response.ok) {
+    throw new Error(await parseErrorResponse(response));
+  }
+
+  return response.json();
+}
+
+export async function fetchFoundationSettlements({ page = 0, size = 10 } = {}) {
+  const query = new URLSearchParams({
+    page: String(page),
+    size: String(size),
+  });
+
+  return requestWithFoundationAuth(
+    `${FOUNDATION_BASE_PATH}/me/settlements?${query.toString()}`,
+  );
+}
+
+export async function fetchFoundationRedemptions({ page = 0, size = 10 } = {}) {
+  const query = new URLSearchParams({
+    page: String(page),
+    size: String(size),
+    sort: "requestedAt,desc",
+  });
+
+  return requestWithFoundationAuth(
+    `${FOUNDATION_BASE_PATH}/me/redemptions?${query.toString()}`,
+  );
+}
+
+export async function requestFoundationRedemption({ requesterNo, amount }) {
+  const response = await fetch("/api/redemptions", {
+    method: "POST",
+    headers: {
+      ...buildAuthorizedHeaders(),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      requesterType: "FOUNDATION",
+      requesterNo: Number(requesterNo),
+      amount: Number(amount),
+    }),
+  });
 
   if (!response.ok) {
     throw new Error(await parseErrorResponse(response));
@@ -250,19 +329,19 @@ export async function fetchFoundationRecentCampaigns({
   }
 
   return requestWithFoundationAuth(
-    `${FOUNDATION_BASE_PATH}/me/campaigns/filter?${query.toString()}`
+    `${FOUNDATION_BASE_PATH}/me/campaigns/filter?${query.toString()}`,
   );
 }
 
 export async function fetchCampaignDetail(campaignNo) {
   return requestWithFoundationAuth(
-    `${FOUNDATION_CAMPAIGN_BASE_PATH}/${campaignNo}/detail`
+    `${FOUNDATION_CAMPAIGN_BASE_PATH}/${campaignNo}/detail`,
   );
 }
 
 export async function fetchPendingCampaignEditDetail(campaignNo) {
   return requestWithFoundationAuth(
-    `${FOUNDATION_CAMPAIGN_BASE_PATH}/${campaignNo}/edit-detail`
+    `${FOUNDATION_CAMPAIGN_BASE_PATH}/${campaignNo}/edit-detail`,
   );
 }
 
@@ -289,7 +368,7 @@ function buildCampaignMultipartData(formValues) {
 
   multipartData.append(
     "dto",
-    new Blob([JSON.stringify(requestData)], { type: "application/json" })
+    new Blob([JSON.stringify(requestData)], { type: "application/json" }),
   );
 
   if (formValues.imageFile) {
@@ -324,11 +403,14 @@ export async function submitCampaignApplication(formValues) {
 export async function updatePendingCampaign(campaignNo, formValues) {
   const multipartData = buildCampaignMultipartData(formValues);
 
-  const response = await fetch(`${FOUNDATION_CAMPAIGN_BASE_PATH}/${campaignNo}`, {
-    method: "PUT",
-    headers: buildAuthorizedHeaders(),
-    body: multipartData,
-  });
+  const response = await fetch(
+    `${FOUNDATION_CAMPAIGN_BASE_PATH}/${campaignNo}`,
+    {
+      method: "PUT",
+      headers: buildAuthorizedHeaders(),
+      body: multipartData,
+    },
+  );
 
   if (!response.ok) {
     throw new Error(await parseErrorResponse(response));

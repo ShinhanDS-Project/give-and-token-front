@@ -1,4 +1,6 @@
-﻿const CAMPAIGN_CATEGORY_OPTIONS = [
+﻿import { useEffect, useState } from "react";
+
+const CAMPAIGN_CATEGORY_OPTIONS = [
   { value: "", label: "카테고리 선택" },
   { value: "CHILD_YOUTH", label: "아동/청소년" },
   { value: "SENIOR", label: "어르신" },
@@ -39,6 +41,30 @@ function toImageSrc(path) {
   }
 
   return `/${path}`;
+}
+
+function FilePreviewImage({ file, alt, className }) {
+  const [previewUrl, setPreviewUrl] = useState("");
+
+  useEffect(() => {
+    if (!file) {
+      setPreviewUrl("");
+      return;
+    }
+
+    const nextUrl = URL.createObjectURL(file);
+    setPreviewUrl(nextUrl);
+
+    return () => {
+      URL.revokeObjectURL(nextUrl);
+    };
+  }, [file]);
+
+  if (!previewUrl) {
+    return null;
+  }
+
+  return <img src={previewUrl} alt={alt} className={className} />;
 }
 
 export default function FoundationApplicationForm({
@@ -163,6 +189,15 @@ export default function FoundationApplicationForm({
               />
             </div>
           ) : null}
+          {formValues.imageFile ? (
+            <div className="mb-2 overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
+              <FilePreviewImage
+                file={formValues.imageFile}
+                alt="선택한 대표 이미지 미리보기"
+                className="h-40 w-full object-cover"
+              />
+            </div>
+          ) : null}
           <input name="imageFile" type="file" accept="image/*" onChange={onFileChange} />
           <span className="text-sm text-slate-600">
             {formValues.imageFile?.name ||
@@ -214,6 +249,15 @@ export default function FoundationApplicationForm({
                   accept="image/*"
                   onChange={(event) => onDetailImageChange(imageItem.id, event)}
                 />
+                {imageItem.file ? (
+                  <div className="mt-2 overflow-hidden rounded-xl border border-slate-200 bg-white">
+                    <FilePreviewImage
+                      file={imageItem.file}
+                      alt={`선택한 상세 이미지 ${index + 1} 미리보기`}
+                      className="h-32 w-full object-cover"
+                    />
+                  </div>
+                ) : null}
                 <span className="text-sm text-slate-600">
                   {imageItem.file?.name || "선택된 파일이 없습니다."}
                 </span>
@@ -357,3 +401,5 @@ export default function FoundationApplicationForm({
     </form>
   );
 }
+
+

@@ -10,7 +10,6 @@ import {
   Settings,
   Wallet,
   Pencil,
-  Trash2,
 } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
@@ -20,11 +19,31 @@ import {
   fetchCampaignDetail,
   fetchPendingCampaignEditDetail,
   fetchFoundationRecentCampaigns,
+  fetchFoundationWalletInfo,
+  fetchFoundationSettlements,
+  fetchFoundationRedemptions,
+  getFoundationNoFromAccessToken,
+  requestFoundationRedemption,
   updateFoundationMyInfo,
 } from "../api/foundationApi";
 
+const BRAND_COLOR = "#FFF200";
+
 function formatWon(value) {
   return Number(value || 0).toLocaleString("ko-KR");
+}
+
+function formatDateTime(value) {
+  if (!value) {
+    return "-";
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return String(value);
+  }
+
+  return date.toLocaleString("ko-KR");
 }
 
 function toImageSrc(path) {
@@ -41,6 +60,26 @@ function toImageSrc(path) {
   }
 
   return `/${path}`;
+}
+
+function formatStatusLabel(value) {
+  const status = String(value || "").toUpperCase();
+  const statusMap = {
+    PENDING: "심사중",
+    APPROVED: "승인",
+    REJECTED: "반려",
+    RECRUITING: "모집중",
+    ACTIVE: "진행중",
+    ENDED: "종료",
+    SETTLED: "정산완료",
+    COMPLETED: "완료",
+    CANCELLED: "취소",
+    PROCESSING: "처리중",
+    ONCHAIN_CONFIRMED: "체인확인",
+    CASH_PAID: "현금지급완료",
+    FAILED: "실패",
+  };
+  return statusMap[status] || value || "-";
 }
 
 const CAMPAIGN_FILTERS = [
@@ -111,6 +150,15 @@ function FoundationDashboardPage() {
   const [settingsMessage, setSettingsMessage] = useState("");
   const [settingsError, setSettingsError] = useState("");
   const [settingsEditMode, setSettingsEditMode] = useState(false);
+  const [walletInfo, setWalletInfo] = useState(null);
+  const [settlements, setSettlements] = useState([]);
+  const [redemptions, setRedemptions] = useState([]);
+  const [settlementLoading, setSettlementLoading] = useState(false);
+  const [settlementError, setSettlementError] = useState("");
+  const [redemptionAmount, setRedemptionAmount] = useState("");
+  const [redeeming, setRedeeming] = useState(false);
+  const [redemptionMessage, setRedemptionMessage] = useState("");
+  const [redemptionError, setRedemptionError] = useState("");
 
   useEffect(() => {
     const menu = searchParams.get("menu");
@@ -281,9 +329,17 @@ function FoundationDashboardPage() {
     try {
       setCampaignDetailLoading(true);
       setCampaignDetailError("");
+      setCampaignDetail(null);
       setSelectedCampaignNo(campaignNo);
       setActiveMenu("campaign");
-      updateDashboardSearchParams("campaign", campaignNo);
+      const shouldSyncUrl = options.syncUrl !== false;
+      if (shouldSyncUrl) {
+        const currentCampaignNo = Number(searchParams.get("campaignNo"));
+        const currentMenu = searchParams.get("menu") || "home";
+        if (currentMenu !== "campaign" || currentCampaignNo !== campaignNo) {
+          updateDashboardSearchParams("campaign", campaignNo);
+        }
+      }
 
       const isPendingHint = campaign ? isPendingCampaign(campaign) : false;
       let detail = null;
@@ -420,19 +476,87 @@ function FoundationDashboardPage() {
     setSettingsMessage("");
   };
 
-  useEffect(() => {
-    if (activeMenu !== "campaign" || !selectedCampaignNo || campaignDetail) {
+  const loadSettlementData = async () => {
+    const foundationNoFromToken = getFoundationNoFromAccessToken();
+    const foundationNo = foundationNoFromToken || foundation?.foundationNo;
+
+    if (!foundationNo) {
+      setSettlementError("기부단체 번호를 확인할 수 없습니다. 다시 로그인해주세요.");
       return;
     }
 
-    const campaign = campaigns.find(
-      (item) => item.campaignNo === selectedCampaignNo,
-    );
-    handleOpenCampaignDetail(campaign || null, {
-      campaignNo: selectedCampaignNo,
-    });
+    try {
+      setSettlementLoading(true);
+      setSettlementError("");
+
+      const [wallet, settlementPage, redemptionPage] = await Promise.all([
+        fetchFoundationWalletInfo(foundationNo),
+        fetchFoundationSettlements({ page: 0, size: 20 }),
+        fetchFoundationRedemptions({ page: 0, size: 20 }),
+      ]);
+
+      setWalletInfo(wallet);
+      setSettlements(settlementPage?.content || []);
+      setRedemptions(redemptionPage?.content || []);
+    } catch (error) {
+      setSettlementError(error.message || "정산 정보를 불러오지 못했습니다.");
+    } finally {
+      setSettlementLoading(false);
+    }
+  };
+
+  const handleRedemptionSubmit = async () => {
+    const foundationNoFromToken = getFoundationNoFromAccessToken();
+    const foundationNo = foundationNoFromToken || foundation?.foundationNo;
+    const amount = Number(redemptionAmount);
+
+    if (!foundationNo) {
+      setRedemptionError("기부단체 번호를 확인할 수 없습니다.");
+      return;
+    }
+
+    if (!Number.isFinite(amount) || amount <= 0) {
+      setRedemptionError("현금화 금액을 1 이상으로 입력해주세요.");
+      return;
+    }
+
+    try {
+      setRedeeming(true);
+      setRedemptionError("");
+      setRedemptionMessage("");
+
+      await requestFoundationRedemption({
+        requesterNo: foundationNo,
+        amount,
+      });
+
+      setRedemptionMessage("현금화 신청이 접수되었습니다.");
+      setRedemptionAmount("");
+      await loadSettlementData();
+    } catch (error) {
+      setRedemptionError(error.message || "현금화 신청에 실패했습니다.");
+    } finally {
+      setRedeeming(false);
+    }
+  };
+
+  useEffect(() => {
+    if (loading || activeMenu !== "campaign" || !selectedCampaignNo) {
+      return;
+    }
+
+    const campaign = campaigns.find((item) => item.campaignNo === selectedCampaignNo);
+    handleOpenCampaignDetail(campaign || { campaignNo: selectedCampaignNo }, { syncUrl: false });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeMenu, selectedCampaignNo, campaigns, campaignDetail]);
+  }, [loading, activeMenu, selectedCampaignNo, campaigns]);
+
+  useEffect(() => {
+    if (activeMenu !== "settlement") {
+      return;
+    }
+    loadSettlementData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeMenu, foundation?.foundationNo]);
 
   if (loading) {
     return (
@@ -460,11 +584,11 @@ function FoundationDashboardPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#f2f4f7] text-slate-900">
+    <main className="min-h-screen bg-[#f7f5f2] text-slate-900">
       <div className="mx-auto grid max-w-[1320px] grid-cols-1 gap-6 px-4 py-4 lg:grid-cols-[160px_1fr]">
         <aside className="rounded-[28px] bg-white p-4">
           <div className="mb-8 flex items-center gap-2 text-sm font-bold">
-            <ArrowLeft size={16} /> PARTNER
+            기부엔토큰
           </div>
 
           <nav className="space-y-2 text-sm">
@@ -472,9 +596,10 @@ function FoundationDashboardPage() {
               type="button"
               className={`w-full rounded-2xl px-3 py-2 text-left ${
                 activeMenu === "home"
-                  ? "bg-[#edf4ff] font-semibold text-blue-600"
+                  ? "font-semibold text-slate-900"
                   : "text-slate-500 hover:bg-slate-50"
               }`}
+              style={activeMenu === "home" ? { backgroundColor: BRAND_COLOR } : undefined}
               onClick={handleGoHome}
             >
               <span className="flex items-center gap-2">
@@ -485,9 +610,10 @@ function FoundationDashboardPage() {
               type="button"
               className={`w-full rounded-2xl px-3 py-2 text-left ${
                 activeMenu === "campaign"
-                  ? "bg-[#edf4ff] font-semibold text-blue-600"
+                  ? "font-semibold text-slate-900"
                   : "text-slate-500 hover:bg-slate-50"
               }`}
+              style={activeMenu === "campaign" ? { backgroundColor: BRAND_COLOR } : undefined}
               onClick={() => handleOpenMenu("campaign")}
             >
               <span className="flex items-center gap-2">
@@ -498,9 +624,10 @@ function FoundationDashboardPage() {
               type="button"
               className={`w-full rounded-2xl px-3 py-2 text-left ${
                 activeMenu === "settlement"
-                  ? "bg-[#edf4ff] font-semibold text-blue-600"
+                  ? "font-semibold text-slate-900"
                   : "text-slate-500 hover:bg-slate-50"
               }`}
+              style={activeMenu === "settlement" ? { backgroundColor: BRAND_COLOR } : undefined}
               onClick={() => handleOpenMenu("settlement")}
             >
               <span className="flex items-center gap-2">
@@ -511,9 +638,10 @@ function FoundationDashboardPage() {
               type="button"
               className={`w-full rounded-2xl px-3 py-2 text-left ${
                 activeMenu === "settings"
-                  ? "bg-[#edf4ff] font-semibold text-blue-600"
+                  ? "font-semibold text-slate-900"
                   : "text-slate-500 hover:bg-slate-50"
               }`}
+              style={activeMenu === "settings" ? { backgroundColor: BRAND_COLOR } : undefined}
               onClick={() => handleOpenMenu("settings")}
             >
               <span className="flex items-center gap-2">
@@ -525,32 +653,30 @@ function FoundationDashboardPage() {
 
         <section className="space-y-4">
           <header className="flex items-center justify-between rounded-[28px] bg-white px-6 py-4">
-            <h1 className="text-lg font-bold">단체 마이페이지</h1>
-            <div className="flex items-center gap-3 text-xs text-slate-500">
-              <span className="rounded-full bg-emerald-50 px-3 py-1 text-emerald-600">
-                시스템 정상
-              </span>
-            </div>
+            <h1 className="text-lg font-bold">기부단체 마이페이지</h1>
           </header>
 
           {activeMenu === "home" ? (
             <>
               <div className="grid gap-5 xl:grid-cols-[360px_1fr]">
-                <article className="rounded-[28px] bg-gradient-to-br from-[#3f8cff] to-[#2f65e8] p-6 text-white shadow-xl shadow-blue-500/20">
-                  <p className="text-xs text-blue-100">반갑습니다</p>
+                <article
+                  className="rounded-[28px] p-6 text-slate-900 shadow-xl"
+                  style={{ background: "linear-gradient(135deg, #eef8a3 0%, #E0F218 100%)" }}
+                >
+                  <p className="text-xs text-slate-700">반갑습니다</p>
                   <h2 className="mt-2 text-2xl font-bold leading-tight">
                     {summary.foundationName}
                   </h2>
 
                   <div className="mt-6 space-y-3">
-                    <div className="rounded-2xl bg-white/10 p-4">
-                      <p className="text-xs text-blue-100">진행 중인 캠페인</p>
+                    <div className="rounded-2xl bg-white/70 p-4">
+                      <p className="text-xs text-slate-700">진행 중인 캠페인</p>
                       <p className="mt-1 text-3xl font-bold">
                         {summary.activeCount}개
                       </p>
                     </div>
-                    <div className="rounded-2xl bg-white/10 p-4">
-                      <p className="text-xs text-blue-100">이달 모금 금액</p>
+                    <div className="rounded-2xl bg-white/70 p-4">
+                      <p className="text-xs text-slate-700">이달 모금 금액</p>
                       <p className="mt-1 text-3xl font-bold">
                         {formatWon(summary.monthlyAmount)}원
                       </p>
@@ -565,7 +691,8 @@ function FoundationDashboardPage() {
                     </h3>
                     <button
                       type="button"
-                      className="text-xs font-semibold text-blue-600"
+                      className="text-xs font-semibold text-slate-700"
+                      style={{ color: "#7c8600" }}
                       onClick={() => handleOpenMenu("campaign")}
                     >
                       전체보기
@@ -613,7 +740,7 @@ function FoundationDashboardPage() {
                   onClick={() => navigate("/foundation/register")}
                 >
                   <div className="flex items-center gap-3">
-                    <CirclePlus size={18} className="text-blue-600" />
+                    <CirclePlus size={18} className="text-slate-900" />
                     <div>
                       <p className="text-sm font-bold">새 캠페인 신청</p>
                       <p className="text-xs text-slate-500">
@@ -657,7 +784,8 @@ function FoundationDashboardPage() {
                     {canEditPendingCampaign ? (
                       <button
                         type="button"
-                        className="inline-flex items-center gap-2 rounded-full bg-blue-500 px-5 py-2.5 text-sm font-semibold text-white"
+                        className="inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold text-slate-900"
+                        style={{ backgroundColor: BRAND_COLOR }}
                         onClick={() =>
                           navigate(
                             `/foundation/register?editCampaignNo=${selectedCampaignNo}`,
@@ -665,7 +793,7 @@ function FoundationDashboardPage() {
                         }
                       >
                         <Pencil size={14} />
-                        PENDING 수정
+                        심사중 수정
                       </button>
                     ) : null}
                   </div>
@@ -685,17 +813,11 @@ function FoundationDashboardPage() {
                     <article className="space-y-6 rounded-2xl border border-slate-200 p-5">
                       <header className="space-y-3">
                         <div className="flex flex-wrap items-center justify-between gap-2">
-                          <h3 className="text-2xl font-bold">
-                            {campaignDetail.title}
-                          </h3>
+                          <h3 className="text-2xl font-bold">{campaignDetail.title}</h3>
                           <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
-                            {campaignDetail.approvalStatus} /{" "}
-                            {campaignDetail.campaignStatus}
+                            {formatStatusLabel(campaignDetail.campaignStatus || campaignDetail.approvalStatus)}
                           </span>
                         </div>
-                        <p className="text-sm text-slate-600">
-                          {campaignDetail.description}
-                        </p>
                       </header>
 
                       {campaignDetail.representativeImagePath ? (
@@ -710,8 +832,15 @@ function FoundationDashboardPage() {
                         </div>
                       ) : null}
 
+                      <section className="space-y-2">
+                        <h4 className="text-base font-bold">상세 설명</h4>
+                        <p className="text-sm leading-6 text-slate-600">{campaignDetail.description || "-"}</p>
+                      </section>
+
                       {campaignDetail.detailImagePaths?.length > 0 ? (
-                        <div className="grid gap-3 md:grid-cols-3">
+                        <section className="space-y-2">
+                          <h4 className="text-base font-bold">상세 이미지</h4>
+                          <div className="grid gap-3 md:grid-cols-3">
                           {campaignDetail.detailImagePaths.map(
                             (imagePath, index) => (
                               <div
@@ -726,7 +855,8 @@ function FoundationDashboardPage() {
                               </div>
                             ),
                           )}
-                        </div>
+                          </div>
+                        </section>
                       ) : null}
 
                       <div className="grid gap-3 md:grid-cols-2">
@@ -749,6 +879,26 @@ function FoundationDashboardPage() {
                         <div className="rounded-xl bg-slate-50 p-3 text-sm">
                           모집 종료일:{" "}
                           {campaignDetail.endAt?.slice?.(0, 10) || "-"}
+                        </div>
+                        <div className="rounded-xl bg-slate-50 p-3 text-sm">
+                          사업 시작일:{" "}
+                          {campaignDetail.usageStartAt?.slice?.(0, 10) || "-"}
+                        </div>
+                        <div className="rounded-xl bg-slate-50 p-3 text-sm">
+                          사업 종료일:{" "}
+                          {campaignDetail.usageEndAt?.slice?.(0, 10) || "-"}
+                        </div>
+                        <div className="rounded-xl bg-slate-50 p-3 text-sm">
+                          진행률: {campaignDetail.progressPercent ?? 0}%
+                        </div>
+                        <div className="rounded-xl bg-slate-50 p-3 text-sm">
+                          남은 기간: D-{campaignDetail.daysLeft ?? 0}
+                        </div>
+                        <div className="rounded-xl bg-slate-50 p-3 text-sm">
+                          지갑 주소: {campaignDetail.walletAddress || "-"}
+                        </div>
+                        <div className="rounded-xl bg-slate-50 p-3 text-sm">
+                          상태: {formatStatusLabel(campaignDetail.campaignStatus || campaignDetail.approvalStatus)}
                         </div>
                       </div>
 
@@ -778,6 +928,12 @@ function FoundationDashboardPage() {
                       </section>
                     </article>
                   ) : null}
+
+                  {!campaignDetailLoading && !campaignDetailError && !campaignDetail ? (
+                    <div className="rounded-2xl border border-dashed border-slate-200 p-6 text-sm text-slate-500">
+                      상세 정보를 준비 중입니다. 잠시 후 다시 시도해주세요.
+                    </div>
+                  ) : null}
                 </div>
               ) : (
                 <>
@@ -790,7 +946,8 @@ function FoundationDashboardPage() {
                     </div>
                     <button
                       type="button"
-                      className="inline-flex items-center gap-2 rounded-full bg-blue-500 px-5 py-2.5 text-sm font-semibold text-white"
+                      className="inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold text-slate-900"
+                      style={{ backgroundColor: BRAND_COLOR }}
                       onClick={() => navigate("/foundation/register")}
                     >
                       <CirclePlus size={16} /> 캠페인 등록
@@ -804,9 +961,10 @@ function FoundationDashboardPage() {
                         type="button"
                         className={`rounded-full px-4 py-1.5 text-xs font-semibold ${
                           campaignFilter === item.key
-                            ? "bg-blue-500 text-white"
+                            ? "text-slate-900"
                             : "bg-slate-100 text-slate-500"
                         }`}
+                        style={campaignFilter === item.key ? { backgroundColor: BRAND_COLOR } : undefined}
                         onClick={() => setCampaignFilter(item.key)}
                       >
                         {item.label}
@@ -827,8 +985,8 @@ function FoundationDashboardPage() {
                           onClick={() => handleOpenCampaignDetail(campaign)}
                         >
                           <div className="mb-2 flex items-center justify-between">
-                            <span className="rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-semibold text-blue-600">
-                              {campaign.approvalStatus || "-"}
+                            <span className="rounded-full px-2.5 py-1 text-[11px] font-semibold text-slate-800" style={{ backgroundColor: "#f3f8c1" }}>
+                              {formatStatusLabel(campaign.approvalStatus) || "-"}
                             </span>
                             <span className="text-[11px] text-slate-400">
                               {campaign.createdAt?.slice?.(0, 10) || "-"}
@@ -855,33 +1013,15 @@ function FoundationDashboardPage() {
                             </div>
                             <div className="h-1.5 rounded-full bg-slate-100">
                               <div
-                                className="h-full rounded-full bg-blue-500"
+                                className="h-full rounded-full"
                                 style={{
                                   width: `${Math.max(0, Math.min(100, campaign.progressPercent ?? 0))}%`,
+                                  backgroundColor: BRAND_COLOR,
                                 }}
                               />
                             </div>
                           </div>
 
-                          <div className="mt-3 flex justify-end gap-2 text-slate-400">
-                            <button
-                              type="button"
-                              className="rounded-md p-1.5 hover:bg-slate-100"
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                handleOpenCampaignDetail(campaign);
-                              }}
-                            >
-                              <Pencil size={14} />
-                            </button>
-                            <button
-                              type="button"
-                              className="rounded-md p-1.5 hover:bg-slate-100"
-                              onClick={(event) => event.stopPropagation()}
-                            >
-                              <Trash2 size={14} />
-                            </button>
-                          </div>
                         </article>
                       ))
                     )}
@@ -893,10 +1033,148 @@ function FoundationDashboardPage() {
 
           {activeMenu === "settlement" ? (
             <section className="rounded-[28px] bg-white p-6">
-              <h2 className="text-xl font-bold">정산 관리</h2>
-              <p className="mt-2 text-sm text-slate-500">
-                정산 화면은 다음 단계에서 연결할 수 있습니다.
-              </p>
+              <div className="mb-5 flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl font-bold">정산 관리</h2>
+                  <p className="mt-1 text-sm text-slate-500">
+                    지갑 정보, 정산 내역, 환급 내역을 확인할 수 있습니다.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                  onClick={loadSettlementData}
+                >
+                  새로고침
+                </button>
+              </div>
+
+              {settlementLoading ? (
+                <p className="mb-4 text-sm text-slate-500">정산 정보를 불러오는 중...</p>
+              ) : null}
+              {settlementError ? (
+                <p className="mb-4 text-sm text-rose-600">{settlementError}</p>
+              ) : null}
+
+              <div className="mb-6 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <div className="mb-3 flex items-center justify-between">
+                  <h3 className="text-base font-bold text-slate-800">기부단체 지갑 정보</h3>
+                  <button
+                    type="button"
+                    className="rounded-lg px-4 py-2 text-sm font-semibold text-slate-900 disabled:cursor-not-allowed disabled:opacity-50"
+                    style={{ backgroundColor: BRAND_COLOR }}
+                    onClick={handleRedemptionSubmit}
+                    disabled={redeeming}
+                  >
+                    {redeeming ? "신청 중..." : "현금화 신청"}
+                  </button>
+                </div>
+                <div className="grid gap-3 md:grid-cols-[1fr_180px]">
+                  <div>
+                    <p className="text-xs text-slate-500">지갑 주소</p>
+                    <p className="break-all text-sm font-semibold text-slate-800">
+                      {walletInfo?.walletAddress || "-"}
+                    </p>
+                    <p className="mt-2 text-xs text-slate-500">잔액</p>
+                    <p className="text-lg font-bold text-slate-900">
+                      {walletInfo?.balance !== undefined && walletInfo?.balance !== null
+                        ? formatWon(walletInfo.balance)
+                        : "-"}
+                    </p>
+                  </div>
+                  <label className="flex flex-col gap-2">
+                    <span className="text-xs font-medium text-slate-600">현금화 금액</span>
+                    <input
+                      type="number"
+                      min="1"
+                      value={redemptionAmount}
+                      onChange={(event) => {
+                        setRedemptionAmount(event.target.value);
+                        setRedemptionError("");
+                        setRedemptionMessage("");
+                      }}
+                      placeholder="금액 입력"
+                      className="rounded-xl border border-slate-200 px-3 py-2 text-sm"
+                    />
+                  </label>
+                </div>
+                {redemptionError ? (
+                  <p className="mt-2 text-sm text-rose-600">{redemptionError}</p>
+                ) : null}
+                {redemptionMessage ? (
+                  <p className="mt-2 text-sm text-emerald-600">{redemptionMessage}</p>
+                ) : null}
+              </div>
+
+              <div className="mb-6">
+                <h3 className="mb-3 text-base font-bold text-slate-800">정산 내역</h3>
+                {settlements.length === 0 ? (
+                  <div className="rounded-2xl border border-dashed border-slate-200 p-4 text-sm text-slate-500">
+                    정산 내역이 없습니다.
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {settlements.map((item) => (
+                      <article
+                        key={item.settlementNo}
+                        className="rounded-xl border border-slate-200 p-4"
+                      >
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <p className="text-sm font-semibold text-slate-800">
+                            {item.campaignTitle || "-"}
+                          </p>
+                          <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">
+                            {formatStatusLabel(item.status) || "-"}
+                          </span>
+                        </div>
+                        <div className="mt-2 grid gap-2 text-xs text-slate-600 md:grid-cols-3">
+                          <p>총 정산금: {formatWon(item.totalAmount)}원</p>
+                          <p>단체 배정금: {formatWon(item.foundationAmount)}원</p>
+                          <p>정산일: {formatDateTime(item.settledAt)}</p>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <h3 className="mb-3 text-base font-bold text-slate-800">환급 내역</h3>
+                {redemptions.length === 0 ? (
+                  <div className="rounded-2xl border border-dashed border-slate-200 p-4 text-sm text-slate-500">
+                    환급 내역이 없습니다.
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {redemptions.map((item) => (
+                      <article
+                        key={item.redemptionNo}
+                        className="rounded-xl border border-slate-200 p-4"
+                      >
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <p className="text-sm font-semibold text-slate-800">
+                            환급 #{item.redemptionNo}
+                          </p>
+                          <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">
+                            {formatStatusLabel(item.status) || "-"}
+                          </span>
+                        </div>
+                        <div className="mt-2 grid gap-2 text-xs text-slate-600 md:grid-cols-2">
+                          <p>금액: {formatWon(item.amount)}원</p>
+                          <p>요청일: {formatDateTime(item.requestedAt)}</p>
+                          <p>처리일: {formatDateTime(item.processedAt)}</p>
+                          <p>입금일: {formatDateTime(item.cashPaidAt)}</p>
+                        </div>
+                        {item.failureReason ? (
+                          <p className="mt-2 rounded-lg bg-rose-50 px-3 py-2 text-xs text-rose-600">
+                            실패 사유: {item.failureReason}
+                          </p>
+                        ) : null}
+                      </article>
+                    ))}
+                  </div>
+                )}
+              </div>
             </section>
           ) : null}
 
@@ -918,8 +1196,9 @@ function FoundationDashboardPage() {
                     </div>
                     <label
                       className={`absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full border-2 border-white ${
-                        settingsEditMode ? "cursor-pointer bg-blue-500 text-white" : "bg-slate-200 text-slate-500"
+                        settingsEditMode ? "cursor-pointer text-slate-900" : "bg-slate-200 text-slate-500"
                       }`}
+                      style={settingsEditMode ? { backgroundColor: BRAND_COLOR } : undefined}
                       title={settingsEditMode ? "프로필 이미지 변경" : "정보 수정 모드에서 변경 가능"}
                     >
                       <Camera size={13} />
@@ -937,7 +1216,7 @@ function FoundationDashboardPage() {
                     인증된 단체
                   </span>
                   {settingsForm.profileImageFile ? (
-                    <p className="mt-2 text-xs text-blue-600">{settingsForm.profileImageFile.name}</p>
+                    <p className="mt-2 text-xs text-slate-700">{settingsForm.profileImageFile.name}</p>
                   ) : null}
                 </div>
               </article>
@@ -1049,7 +1328,8 @@ function FoundationDashboardPage() {
                           <button
                             type="submit"
                             disabled={settingsSaving}
-                            className="rounded-xl bg-blue-500 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-600 disabled:cursor-not-allowed disabled:opacity-50"
+                            className="rounded-xl px-5 py-2.5 text-sm font-semibold text-slate-900 disabled:cursor-not-allowed disabled:opacity-50"
+                            style={{ backgroundColor: BRAND_COLOR }}
                           >
                             {settingsSaving ? "저장 중..." : "정보 저장하기"}
                           </button>

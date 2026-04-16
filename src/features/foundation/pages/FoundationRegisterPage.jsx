@@ -80,7 +80,8 @@ export default function FoundationRegisterPage() {
 
   const [accessChecked, setAccessChecked] = useState(false);
   const [formValues, setFormValues] = useState(INITIAL_FORM_VALUES);
-  const [existingRepresentativeImagePath, setExistingRepresentativeImagePath] = useState("");
+  const [existingRepresentativeImagePath, setExistingRepresentativeImagePath] =
+    useState("");
   const [existingDetailImagePaths, setExistingDetailImagePaths] = useState([]);
   const [beneficiaryInfo, setBeneficiaryInfo] = useState(null);
   const [beneficiaryChecked, setBeneficiaryChecked] = useState(false);
@@ -152,8 +153,12 @@ export default function FoundationRegisterPage() {
           title: detail.title || "",
           startAt: detail.startAt ? String(detail.startAt).slice(0, 10) : "",
           endAt: detail.endAt ? String(detail.endAt).slice(0, 10) : "",
-          usageStartAt: detail.usageStartAt ? String(detail.usageStartAt).slice(0, 10) : "",
-          usageEndAt: detail.usageEndAt ? String(detail.usageEndAt).slice(0, 10) : "",
+          usageStartAt: detail.usageStartAt
+            ? String(detail.usageStartAt).slice(0, 10)
+            : "",
+          usageEndAt: detail.usageEndAt
+            ? String(detail.usageEndAt).slice(0, 10)
+            : "",
           recruitDurationDays: calculateDurationLabel(
             detail.startAt ? String(detail.startAt).slice(0, 10) : "",
             detail.endAt ? String(detail.endAt).slice(0, 10) : "",
@@ -177,18 +182,26 @@ export default function FoundationRegisterPage() {
               : [createUsePlan()],
           detailImageFiles: [createDetailImageItem()],
         }));
-        setExistingRepresentativeImagePath(detail.representativeImagePath || "");
+        setExistingRepresentativeImagePath(
+          detail.representativeImagePath || "",
+        );
         setExistingDetailImagePaths(
-          Array.isArray(detail.detailImagePaths) ? detail.detailImagePaths.filter(Boolean) : [],
+          Array.isArray(detail.detailImagePaths)
+            ? detail.detailImagePaths.filter(Boolean)
+            : [],
         );
 
         setBeneficiaryChecked(Boolean(detail.entryCode));
-        setBeneficiaryStatusMessage("수정 모드입니다. 필요 시 수혜자 확인을 다시 진행하세요.");
+        setBeneficiaryStatusMessage(
+          "수정 모드입니다. 필요 시 수혜자 확인을 다시 진행하세요.",
+        );
       } catch (error) {
         if (!mounted) {
           return;
         }
-        setErrorMessage(error.message || "수정할 캠페인 정보를 불러오지 못했습니다.");
+        setErrorMessage(
+          error.message || "수정할 캠페인 정보를 불러오지 못했습니다.",
+        );
       }
     };
 
@@ -228,7 +241,9 @@ export default function FoundationRegisterPage() {
     if (name === "entryCode") {
       setBeneficiaryChecked(false);
       setBeneficiaryInfo(null);
-      setBeneficiaryStatusMessage("엔트리 코드가 변경되어 다시 확인이 필요합니다.");
+      setBeneficiaryStatusMessage(
+        "엔트리 코드가 변경되어 다시 확인이 필요합니다.",
+      );
     }
 
     setErrorMessage("");
@@ -285,7 +300,10 @@ export default function FoundationRegisterPage() {
   const handleAddDetailImage = () => {
     setFormValues((previousValues) => ({
       ...previousValues,
-      detailImageFiles: [...previousValues.detailImageFiles, createDetailImageItem()],
+      detailImageFiles: [
+        ...previousValues.detailImageFiles,
+        createDetailImageItem(),
+      ],
     }));
   };
 
@@ -295,7 +313,9 @@ export default function FoundationRegisterPage() {
       detailImageFiles:
         previousValues.detailImageFiles.length === 1
           ? previousValues.detailImageFiles
-          : previousValues.detailImageFiles.filter((imageItem) => imageItem.id !== itemId),
+          : previousValues.detailImageFiles.filter(
+              (imageItem) => imageItem.id !== itemId,
+            ),
     }));
   };
 
@@ -314,13 +334,17 @@ export default function FoundationRegisterPage() {
       if (!result.valid) {
         setBeneficiaryChecked(false);
         setBeneficiaryInfo(null);
-        setBeneficiaryStatusMessage(result.message || "유효하지 않은 수혜자 코드입니다.");
+        setBeneficiaryStatusMessage(
+          result.message || "유효하지 않은 수혜자 코드입니다.",
+        );
         return;
       }
 
       setBeneficiaryChecked(true);
       setBeneficiaryInfo(result);
-      setBeneficiaryStatusMessage(result.message || "수혜자 확인이 완료되었습니다.");
+      setBeneficiaryStatusMessage(
+        result.message || "수혜자 확인이 완료되었습니다.",
+      );
     } catch (error) {
       setBeneficiaryChecked(false);
       setBeneficiaryInfo(null);
@@ -397,7 +421,9 @@ export default function FoundationRegisterPage() {
 
       const payload = {
         ...formValues,
-        detailImageFiles: formValues.detailImageFiles.map((imageItem) => imageItem.file),
+        detailImageFiles: formValues.detailImageFiles.map(
+          (imageItem) => imageItem.file,
+        ),
       };
 
       const result = isEditMode
@@ -420,7 +446,9 @@ export default function FoundationRegisterPage() {
   };
 
   if (submitResult) {
-    return <FoundationApplicationResult result={submitResult} authInfo={authInfo} />;
+    return (
+      <FoundationApplicationResult result={submitResult} authInfo={authInfo} />
+    );
   }
 
   if (!accessChecked) {
