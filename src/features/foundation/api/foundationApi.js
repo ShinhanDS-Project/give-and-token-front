@@ -339,6 +339,18 @@ export async function fetchCampaignDetail(campaignNo) {
   );
 }
 
+export async function fetchCampaignDetailPublic(campaignNo) {
+  const response = await fetch(
+    `${FOUNDATION_CAMPAIGN_BASE_PATH}/${campaignNo}/detail`,
+  );
+
+  if (!response.ok) {
+    throw new Error(await parseErrorResponse(response));
+  }
+
+  return response.json();
+}
+
 export async function fetchPendingCampaignEditDetail(campaignNo) {
   return requestWithFoundationAuth(
     `${FOUNDATION_CAMPAIGN_BASE_PATH}/${campaignNo}/edit-detail`,

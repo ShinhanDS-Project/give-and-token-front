@@ -17,6 +17,7 @@ import {
   fetchFoundationPublicDetail,
   fetchFoundationMyStats,
   fetchCampaignDetail,
+  fetchCampaignDetailPublic,
   fetchPendingCampaignEditDetail,
   fetchFoundationRecentCampaigns,
   fetchFoundationWalletInfo,
@@ -28,6 +29,7 @@ import {
 } from "../api/foundationApi";
 
 const BRAND_COLOR = "#FFF200";
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/$/, "");
 
 function formatWon(value) {
   return Number(value || 0).toLocaleString("ko-KR");
@@ -51,15 +53,96 @@ function toImageSrc(path) {
     return "";
   }
 
-  if (path.startsWith("http://") || path.startsWith("https://")) {
-    return path;
+  const rawPath = String(path).trim();
+  if (!rawPath) return "";
+  if (/^(https?:\/\/|data:image\/|blob:)/i.test(rawPath)) return rawPath;
+
+  const noFileScheme = rawPath.replace(/^file:(\/\/\/|\/\/)?/i, "");
+  const normalized = noFileScheme.replace(/\\/g, "/");
+  const uploadMatch = normalized.match(/(?:^|\/)uploads\/(.+)$/i);
+  if (uploadMatch) {
+    const uploadPath = `/uploads/${uploadMatch[1].replace(/^\/+/, "")}`;
+    return API_BASE_URL ? `${API_BASE_URL}${uploadPath}` : uploadPath;
   }
 
-  if (path.startsWith("/")) {
-    return path;
-  }
+  if (/^[a-zA-Z]:\//.test(normalized)) return "";
+  if (!API_BASE_URL) return rawPath;
+  return rawPath.startsWith("/") ? `${API_BASE_URL}${rawPath}` : `${API_BASE_URL}/${rawPath}`;
+}
 
-  return `/${path}`;
+function normalizeCampaignDetail(detail, fallbackCampaign) {
+  const safeDetail = detail || {};
+  const imagesFromSummary = Array.isArray(safeDetail.images)
+    ? safeDetail.images.map((item) => item?.imgPath || item?.imagePath || item?.path || "")
+    : [];
+  const detailImages = Array.isArray(safeDetail.detailImagePaths)
+    ? safeDetail.detailImagePaths
+    : Array.isArray(safeDetail.detailImages)
+      ? safeDetail.detailImages.map((item) =>
+          typeof item === "string"
+            ? item
+            : item?.imagePath || item?.path || item?.url || "",
+        )
+      : imagesFromSummary.length > 0
+        ? imagesFromSummary
+      : [];
+
+  return {
+    ...fallbackCampaign,
+    ...safeDetail,
+    title: safeDetail.title || safeDetail.campaignTitle || fallbackCampaign?.title || "",
+    description:
+      safeDetail.description ||
+      safeDetail.historyDescription ||
+      safeDetail.content ||
+      fallbackCampaign?.description ||
+      "",
+    representativeImagePath:
+      safeDetail.representativeImagePath ||
+      safeDetail.imagePath ||
+      safeDetail.thumbnailPath ||
+      safeDetail.mainImagePath ||
+      fallbackCampaign?.imagePath ||
+      fallbackCampaign?.representativeImagePath ||
+      "",
+    detailImagePaths: detailImages.filter(Boolean),
+    rejectReason:
+      safeDetail.rejectReason ||
+      safeDetail.rejectionReason ||
+      fallbackCampaign?.rejectReason ||
+      "",
+    campaignStatus:
+      safeDetail.campaignStatus || safeDetail.status || fallbackCampaign?.campaignStatus,
+    approvalStatus:
+      safeDetail.approvalStatus || safeDetail.reviewStatus || fallbackCampaign?.approvalStatus,
+  };
+}
+
+function mergeCampaignDetailSources(sources, fallbackCampaign) {
+  const validSources = (sources || []).filter(Boolean);
+  const merged = validSources.reduce((acc, item) => ({ ...acc, ...item }), {});
+  const mergedDetailImages = validSources.flatMap((item) => {
+    if (Array.isArray(item?.detailImagePaths)) return item.detailImagePaths;
+    if (Array.isArray(item?.detailImages)) {
+      return item.detailImages.map((image) =>
+        typeof image === "string"
+          ? image
+          : image?.imagePath || image?.path || image?.url || "",
+      );
+    }
+    return [];
+  }).filter(Boolean);
+
+  return normalizeCampaignDetail(
+    {
+      ...merged,
+      detailImagePaths:
+        mergedDetailImages.length > 0
+          ? Array.from(new Set(mergedDetailImages))
+          : merged.detailImagePaths,
+    },
+    fallbackCampaign,
+  );
 }
 
 function formatStatusLabel(value) {
@@ -199,7 +282,7 @@ function FoundationDashboardPage() {
           await Promise.all([
             fetchFoundationMyInfo(),
             fetchFoundationMyStats(),
-            fetchFoundationRecentCampaigns({ size: 50 }),
+            fetchFoundationRecentCampaigns({ size: 500 }),
           ]);
 
         if (!mounted) {
@@ -307,12 +390,38 @@ function FoundationDashboardPage() {
       ),
     [campaignFilter, campaigns],
   );
+  const selectedCampaignFromList = useMemo(
+    () => campaigns.find((item) => item.campaignNo === selectedCampaignNo) || null,
+    [campaigns, selectedCampaignNo],
+  );
+  const campaignDetailForView = useMemo(
+    () => mergeCampaignDetailSources([campaignDetail], selectedCampaignFromList),
+    [campaignDetail, selectedCampaignFromList],
+  );
 
   const canEditPendingCampaign = useMemo(() => {
-    const approval = String(campaignDetail?.approvalStatus || "").toUpperCase();
-    const status = String(campaignDetail?.campaignStatus || "").toUpperCase();
+    const approval = String(campaignDetailForView?.approvalStatus || "").toUpperCase();
+    const status = String(campaignDetailForView?.campaignStatus || "").toUpperCase();
     return approval === "PENDING" && status === "PENDING";
-  }, [campaignDetail]);
+  }, [campaignDetailForView]);
+
+  const isRejectedCampaignDetail = useMemo(() => {
+    const approval = String(
+      campaignDetailForView?.approvalStatus || "",
+    ).toUpperCase();
+    const status = String(
+      campaignDetailForView?.campaignStatus || "",
+    ).toUpperCase();
+    return approval === "REJECTED" || status === "REJECTED" || status === "CANCELLED";
+  }, [campaignDetailForView]);
+
+  const campaignRejectReason = useMemo(
+    () =>
+      campaignDetailForView?.rejectReason ||
+      campaignDetailForView?.rejectionReason ||
+      "",
+    [campaignDetailForView],
+  );
 
   const isPendingCampaign = (campaign) => {
     const approval = String(campaign?.approvalStatus || "").toUpperCase();
@@ -342,19 +451,39 @@ function FoundationDashboardPage() {
       }
 
       const isPendingHint = campaign ? isPendingCampaign(campaign) : false;
-      let detail = null;
+      const detailCandidates = [];
 
       if (isPendingHint) {
-        detail = await fetchPendingCampaignEditDetail(campaignNo);
-      } else {
         try {
-          detail = await fetchCampaignDetail(campaignNo);
+          detailCandidates.push(await fetchPendingCampaignEditDetail(campaignNo));
         } catch {
-          detail = await fetchPendingCampaignEditDetail(campaignNo);
+          // keep going
         }
       }
 
-      setCampaignDetail(detail);
+      try {
+        detailCandidates.push(await fetchCampaignDetail(campaignNo));
+      } catch {
+        // keep going
+      }
+
+      try {
+        detailCandidates.push(await fetchPendingCampaignEditDetail(campaignNo));
+      } catch {
+        // keep going
+      }
+
+      try {
+        detailCandidates.push(await fetchCampaignDetailPublic(campaignNo));
+      } catch {
+        // keep going
+      }
+
+      if (detailCandidates.length === 0 && !campaign) {
+        throw new Error("캠페인 상세를 불러오지 못했습니다.");
+      }
+
+      setCampaignDetail(mergeCampaignDetailSources(detailCandidates, campaign));
     } catch (error) {
       setCampaignDetailError(
         error.message || "캠페인 상세를 불러오지 못했습니다.",
@@ -803,30 +932,36 @@ function FoundationDashboardPage() {
                       상세 불러오는 중...
                     </p>
                   ) : null}
-                  {campaignDetailError ? (
+                  {campaignDetailError && !campaignDetailForView ? (
                     <p className="text-sm text-rose-600">
                       {campaignDetailError}
                     </p>
                   ) : null}
 
-                  {campaignDetail ? (
+                  {campaignDetailForView ? (
                     <article className="space-y-6 rounded-2xl border border-slate-200 p-5">
+                      {isRejectedCampaignDetail ? (
+                        <p className="text-sm font-semibold text-rose-600">
+                          반려 사유: {campaignRejectReason || "반려 사유가 등록되지 않았습니다."}
+                        </p>
+                      ) : null}
+
                       <header className="space-y-3">
                         <div className="flex flex-wrap items-center justify-between gap-2">
-                          <h3 className="text-2xl font-bold">{campaignDetail.title}</h3>
+                          <h3 className="text-2xl font-bold">{campaignDetailForView.title}</h3>
                           <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
-                            {formatStatusLabel(campaignDetail.campaignStatus || campaignDetail.approvalStatus)}
+                            {formatStatusLabel(campaignDetailForView.campaignStatus || campaignDetailForView.approvalStatus)}
                           </span>
                         </div>
                       </header>
 
-                      {campaignDetail.representativeImagePath ? (
+                      {campaignDetailForView.representativeImagePath ? (
                         <div className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
                           <img
                             src={toImageSrc(
-                              campaignDetail.representativeImagePath,
+                              campaignDetailForView.representativeImagePath,
                             )}
-                            alt={campaignDetail.title}
+                            alt={campaignDetailForView.title}
                             className="h-72 w-full object-cover"
                           />
                         </div>
@@ -834,14 +969,14 @@ function FoundationDashboardPage() {
 
                       <section className="space-y-2">
                         <h4 className="text-base font-bold">상세 설명</h4>
-                        <p className="text-sm leading-6 text-slate-600">{campaignDetail.description || "-"}</p>
+                        <p className="text-sm leading-6 text-slate-600">{campaignDetailForView.description || "-"}</p>
                       </section>
 
-                      {campaignDetail.detailImagePaths?.length > 0 ? (
+                      {campaignDetailForView.detailImagePaths?.length > 0 ? (
                         <section className="space-y-2">
                           <h4 className="text-base font-bold">상세 이미지</h4>
                           <div className="grid gap-3 md:grid-cols-3">
-                          {campaignDetail.detailImagePaths.map(
+                          {campaignDetailForView.detailImagePaths.map(
                             (imagePath, index) => (
                               <div
                                 key={`${imagePath}-${index}`}
@@ -861,52 +996,52 @@ function FoundationDashboardPage() {
 
                       <div className="grid gap-3 md:grid-cols-2">
                         <div className="rounded-xl bg-slate-50 p-3 text-sm">
-                          카테고리: {campaignDetail.category || "-"}
+                          카테고리: {campaignDetailForView.category || "-"}
                         </div>
                         <div className="rounded-xl bg-slate-50 p-3 text-sm">
-                          수혜자 코드: {campaignDetail.entryCode || "-"}
+                          수혜자 코드: {campaignDetailForView.entryCode || "-"}
                         </div>
                         <div className="rounded-xl bg-slate-50 p-3 text-sm">
-                          목표 금액: {formatWon(campaignDetail.targetAmount)}원
+                          목표 금액: {formatWon(campaignDetailForView.targetAmount)}원
                         </div>
                         <div className="rounded-xl bg-slate-50 p-3 text-sm">
-                          현재 금액: {formatWon(campaignDetail.currentAmount)}원
+                          현재 금액: {formatWon(campaignDetailForView.currentAmount)}원
                         </div>
                         <div className="rounded-xl bg-slate-50 p-3 text-sm">
                           모집 시작일:{" "}
-                          {campaignDetail.startAt?.slice?.(0, 10) || "-"}
+                          {campaignDetailForView.startAt?.slice?.(0, 10) || "-"}
                         </div>
                         <div className="rounded-xl bg-slate-50 p-3 text-sm">
                           모집 종료일:{" "}
-                          {campaignDetail.endAt?.slice?.(0, 10) || "-"}
+                          {campaignDetailForView.endAt?.slice?.(0, 10) || "-"}
                         </div>
                         <div className="rounded-xl bg-slate-50 p-3 text-sm">
                           사업 시작일:{" "}
-                          {campaignDetail.usageStartAt?.slice?.(0, 10) || "-"}
+                          {campaignDetailForView.usageStartAt?.slice?.(0, 10) || "-"}
                         </div>
                         <div className="rounded-xl bg-slate-50 p-3 text-sm">
                           사업 종료일:{" "}
-                          {campaignDetail.usageEndAt?.slice?.(0, 10) || "-"}
+                          {campaignDetailForView.usageEndAt?.slice?.(0, 10) || "-"}
                         </div>
                         <div className="rounded-xl bg-slate-50 p-3 text-sm">
-                          진행률: {campaignDetail.progressPercent ?? 0}%
+                          진행률: {campaignDetailForView.progressPercent ?? 0}%
                         </div>
                         <div className="rounded-xl bg-slate-50 p-3 text-sm">
-                          남은 기간: D-{campaignDetail.daysLeft ?? 0}
+                          남은 기간: D-{campaignDetailForView.daysLeft ?? 0}
                         </div>
                         <div className="rounded-xl bg-slate-50 p-3 text-sm">
-                          지갑 주소: {campaignDetail.walletAddress || "-"}
+                          지갑 주소: {campaignDetailForView.walletAddress || "-"}
                         </div>
                         <div className="rounded-xl bg-slate-50 p-3 text-sm">
-                          상태: {formatStatusLabel(campaignDetail.campaignStatus || campaignDetail.approvalStatus)}
+                          상태: {formatStatusLabel(campaignDetailForView.campaignStatus || campaignDetailForView.approvalStatus)}
                         </div>
                       </div>
 
                       <section className="space-y-2">
                         <h4 className="text-base font-bold">지출 계획</h4>
-                        {campaignDetail.usePlans?.length > 0 ? (
+                        {campaignDetailForView.usePlans?.length > 0 ? (
                           <div className="space-y-2">
-                            {campaignDetail.usePlans.map((plan) => (
+                            {campaignDetailForView.usePlans.map((plan) => (
                               <div
                                 key={plan.usePlanNo || plan.planContent}
                                 className="rounded-xl border border-slate-200 p-3 text-sm"
@@ -929,7 +1064,7 @@ function FoundationDashboardPage() {
                     </article>
                   ) : null}
 
-                  {!campaignDetailLoading && !campaignDetailError && !campaignDetail ? (
+                  {!campaignDetailLoading && !campaignDetailError && !campaignDetailForView ? (
                     <div className="rounded-2xl border border-dashed border-slate-200 p-6 text-sm text-slate-500">
                       상세 정보를 준비 중입니다. 잠시 후 다시 시도해주세요.
                     </div>
