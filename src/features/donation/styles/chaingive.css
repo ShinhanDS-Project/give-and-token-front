@@ -77,3 +77,22 @@ body.home-scroll-snap .home-snap-target {
   scroll-snap-align: start;
   scroll-snap-stop: always;
 }
+
+html.page-scroll-snap {
+  scroll-snap-type: y proximity;
+  scroll-padding-top: 5.5rem;
+}
+
+html.page-scroll-snap .page-snap-target {
+  scroll-snap-align: start;
+  scroll-snap-stop: normal;
+}
+
+body.page-scroll-snap {
+  scroll-snap-type: y proximity;
+}
+
+body.page-scroll-snap .page-snap-target {
+  scroll-snap-align: start;
+  scroll-snap-stop: normal;
+}
