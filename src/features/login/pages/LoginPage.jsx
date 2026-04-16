@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+﻿import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import LoginRoleSelector from "../components/LoginRoleSelector";
 import LoginForm from "../components/LoginForm";
@@ -10,25 +10,6 @@ import { loginLocal } from "../api/authApi";
 
 const LoginPage = () => {
   const navigate = useNavigate();
-
-  // 로그인 여부 확인 함수
-  const getIsLoggedIn = () => {
-    const cookies = document.cookie.split(';');
-    const hasCookieToken = cookies.some(cookie => cookie.trim().startsWith('accessToken='));
-    const hasLocalStorageToken = !!localStorage.getItem('accessToken');
-    return hasCookieToken || hasLocalStorageToken;
-  };
-
-  // 1. 이미 로그인된 사용자는 메인으로 튕겨냄
-  // 2. 구글 로그인 후 리다이렉트(/login/google) 처리
-  React.useEffect(() => {
-    const isLoggedIn = getIsLoggedIn();
-    const isGoogleRedirect = window.location.pathname === "/login/google";
-
-    if (isLoggedIn || isGoogleRedirect) {
-      navigate("/", { replace: true });
-    }
-  }, [navigate]);
 
   const [loginData, setLoginData] = useState({
     role: "user",
@@ -51,7 +32,7 @@ const LoginPage = () => {
   const redirectByRole = (role) => {
     switch (role) {
       case "foundation":
-        navigate("/foundation/dashboard");
+        navigate("/foundation/me");
         break;
       case "beneficiary":
         navigate("/beneficiary/main");
@@ -74,16 +55,44 @@ const LoginPage = () => {
 
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(errorText || "로그인에 실패했어.");
+        throw new Error(errorText || "로그인에 실패했습니다.");
       }
 
-      const data = await response.json().catch(()=>null);
+      const data = await response.json();
       console.log("로그인 성공:", data);
-      localStorage.setItem('accessToken',data.accessToken);
+
+      if (loginData.role === "foundation") {
+        const rawToken = String(data?.accessToken || "")
+          .replace(/^Bearer\s+/i, "")
+          .trim();
+
+        if (rawToken) {
+          window.localStorage.setItem("accessToken", rawToken);
+          window.localStorage.setItem("foundationAccessToken", rawToken);
+        }
+
+        window.localStorage.setItem(
+          "foundationAuthInfo",
+          JSON.stringify({
+            foundationNo: data?.foundationNo ?? null,
+            foundationName: data?.foundationName ?? "",
+            email: data?.email ?? loginData.email,
+            tokenType: data?.tokenType ?? "Bearer",
+          }),
+        );
+      } else if (data?.accessToken) {
+        const rawToken = String(data.accessToken)
+          .replace(/^Bearer\s+/i, "")
+          .trim();
+        if (rawToken) {
+          window.localStorage.setItem("accessToken", rawToken);
+        }
+      }
+
       redirectByRole(loginData.role);
     } catch (error) {
       console.error("로그인 중 오류 발생:", error);
-      setLoginError(error.message || "로그인 중 오류가 발생했어.");
+      setLoginError(error.message || "로그인 중 오류가 발생했습니다.");
     }
   };
 
@@ -116,7 +125,6 @@ const LoginPage = () => {
           onOpenPasswordReset={() => setIsPasswordResetOpen(true)}
         />
 
-        {/* 일반 유저(user)인 경우에만 소셜 로그인 섹션 노출 */}
         {loginData.role === "user" && (
           <>
             <div className="relative flex py-5 items-center">
