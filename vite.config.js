@@ -25,9 +25,6 @@ export default defineConfig({
       "/uploads": {
         target: "http://localhost:8090",
         changeOrigin: true,
-      "/oauth2": {
-        target: "http://localhost:8090",
-        changeOrigin: true,
       },
       "/users": {
         target: "http://localhost:8090",
@@ -35,5 +32,4 @@ export default defineConfig({
       }
     }
   }
-    },
 });

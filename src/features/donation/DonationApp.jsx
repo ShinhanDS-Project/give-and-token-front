@@ -153,12 +153,15 @@ function HomePage() {
 
 export default function DonationApp() {
   const location = useLocation();
-  const isFoundationRoute = location.pathname.startsWith("/foundation/");
+  const isFoundationRoute = location.pathname.startsWith("/foundation");
+  const isMyPageRoute = location.pathname.startsWith("/mypage");
 
+  // 💡 2. 하나라도 해당하면 true가 되도록 변수 생성
+  const shouldHideLayout = isFoundationRoute || isMyPageRoute;
   return (
     <div className="min-h-screen bg-surface selection:bg-primary selection:text-white">
       <ScrollToTop />
-      {!isFoundationRoute ? <Navbar /> : null}
+      {!shouldHideLayout && <Navbar />}
       <main>
         <Routes>
           <Route path="/" element={<HomePage />} />
@@ -200,6 +203,7 @@ export default function DonationApp() {
 
           {/* 마이페이지 */}
           <Route path="/mypage" element={<MyPageMain />} />
+          <Route path="/mypage/profile" element={<MyPageProfileEdit />} />
           <Route path="/mypage/history" element={<MyPageDonationHistory />} />
           <Route path="/mypage/password" element={<MyPagePasswordChange />} />
 
@@ -216,7 +220,7 @@ export default function DonationApp() {
         </Routes>
       </main>
 
-      {!isFoundationRoute ? <Footer /> : null}
+      {!shouldHideLayout && <Footer />}
     </div>
   );
 }
