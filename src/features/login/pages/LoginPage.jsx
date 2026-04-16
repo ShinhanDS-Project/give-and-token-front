@@ -11,6 +11,27 @@ import { loginLocal } from "../api/authApi";
 const LoginPage = () => {
   const navigate = useNavigate();
 
+  // 로그인 여부 확인 함수
+  const getIsLoggedIn = () => {
+    const cookies = document.cookie.split(";");
+    const hasCookieToken = cookies.some((cookie) =>
+      cookie.trim().startsWith("accessToken="),
+    );
+    const hasLocalStorageToken = !!localStorage.getItem("accessToken");
+    return hasCookieToken || hasLocalStorageToken;
+  };
+
+  // 1. 이미 로그인된 사용자는 메인으로 튕겨냄
+  // 2. 구글 로그인 후 리다이렉트(/login/google) 처리
+  React.useEffect(() => {
+    const isLoggedIn = getIsLoggedIn();
+    const isGoogleRedirect = window.location.pathname === "/login/google";
+
+    if (isLoggedIn || isGoogleRedirect) {
+      navigate("/", { replace: true });
+    }
+  }, [navigate]);
+
   const [loginData, setLoginData] = useState({
     role: "user",
     email: "",
@@ -58,28 +79,9 @@ const LoginPage = () => {
         throw new Error(errorText || "濡쒓렇?몄뿉 ?ㅽ뙣?덉뼱.");
       }
 
-      const data = await response.json();
-      console.log("濡쒓렇???깃났:", data);
-      if (loginData.role === "foundation") {
-        const rawToken = String(data?.accessToken || "")
-          .replace(/^Bearer\s+/i, "")
-          .trim();
-
-        if (rawToken) {
-          window.localStorage.setItem("accessToken", rawToken);
-          window.localStorage.setItem("foundationAccessToken", rawToken);
-        }
-
-        window.localStorage.setItem(
-          "foundationAuthInfo",
-          JSON.stringify({
-            foundationNo: data?.foundationNo ?? null,
-            foundationName: data?.foundationName ?? "",
-            email: data?.email ?? loginData.email,
-            tokenType: data?.tokenType ?? "Bearer",
-          }),
-        );
-      }
+      const data = await response.json().catch(() => null);
+      console.log("로그인 성공:", data);
+      localStorage.setItem("accessToken", data.accessToken);
       redirectByRole(loginData.role);
     } catch (error) {
       console.error("濡쒓렇??以??ㅻ쪟 諛쒖깮:", error);
@@ -116,18 +118,23 @@ const LoginPage = () => {
           onOpenPasswordReset={() => setIsPasswordResetOpen(true)}
         />
 
-        <div className="relative flex py-5 items-center">
-          <div className="flex-grow border-t border-gray-300"></div>
-          <span className="flex-shrink mx-4 text-gray-400 text-xs">
-            ?먮뒗
-          </span>
-          <div className="flex-grow border-t border-gray-300"></div>
-        </div>
+        {/* 일반 유저(user)인 경우에만 소셜 로그인 섹션 노출 */}
+        {loginData.role === "user" && (
+          <>
+            <div className="relative flex py-5 items-center">
+              <div className="flex-grow border-t border-gray-300"></div>
+              <span className="flex-shrink mx-4 text-gray-400 text-xs">
+                또는
+              </span>
+              <div className="flex-grow border-t border-gray-300"></div>
+            </div>
 
-        <SocialLoginSection
-          onGoToSignUp={goToSignUp}
-          onGoogleLogin={handleGoogleLogin}
-        />
+            <SocialLoginSection
+              onGoToSignUp={goToSignUp}
+              onGoogleLogin={handleGoogleLogin}
+            />
+          </>
+        )}
 
         {isEmailFindOpen && (
           <EmailFindModal onClose={() => setIsEmailFindOpen(false)} />
@@ -142,4 +149,3 @@ const LoginPage = () => {
 };
 
 export default LoginPage;
-

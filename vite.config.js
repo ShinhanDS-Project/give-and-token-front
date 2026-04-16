@@ -8,16 +8,20 @@ export default defineConfig({
     proxy: {
       "/api": {
         target: "http://127.0.0.1:8090",
-        changeOrigin: true
+        changeOrigin: true,
       },
       "/uploads": {
         target: "http://127.0.0.1:8090",
-        changeOrigin: true
+        changeOrigin: true,
       },
       "/admin": {
         target: "http://localhost:8090",
-        changeOrigin: true
-      }
-    }
-  }
+        changeOrigin: true,
+      },
+    },
+    "/oauth2": {
+      target: "http://localhost:8090", // 👈 여기도 8090이어야 합니다!
+      changeOrigin: true,
+    },
+  },
 });

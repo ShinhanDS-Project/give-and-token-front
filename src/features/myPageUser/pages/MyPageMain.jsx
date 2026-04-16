@@ -19,9 +19,25 @@ export default function MyPageMain() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  // 로그인 여부 확인용 헬퍼 함수
+  const getIsLoggedIn = () => {
+    const cookies = document.cookie.split(';');
+    const hasCookieToken = cookies.some(cookie => cookie.trim().startsWith('accessToken='));
+    const hasLocalStorageToken = !!localStorage.getItem('accessToken');
+    return hasCookieToken || hasLocalStorageToken;
+  };
+
   useEffect(() => {
+    // 1. 로그인 여부 즉시 확인
+    if (!getIsLoggedIn()) {
+      alert("로그인이 필요한 페이지입니다.");
+      navigate("/login", { replace: true });
+      return;
+    }
+    
+    // 2. 데이터 불러오기
     fetchMyPageData();
-  }, []);
+  }, [navigate]);
 
   const fetchMyPageData = async () => {
     try {

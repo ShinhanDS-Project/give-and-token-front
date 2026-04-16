@@ -1,5 +1,3 @@
-// give-and-token-front/src/features/signUp/pages/SignupPage.jsx
-
 import React, { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import SignupRoleSelector from "../components/SignupRoleSelector";
@@ -45,7 +43,6 @@ const SignupPage = () => {
       ...initialFormData,
       role: newRole,
     });
-    // 인증 상태 초기화
     setIsNicknameChecked(false);
     setIsEmailVerified(false);
     setShowVerificationInput(false);
@@ -88,6 +85,7 @@ const SignupPage = () => {
       alert("닉네임을 입력해주세요.");
       return;
     }
+
     try {
       const response = await checkNickname(formData.nameHash);
       if (response.ok) {
@@ -108,6 +106,7 @@ const SignupPage = () => {
       alert("이메일을 입력해주세요.");
       return;
     }
+
     try {
       const response = await sendEmailVerification(email);
       if (response.ok) {
@@ -128,6 +127,7 @@ const SignupPage = () => {
       alert("인증코드를 입력해주세요.");
       return;
     }
+
     try {
       const response = await verifyEmailCode({ email, code: verificationCode });
       if (response.ok) {
@@ -150,15 +150,16 @@ const SignupPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // 공통 유효성 검사
     if (formData.role === "user" && !isEmailVerified) {
       alert("이메일 인증이 필요합니다.");
       return;
     }
+
     if (formData.password !== formData.password2) {
       alert("비밀번호가 일치하지 않습니다.");
       return;
     }
+
     if (formData.role === "user" && !isNicknameChecked) {
       alert("닉네임 중복 확인이 필요합니다.");
       return;
@@ -227,6 +228,7 @@ const SignupPage = () => {
               onVerifyCode={handleVerifyCode}
               showVerificationInput={showVerificationInput}
               isEmailVerified={isEmailVerified}
+              isGoogleSignup={false}
           />
           <button type="submit" disabled={submitting}>
             {submitting ? "가입 중..." : "가입 완료"}

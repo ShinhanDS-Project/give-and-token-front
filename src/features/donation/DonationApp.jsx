@@ -1,6 +1,5 @@
 import { Link, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { useEffect } from "react";
-import { Link, Navigate, Route, Routes } from "react-router-dom";
 import { Heart } from "lucide-react";
 import Navbar from "./components/Navbar";
 import Hero from "./components/Hero";
@@ -26,6 +25,7 @@ import MyPagePasswordChange from "../myPageUser/pages/MyPagePasswordChange";
 import MyPageProfileEdit from "../myPageUser/pages/MyPageProfileEdit";
 import FoundationRegisterPage from "../foundation/pages/FoundationRegisterPage";
 import FoundationDashboardPage from "../foundation/pages/FoundationDashboardPage";
+import GoogleSignupPage from "../signUp/pages/GoogleSignupPage";
 import TestCampaignPage from "../foundation/pages/GabeenCampaignPageTest";
 import FoundationDetailPage from "../foundation/pages/FoundationDetailPage";
 import FoundationListPage from "../foundation/pages/FoundationListPage";
@@ -166,6 +166,8 @@ export default function DonationApp() {
           <Route path="/mission" element={<MissionPage />} />
           <Route path="/guide" element={<DonationGuidePage />} />
           <Route path="/ledger" element={<LedgerPage />} />
+
+          {/* 단체 가입 관련 */}
           <Route
             path="/organization/apply"
             element={<OrganizationApplyPage />}
@@ -178,9 +180,24 @@ export default function DonationApp() {
             path="/organization/apply/complete"
             element={<FoundationSignupCompletePage />}
           />
+
+          {/* 약관 및 정책 */}
           <Route path="/terms" element={<LegalPage />} />
           <Route path="/privacy" element={<LegalPage />} />
           <Route path="/policy" element={<LegalPage />} />
+
+          {/* 로그인 및 회원가입 */}
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/signup" element={<SignupPage />} />
+          <Route path="/signup/google" element={<GoogleSignupPage />} />
+
+          {/* 마이페이지 */}
+          <Route path="/mypage" element={<MyPageMain />} />
+          <Route path="/mypage/history" element={<MyPageDonationHistory />} />
+          <Route path="/mypage/password" element={<MyPagePasswordChange />} />
+          <Route path="/mypage/profile" element={<MyPageProfileEdit />} />
+
+          {/* 재단/테스트 (중복 제거됨) */}
           <Route path="/test/campaign" element={<TestCampaignPage />} />
           <Route
             path="/foundation/:foundationNo"
@@ -190,6 +207,8 @@ export default function DonationApp() {
             path="/foundation/:foundationNo/campaigns"
             element={<FoundationListPage />}
           />
+
+          {/* 404 페이지 */}
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </main>
