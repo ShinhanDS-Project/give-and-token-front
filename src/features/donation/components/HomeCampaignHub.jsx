@@ -8,7 +8,7 @@ import {
   Heart,
   ShieldCheck,
   Sparkles,
-  TrendingUp
+  TrendingUp,
 } from "lucide-react";
 import childIcon from "../../../img/category/child.svg";
 import seniorIcon from "../../../img/category/senior.svg";
@@ -17,7 +17,10 @@ import animalIcon from "../../../img/category/animal.svg";
 import environmentIcon from "../../../img/category/environment.svg";
 import etcIcon from "../../../img/category/etc.svg";
 
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/$/, "");
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "").replace(
+  /\/$/,
+  "",
+);
 const HOME_HUB_CACHE_KEY = "donation-home-hub-cache-v1";
 const HOME_HUB_CACHE_TTL_MS = 60 * 1000;
 const HOME_HUB_POLL_INTERVAL_MS = 15 * 1000;
@@ -26,7 +29,7 @@ const LIVE_FEED_COUNT = 5;
 const EMPTY_SUMMARY = {
   totalDonationCount: 0,
   totalUserCount: 0,
-  totalCampaignCount: 0
+  totalCampaignCount: 0,
 };
 
 const QUICK_CATEGORIES = [
@@ -35,7 +38,7 @@ const QUICK_CATEGORIES = [
   { label: "장애인", icon: disabledIcon },
   { label: "동물", icon: animalIcon },
   { label: "환경", icon: environmentIcon },
-  { label: "기타", icon: etcIcon }
+  { label: "기타", icon: etcIcon },
 ];
 
 const REPORT_FEATURES = [
@@ -43,20 +46,22 @@ const REPORT_FEATURES = [
     key: "ledger",
     icon: FileText,
     title: "실시간 나눔 장부",
-    description: "기부금이 들어오고 나가는 모든 순간을 실시간으로 확인할 수 있어요."
+    description:
+      "기부금이 들어오고 나가는 모든 순간을 실시간으로 확인할 수 있어요.",
   },
   {
     key: "record",
     icon: ShieldCheck,
     title: "바꿀 수 없는 기록",
-    description: "한 번 기록된 따뜻한 마음은 누구도 지우거나 수정할 수 없답니다."
+    description:
+      "한 번 기록된 따뜻한 마음은 누구도 지우거나 수정할 수 없답니다.",
   },
   {
     key: "trust",
     icon: Heart,
     title: "함께 만드는 기적",
-    description: "모든 트랜잭션은 공개되어 누구나 검증하고 신뢰할 수 있어요."
-  }
+    description: "모든 트랜잭션은 공개되어 누구나 검증하고 신뢰할 수 있어요.",
+  },
 ];
 
 function formatCount(value, unit = "") {
@@ -126,7 +131,7 @@ function toCampaignCard(item) {
     raised: Number.isFinite(raised) ? raised : 0,
     goal: Number.isFinite(goal) ? goal : 0,
     daysLeft: item?.daysLeft ?? null,
-    endDate: item?.endAt ?? item?.endDate ?? null
+    endDate: item?.endAt ?? item?.endDate ?? null,
   };
 }
 
@@ -138,28 +143,36 @@ function toFeedItem(item, index) {
     name: item?.name || "익명",
     amount: Number(item?.amount ?? 0),
     campaignTitle: item?.campaignTitle || "캠페인",
-    donatedAt: Number.isFinite(donatedAtMs) ? donatedAtMs : Date.now()
+    donatedAt: Number.isFinite(donatedAtMs) ? donatedAtMs : Date.now(),
   };
 }
 
 function toHomeState(data) {
-  const soonList = Array.isArray(data?.endingSoon) ? data.endingSoon.map(toCampaignCard) : [];
-  const topList = Array.isArray(data?.topParticipation) ? data.topParticipation.map(toCampaignCard) : [];
-  const latestList = Array.isArray(data?.latestOngoing) ? data.latestOngoing.map(toCampaignCard) : [];
+  const soonList = Array.isArray(data?.endingSoon)
+    ? data.endingSoon.map(toCampaignCard)
+    : [];
+  const topList = Array.isArray(data?.topParticipation)
+    ? data.topParticipation.map(toCampaignCard)
+    : [];
+  const latestList = Array.isArray(data?.latestOngoing)
+    ? data.latestOngoing.map(toCampaignCard)
+    : [];
 
   const merged = [...soonList, ...topList, ...latestList];
-  const uniqueCampaigns = Array.from(new Map(merged.map((item) => [item.id, item])).values());
+  const uniqueCampaigns = Array.from(
+    new Map(merged.map((item) => [item.id, item])).values(),
+  );
 
   return {
     summary: {
       totalDonationCount: Number(data?.totalDonationCount ?? 0),
       totalUserCount: Number(data?.totalUserCount ?? 0),
-      totalCampaignCount: Number(data?.totalCampaignCount ?? 0)
+      totalCampaignCount: Number(data?.totalCampaignCount ?? 0),
     },
     endingSoon: soonList,
     topProgress: topList,
     latestOngoing: latestList,
-    campaigns: uniqueCampaigns
+    campaigns: uniqueCampaigns,
   };
 }
 
@@ -167,7 +180,9 @@ function isOngoingCampaign(item) {
   const status = String(item?.status ?? "").toUpperCase();
 
   if (status) {
-    return status === "ONGOING" || status === "IN_PROGRESS" || status === "ACTIVE";
+    return (
+      status === "ONGOING" || status === "IN_PROGRESS" || status === "ACTIVE"
+    );
   }
 
   const endDate = item?.endAt ?? item?.endDate;
@@ -181,8 +196,12 @@ function isOngoingCampaign(item) {
 
 function sortByLatest(items) {
   return [...items].sort((a, b) => {
-    const aTime = new Date(a?.createdAt ?? a?.createdDate ?? a?.registeredAt ?? 0).getTime();
-    const bTime = new Date(b?.createdAt ?? b?.createdDate ?? b?.registeredAt ?? 0).getTime();
+    const aTime = new Date(
+      a?.createdAt ?? a?.createdDate ?? a?.registeredAt ?? 0,
+    ).getTime();
+    const bTime = new Date(
+      b?.createdAt ?? b?.createdDate ?? b?.registeredAt ?? 0,
+    ).getTime();
     return bTime - aTime;
   });
 }
@@ -209,7 +228,9 @@ function getDdayLabel(campaign) {
 
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const endDay = new Date(end.getFullYear(), end.getMonth(), end.getDate());
-  const diff = Math.ceil((endDay.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+  const diff = Math.ceil(
+    (endDay.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
+  );
 
   if (diff < 0) return "종료";
   if (diff === 0) return "D-Day";
@@ -246,10 +267,16 @@ function CampaignCard({ campaign, showDeadlinePill = false }) {
         <h3 className="line-clamp-2 text-xl font-display font-bold text-ink">
           {campaign.shortTitle}
         </h3>
-        <p className="mt-2 line-clamp-2 text-sm text-stone-500">{campaign.summary}</p>
+        <p className="mt-2 line-clamp-2 text-sm text-stone-500">
+          {campaign.summary}
+        </p>
         <div className="mt-4 flex items-end justify-between">
-          <span className="font-bold text-primary">{formatWon(campaign.raised)}</span>
-          <span className="text-xs text-stone-400">목표 {formatWon(campaign.goal)}</span>
+          <span className="font-bold text-primary">
+            {formatWon(campaign.raised)}
+          </span>
+          <span className="text-xs text-stone-400">
+            목표 {formatWon(campaign.goal)}
+          </span>
         </div>
       </div>
     </Link>
@@ -306,13 +333,19 @@ function HorizontalCampaignCard({ campaign }) {
             <div className="mb-3 h-2 w-full overflow-hidden rounded-full bg-line">
               <div
                 className="h-full rounded-full bg-primary transition-all duration-500"
-                style={{ width: `${Math.min(Math.max(campaign.progress, 0), 100)}%` }}
+                style={{
+                  width: `${Math.min(Math.max(campaign.progress, 0), 100)}%`,
+                }}
               />
             </div>
 
             <div className="flex items-end justify-between">
-              <span className="text-xl font-bold text-primary">{formatWon(campaign.raised)}</span>
-              <span className="text-sm text-stone-400">목표 {formatWon(campaign.goal)}</span>
+              <span className="text-xl font-bold text-primary">
+                {formatWon(campaign.raised)}
+              </span>
+              <span className="text-sm text-stone-400">
+                목표 {formatWon(campaign.goal)}
+              </span>
             </div>
           </div>
         </div>
@@ -364,7 +397,7 @@ export default function HomeCampaignHub() {
       try {
         sessionStorage.setItem(
           HOME_HUB_CACHE_KEY,
-          JSON.stringify({ savedAt: Date.now(), payload })
+          JSON.stringify({ savedAt: Date.now(), payload }),
         );
       } catch {
         // ignore cache errors
@@ -374,7 +407,7 @@ export default function HomeCampaignHub() {
     async function loadFallbackHub() {
       const [statsRes, campaignsRes] = await Promise.all([
         fetch(`${API_BASE_URL}/api/donation/public/stats`),
-        fetch(`${API_BASE_URL}/api/foundation/campaigns?sort=deadline`)
+        fetch(`${API_BASE_URL}/api/foundation/campaigns?sort=deadline`),
       ]);
 
       if (!statsRes.ok || !campaignsRes.ok) {
@@ -383,7 +416,7 @@ export default function HomeCampaignHub() {
 
       const [stats, campaignListRaw] = await Promise.all([
         statsRes.json(),
-        campaignsRes.json()
+        campaignsRes.json(),
       ]);
 
       const rawList = Array.isArray(campaignListRaw) ? campaignListRaw : [];
@@ -401,7 +434,7 @@ export default function HomeCampaignHub() {
         topParticipation: [...campaignList]
           .sort((a, b) => b.progress - a.progress)
           .slice(0, 3),
-        latestOngoing: ongoingLatest
+        latestOngoing: ongoingLatest,
       };
 
       return toHomeState(payload);
@@ -414,9 +447,12 @@ export default function HomeCampaignHub() {
         controller = new AbortController();
         timeoutId = setTimeout(() => controller?.abort(), 1500);
 
-        const response = await fetch(`${API_BASE_URL}/api/donation/public/home-hub`, {
-          signal: controller.signal
-        });
+        const response = await fetch(
+          `${API_BASE_URL}/api/donation/public/home-hub`,
+          {
+            signal: controller.signal,
+          },
+        );
 
         clearTimeout(timeoutId);
 
@@ -443,7 +479,7 @@ export default function HomeCampaignHub() {
               totalCampaignCount: fallback.summary.totalCampaignCount,
               endingSoon: fallback.endingSoon,
               topParticipation: fallback.topProgress,
-              latestOngoing: fallback.latestOngoing
+              latestOngoing: fallback.latestOngoing,
             });
           }
         } catch {
@@ -464,11 +500,13 @@ export default function HomeCampaignHub() {
     async function loadLatestCampaigns() {
       try {
         const response = await fetch(
-          `${API_BASE_URL}/api/donation/public/latest-campaigns?limit=5`
+          `${API_BASE_URL}/api/donation/public/latest-campaigns?limit=5`,
         );
 
         if (!response.ok) {
-          throw new Error(`latest-campaigns request failed: ${response.status}`);
+          throw new Error(
+            `latest-campaigns request failed: ${response.status}`,
+          );
         }
 
         const data = await response.json();
@@ -476,11 +514,13 @@ export default function HomeCampaignHub() {
         console.log("latest raw data:", data);
         console.log(
           "latest mapped data:",
-          Array.isArray(data) ? data.map(toCampaignCard) : []
+          Array.isArray(data) ? data.map(toCampaignCard) : [],
         );
 
         if (!ignore) {
-          setLatestCampaigns(Array.isArray(data) ? data.map(toCampaignCard) : []);
+          setLatestCampaigns(
+            Array.isArray(data) ? data.map(toCampaignCard) : [],
+          );
         }
       } catch (error) {
         console.error("현재 진행중인 캠페인 조회 실패:", error);
@@ -494,11 +534,13 @@ export default function HomeCampaignHub() {
 
         const response = await fetch(
           `${API_BASE_URL}/api/donation/public/recent-donations?limit=${LIVE_FEED_COUNT}`,
-          { signal: feedController.signal }
+          { signal: feedController.signal },
         );
 
         if (!response.ok) {
-          throw new Error(`recent-donations request failed: ${response.status}`);
+          throw new Error(
+            `recent-donations request failed: ${response.status}`,
+          );
         }
 
         const data = await response.json();
@@ -529,7 +571,7 @@ export default function HomeCampaignHub() {
         await Promise.all([
           loadHomeHub(),
           loadRecentFeed(),
-          loadLatestCampaigns()
+          loadLatestCampaigns(),
         ]);
       } finally {
         isFetching = false;
@@ -560,12 +602,17 @@ export default function HomeCampaignHub() {
   }, [campaigns]);
 
   return (
-    <section id="home-hub" className="home-snap-target bg-white pb-16 pt-28 md:pb-20 md:pt-32">
+    <section
+      id="home-hub"
+      className="home-snap-target bg-[#FFF9F5] pb-16 pt-28 md:pb-20 md:pt-32"
+    >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid gap-4 md:grid-cols-2">
           <div className="rounded-[2rem] border border-primary/20 bg-primary px-8 py-7 text-white shadow-lg shadow-primary/20">
             <p className="text-sm font-bold text-white/80">누적 기부 금액</p>
-            <p className="mt-3 text-4xl font-display font-bold">{formatWon(totalRaisedAmount)}</p>
+            <p className="mt-3 text-4xl font-display font-bold">
+              {formatWon(totalRaisedAmount)}
+            </p>
           </div>
 
           <div className="rounded-[2rem] border border-line bg-ink px-8 py-7 text-white shadow-lg">
@@ -583,14 +630,21 @@ export default function HomeCampaignHub() {
                 <Flame size={20} className="text-primary" />
                 마감 임박 캠페인
               </h3>
-              <Link to="/campaigns" className="text-sm font-bold text-primary hover:underline">
+              <Link
+                to="/campaigns"
+                className="text-sm font-bold text-primary hover:underline"
+              >
                 전체보기
               </Link>
             </div>
 
             <div className="grid gap-5 md:grid-cols-2">
               {endingSoon.map((item) => (
-                <CampaignCard key={`soon-${item.id}`} campaign={item} showDeadlinePill />
+                <CampaignCard
+                  key={`soon-${item.id}`}
+                  campaign={item}
+                  showDeadlinePill
+                />
               ))}
             </div>
 
@@ -599,7 +653,10 @@ export default function HomeCampaignHub() {
                 <TrendingUp size={20} className="text-primary" />
                 참여율 높은 캠페인
               </h3>
-              <Link to="/campaigns" className="text-sm font-bold text-primary hover:underline">
+              <Link
+                to="/campaigns"
+                className="text-sm font-bold text-primary hover:underline"
+              >
                 전체보기
               </Link>
             </div>
@@ -615,7 +672,10 @@ export default function HomeCampaignHub() {
                 <Sparkles size={20} className="text-primary" />
                 현재 진행중인 캠페인
               </h3>
-              <Link to="/campaigns" className="text-sm font-bold text-primary hover:underline">
+              <Link
+                to="/campaigns"
+                className="text-sm font-bold text-primary hover:underline"
+              >
                 전체보기
               </Link>
             </div>
@@ -650,7 +710,9 @@ export default function HomeCampaignHub() {
                       className="mx-auto h-8 w-8 object-contain"
                       loading="lazy"
                     />
-                    <p className="mt-2 text-xs font-bold text-ink">{item.label}</p>
+                    <p className="mt-2 text-xs font-bold text-ink">
+                      {item.label}
+                    </p>
                   </Link>
                 ))}
               </div>
@@ -669,12 +731,18 @@ export default function HomeCampaignHub() {
                   </li>
                 ) : feedItems.length > 0 ? (
                   feedItems.map((item) => (
-                    <li key={item.id} className="rounded-xl bg-[#FFF9F5] px-3 py-2">
+                    <li
+                      key={item.id}
+                      className="rounded-xl bg-[#FFF9F5] px-3 py-2"
+                    >
                       <p className="line-clamp-1 text-sm font-bold text-ink">
                         {item.name}님이 {formatWon(item.amount)} 기부
                       </p>
                       <p className="text-xs text-stone-500">
-                        {formatElapsed(Math.floor((nowTs - item.donatedAt) / 1000))} · {item.campaignTitle}
+                        {formatElapsed(
+                          Math.floor((nowTs - item.donatedAt) / 1000),
+                        )}{" "}
+                        · {item.campaignTitle}
                       </p>
                     </li>
                   ))
@@ -706,8 +774,12 @@ export default function HomeCampaignHub() {
                         <Icon size={18} />
                       </div>
                       <div>
-                        <p className="text-lg font-display font-bold text-ink">{item.title}</p>
-                        <p className="mt-1 text-sm text-stone-500">{item.description}</p>
+                        <p className="text-lg font-display font-bold text-ink">
+                          {item.title}
+                        </p>
+                        <p className="mt-1 text-sm text-stone-500">
+                          {item.description}
+                        </p>
                       </div>
                     </li>
                   );

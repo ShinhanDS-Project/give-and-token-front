@@ -1,4 +1,4 @@
-import { Link, Navigate, Route, Routes, useLocation } from "react-router-dom";
+﻿import { Link, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { useEffect } from "react";
 import { Heart } from "lucide-react";
 import Navbar from "./components/Navbar";
@@ -109,31 +109,31 @@ function HomePage() {
       <Hero />
       <HomeCampaignHub />
 
-      <section className="pt-20 pb-44 bg-white relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-full h-full watercolor-bg opacity-30" />
+      <section className="pt-20 pb-44 relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-full h-full" />
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="bg-primary px-5 py-7 md:px-8 md:py-8 rounded-[2rem] text-center text-white relative overflow-hidden shadow-2xl shadow-primary/20 border-[5px] border-white">
             <div className="absolute top-0 right-0 w-full h-full bg-[radial-gradient(circle_at_70%_30%,rgba(255,255,255,0.2),transparent)]" />
             <div className="relative z-10">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-white text-[11px] font-bold mb-4">
                 <Heart size={14} fill="currentColor" />
-                따뜻한 변화의 시작
+                ?곕쑜??蹂?붿쓽 ?쒖옉
               </div>
               <h2 className="text-[1.65rem] md:text-[2rem] font-display font-bold mb-4 leading-tight">
-                여러분의 <span className="text-accent italic">마음</span>이
+                ?щ윭遺꾩쓽 <span className="text-accent italic">留덉쓬</span>??
                 <br />
-                아이들을 웃게 합니다
+                ?꾩씠?ㅼ쓣 ?껉쾶 ?⑸땲??
               </h2>
               <p className="text-white/80 text-sm mb-6 max-w-md mx-auto leading-relaxed font-medium">
-                지금 바로 기부엔토큰의 후원 흐름을 만나보세요. <br />
-                작은 실천이 모여 누군가의 일상에 더 큰 빛이 됩니다.
+                吏湲?諛붾줈 湲곕??뷀넗?곗쓽 ?꾩썝 ?먮쫫??留뚮굹蹂댁꽭?? <br />
+                ?묒? ?ㅼ쿇??紐⑥뿬 ?꾧뎔媛???쇱긽??????鍮쏆씠 ?⑸땲??
               </p>
               <div className="flex flex-wrap justify-center gap-2.5">
                 <Link
                   to="/campaigns"
                   className="bg-white text-primary px-6 py-2.5 rounded-full text-sm font-bold hover:scale-105 transition-all shadow-2xl shadow-black/10"
                 >
-                  캠페인 둘러보기
+                  罹좏럹???섎윭蹂닿린
                 </Link>
               </div>
             </div>
@@ -167,7 +167,7 @@ export default function DonationApp() {
           <Route path="/guide" element={<DonationGuidePage />} />
           <Route path="/ledger" element={<LedgerPage />} />
 
-          {/* 단체 가입 관련 */}
+          {/* ?⑥껜 媛??愿??*/}
           <Route
             path="/organization/apply"
             element={<OrganizationApplyPage />}
@@ -181,23 +181,25 @@ export default function DonationApp() {
             element={<FoundationSignupCompletePage />}
           />
 
-          {/* 약관 및 정책 */}
+          {/* ?쎄? 諛??뺤콉 */}
           <Route path="/terms" element={<LegalPage />} />
           <Route path="/privacy" element={<LegalPage />} />
           <Route path="/policy" element={<LegalPage />} />
 
-          {/* 로그인 및 회원가입 */}
+          {/* 濡쒓렇??諛??뚯썝媛??*/}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/signup/google" element={<GoogleSignupPage />} />
 
-          {/* 마이페이지 */}
+          {/* 留덉씠?섏씠吏 */}
           <Route path="/mypage" element={<MyPageMain />} />
           <Route path="/mypage/history" element={<MyPageDonationHistory />} />
           <Route path="/mypage/password" element={<MyPagePasswordChange />} />
-          <Route path="/mypage/profile" element={<MyPageProfileEdit />} />
+          
+          <Route path="/foundation/me" element={<FoundationDashboardPage />} />
+          <Route path="/foundation/register" element={<FoundationRegisterPage />} />
 
-          {/* 재단/테스트 (중복 제거됨) */}
+          {/* ?щ떒/?뚯뒪??(以묐났 ?쒓굅?? */}
           <Route path="/test/campaign" element={<TestCampaignPage />} />
           <Route
             path="/foundation/:foundationNo"
@@ -208,7 +210,7 @@ export default function DonationApp() {
             element={<FoundationListPage />}
           />
 
-          {/* 404 페이지 */}
+          {/* 404 ?섏씠吏 */}
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </main>
@@ -216,3 +218,4 @@ export default function DonationApp() {
     </div>
   );
 }
+
