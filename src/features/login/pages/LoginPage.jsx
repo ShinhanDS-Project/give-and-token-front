@@ -47,25 +47,37 @@ const LoginPage = () => {
 
   const handleLocalLogin = async (e) => {
     e.preventDefault();
+
     try {
       setLoginError("");
+
       const response = await loginLocal(loginData.role, {
         email: loginData.email,
         password: loginData.password,
       });
 
       if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(errorText || "로그인에 실패했습니다.");
+        let message = "로그인에 실패했습니다.";
+
+        if (response.status === 400) {
+          message = "입력값을 다시 확인해주세요.";
+        } else if (response.status === 401) {
+          message = "이메일 또는 비밀번호가 올바르지 않습니다.";
+        } else if (response.status === 403) {
+          message = "접근 권한이 없습니다.";
+        } else if (response.status >= 500) {
+          message = "서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.";
+        }
+
+        throw new Error(message);
       }
 
       const data = await response.json().catch(() => null);
       console.log("로그인 성공:", data);
 
-      // 토큰 및 사용자 역할 저장
       const rawToken = String(data?.accessToken || "")
-        .replace(/^Bearer\s+/i, "")
-        .trim();
+          .replace(/^Bearer\s+/i, "")
+          .trim();
 
       if (rawToken) {
         window.localStorage.setItem("accessToken", rawToken);
@@ -76,13 +88,13 @@ const LoginPage = () => {
       if (loginData.role === "foundation") {
         window.localStorage.setItem("foundationAccessToken", rawToken);
         window.localStorage.setItem(
-          "foundationAuthInfo",
-          JSON.stringify({
-            foundationNo: data?.foundationNo ?? null,
-            foundationName: data?.foundationName ?? "",
-            email: data?.email ?? loginData.email,
-            tokenType: data?.tokenType ?? "Bearer",
-          }),
+            "foundationAuthInfo",
+            JSON.stringify({
+              foundationNo: data?.foundationNo ?? null,
+              foundationName: data?.foundationName ?? "",
+              email: data?.email ?? loginData.email,
+              tokenType: data?.tokenType ?? "Bearer",
+            }),
         );
       }
 

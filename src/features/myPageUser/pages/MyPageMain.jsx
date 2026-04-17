@@ -80,7 +80,7 @@ export default function MyPageMain() {
       setTransactionList(transactionRes.data ?? []);
     } catch (err) {
       console.error(err);
-      setError("마이페이지 정보를 불러오지 못했어.");
+      setError("마이페이지 정보를 불러오지 못했습니다.");
     } finally {
       setLoading(false);
     }
