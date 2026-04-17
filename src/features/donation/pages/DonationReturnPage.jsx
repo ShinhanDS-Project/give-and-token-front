@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Check } from "lucide-react";
+import { Check, Loader2, X } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 
 const PAYMENT_METHOD_STORAGE_KEY = "donation_payment_method";
@@ -226,11 +226,23 @@ export default function DonationReturnPage() {
 
       <div className="mx-auto max-w-3xl pb-10 pt-[calc(4rem+40px)]">
         <section className="mb-10 text-center">
-          <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-primary/15 text-primary">
-            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary text-white shadow-lg shadow-primary/30">
-              <Check size={30} strokeWidth={2.4} />
+          {status === "loading" ? (
+            <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-stone-100">
+              <Loader2 size={40} strokeWidth={2} className="animate-spin text-stone-400" />
             </div>
-          </div>
+          ) : status === "failed" || status === "ready" ? (
+            <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-red-100 text-red-500">
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-red-500 text-white shadow-lg shadow-red-200">
+                <X size={30} strokeWidth={2.4} />
+              </div>
+            </div>
+          ) : (
+            <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-primary/15 text-primary">
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary text-white shadow-lg shadow-primary/30">
+                <Check size={30} strokeWidth={2.4} />
+              </div>
+            </div>
+          )}
 
           <h1 className="mb-4 text-2xl font-bold tracking-tight text-ink sm:text-3xl">
             {title}

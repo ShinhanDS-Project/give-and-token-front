@@ -368,7 +368,7 @@ export default function DonatePage() {
 
         <section className="mb-20">
           <h2 className="mb-5 text-2xl font-bold text-stone-300">금액 직접 입력</h2>
-          <div className="mb-14 flex items-center border-b-2 border-stone-400 pb-5">
+          <div className="mb-14 flex items-center gap-3 border-b-2 border-stone-400 pb-5">
             <input
               value={amount}
               onChange={handleAmountChange}
@@ -379,6 +379,15 @@ export default function DonatePage() {
               className="min-w-0 flex-1 border-none bg-transparent text-right text-2xl font-bold text-ink outline-none placeholder:text-base placeholder:text-stone-300 sm:text-3xl sm:placeholder:text-lg"
             />
             <span className="text-lg font-bold text-stone-400">원</span>
+            {amount && (
+              <button
+                type="button"
+                onClick={() => setAmount("")}
+                className="flex-shrink-0 rounded border border-stone-200 px-3 py-1 text-sm font-bold text-stone-400 transition-colors hover:border-red-300 hover:text-red-400"
+              >
+                초기화
+              </button>
+            )}
           </div>
 
           <div className="grid grid-cols-4 gap-2 sm:gap-3">
@@ -461,6 +470,9 @@ export default function DonatePage() {
                 );
               })}
             </div>
+            <p className="mt-3 text-sm font-bold text-stone-400">
+              ※ 선택한 결제수단으로 결제가 최종 완료되어야 기부 완료 처리됩니다.
+            </p>
           </div>
 
           {paymentError && (
