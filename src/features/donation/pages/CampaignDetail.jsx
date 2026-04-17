@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ChevronLeft, Clock, Download, Heart, MapPin, Share2, Users } from "lucide-react";
 import { campaigns, formatWon } from "../data/campaigns";
+import FoundationProfileCard from "../../foundation/components/FoundationProfileCard";
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/$/, "");
 
@@ -67,17 +68,17 @@ function toDetailCampaignModel(data, id) {
     projectEndDate: data?.usageEndAt || null,
     documents: Array.isArray(data?.documents)
       ? data.documents.map((doc) => ({
-          name: doc?.name || "사용 계획서",
-          size: doc?.size || "-",
-          href: doc?.href || "#",
-        }))
+        name: doc?.name || "사용 계획서",
+        size: doc?.size || "-",
+        href: doc?.href || "#",
+      }))
       : [],
     recentDonors: Array.isArray(data?.recentDonors)
       ? data.recentDonors.map((donor) => ({
-          name: donor?.name || "익명",
-          amount: Number.isFinite(Number(donor?.amount)) ? Number(donor.amount) : 0,
-          time: donor?.time || "-",
-        }))
+        name: donor?.name || "익명",
+        amount: Number.isFinite(Number(donor?.amount)) ? Number(donor.amount) : 0,
+        time: donor?.time || "-",
+      }))
       : [],
     beneficiary: {
       title: data?.beneficiary?.title || "수혜자 정보 준비 중",
@@ -87,6 +88,7 @@ function toDetailCampaignModel(data, id) {
       name: data?.foundation?.foundationName || "기부단체",
       description: data?.foundation?.description || "",
       image: normalizeImagePath(data?.foundation?.profilePath || representativeImage),
+      foundationNo: data?.foundation?.foundationNo ?? null,
     },
   };
 }
@@ -239,9 +241,8 @@ export default function CampaignDetail() {
                   key={tab}
                   type="button"
                   onClick={() => setActiveTab(tab)}
-                  className={`relative pb-4 text-sm font-bold uppercase tracking-widest transition-all ${
-                    activeTab === tab ? "text-primary" : "text-stone-400 hover:text-ink"
-                  }`}
+                  className={`relative pb-4 text-sm font-bold uppercase tracking-widest transition-all ${activeTab === tab ? "text-primary" : "text-stone-400 hover:text-ink"
+                    }`}
                 >
                   {tab === "about" && "소개"}
                   {tab === "contributors" && "기부자 명단"}
@@ -467,19 +468,17 @@ export default function CampaignDetail() {
                 </button>
               </div>
 
-              <div className="relative overflow-hidden rounded-[40px] bg-white p-10">
-                <h4 className="relative mb-6 text-2xl font-display font-bold text-ink">기부단체 정보</h4>
-                <div className="relative space-y-4">
-                  <div>
-                    <div className="mb-2 text-[10px] font-bold uppercase tracking-widest text-stone-500">기부단체명</div>
-                    <div className="mb-2 text-sm font-bold text-ink">{campaign.organization?.name}</div>
-                    <div className="mb-2 text-[10px] font-bold uppercase tracking-widest text-stone-500">기부단체 소개</div>
-                    <div className="mb-2 text-sm text-stone-700">{campaign.organization?.description}</div>
-                  </div>
-                  <div>
-                    <img src={campaign.organization?.image || safeImages[0]} alt={campaign.organization?.name || "기부단체"} className="h-20 w-full rounded-xl object-cover" referrerPolicy="no-referrer" />
-                  </div>
-                </div>
+              {/* [가빈] 기부단체 프로필 카드 컴포넌트로 변경함.*/}
+              <div className="rounded-[40px] border border-line bg-white p-10">
+                <h4 className="mb-6 text-2xl font-display font-bold text-ink">기부단체 정보</h4>
+                <FoundationProfileCard
+                  foundation={{
+                    foundationNo: campaign.organization?.foundationNo,
+                    foundationName: campaign.organization?.name,
+                    profilePath: campaign.organization?.image || safeImages[0],
+                    description: campaign.organization?.description,
+                  }}
+                />
               </div>
             </div>
           </div>
