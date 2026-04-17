@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import ProfileCardPage from '../components/ProfileCardPage';
 import { getMyInfo } from '../api/myPageApi'; // API 경로 확인 필요
-import '../styles/MyPageMain.css'; // 기존 스타일 재사용
+import '../styles/MyPage.css'; // 기존 스타일 재사용
 
 const MyPageLayout = () => {
     const [myInfo, setMyInfo] = useState(null);
