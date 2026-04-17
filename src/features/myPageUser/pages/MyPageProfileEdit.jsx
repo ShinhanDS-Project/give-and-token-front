@@ -1,17 +1,16 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useOutletContext } from "react-router-dom";
 import { User, Camera, Check, AlertCircle, ArrowLeft } from "lucide-react";
 import "../styles/MyPage.css";
 import {
   checkNicknameDuplicate,
-  getMyPageInfo,
   updateMyPageInfo,
 } from "../api/mypageApi";
 
 export default function MyPageProfileEdit() {
   const navigate = useNavigate();
+  const { myInfo } = useOutletContext();
 
-  const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
   const [form, setForm] = useState({
@@ -30,49 +29,31 @@ export default function MyPageProfileEdit() {
   const [nicknameMessage, setNicknameMessage] = useState("");
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    fetchMyInfo();
-  }, []);
-
-  // 이미지 서버 기본 주소 (분석 결과 반영)
   const IMAGE_BASE_URL = "http://localhost:8090/uploads/";
 
-  const fetchMyInfo = async () => {
-    try {
-      setLoading(true);
-      setError("");
-
-      const response = await getMyPageInfo();
-      const data = response.data;
-
+  useEffect(() => {
+    if (myInfo) {
       setForm({
-        email: data.email ?? "",
-        name: data.name ?? "",
-        phone: data.phone ?? "",
-        nameHash: data.nameHash ?? "",
-        profilePath: data.profilePath ?? "",
+        email: myInfo.email ?? "",
+        name: myInfo.name ?? "",
+        phone: myInfo.phone ?? "",
+        nameHash: myInfo.nameHash ?? "",
+        profilePath: myInfo.profilePath ?? "",
       });
 
-      setOriginalNickname(data.nameHash ?? "");
+      setOriginalNickname(myInfo.nameHash ?? "");
       
-      // 분석 결과 반영: profilePath가 있으면 서버 주소를 붙여서 미리보기 설정
-      if (data.profilePath) {
-        // 이미 전체 URL인 경우(S3 등)와 파일명만 온 경우를 구분
-        const fullPath = data.profilePath.startsWith('http') 
-          ? data.profilePath 
-          : `${IMAGE_BASE_URL}${data.profilePath}`;
+      if (myInfo.profilePath) {
+        const fullPath = myInfo.profilePath.startsWith('http') 
+          ? myInfo.profilePath 
+          : `${IMAGE_BASE_URL}${myInfo.profilePath}`;
         setPreviewImage(fullPath);
       }
       
       setNicknameChecked(true);
       setNicknameMessage("현재 사용 중인 닉네임입니다.");
-    } catch (err) {
-      console.error(err);
-      setError("내 정보를 불러오지 못했습니다.");
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [myInfo]);
 
   const handleNicknameChange = (e) => {
     const value = e.target.value;
@@ -138,6 +119,10 @@ export default function MyPageProfileEdit() {
     }
   };
 
+  
+
+  
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -179,10 +164,6 @@ export default function MyPageProfileEdit() {
       setSubmitting(false);
     }
   };
-
-  if (loading) {
-    return <div className="min-h-screen flex items-center justify-center font-display text-xl text-ink">불러오는 중...</div>;
-  }
 
   return (
     <div className="mypage-main-page">
