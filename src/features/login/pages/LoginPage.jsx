@@ -59,7 +59,7 @@ const LoginPage = () => {
         throw new Error(errorText || "로그인에 실패했습니다.");
       }
 
-      const data = await response.json();
+      const data = await response.json().catch(() => null);
       console.log("로그인 성공:", data);
 
       // 토큰 및 사용자 역할 저장

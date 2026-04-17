@@ -7,6 +7,7 @@ import {
   FileClock,
   House,
   Layers,
+  LogOut,
   Settings,
   Wallet,
   Pencil,
@@ -24,6 +25,7 @@ import {
   fetchFoundationSettlements,
   fetchFoundationRedemptions,
   getFoundationNoFromAccessToken,
+  logoutFoundationAccount,
   requestFoundationRedemption,
   updateFoundationMyInfo,
 } from "../api/foundationApi";
@@ -521,6 +523,14 @@ function FoundationDashboardPage() {
     navigate("/foundation/me");
   };
 
+  const handleLogout = async () => {
+    try {
+      await logoutFoundationAccount();
+    } finally {
+      navigate("/", { replace: true });
+    }
+  };
+
   const handleSettingsChange = (event) => {
     const { name, value } = event.target;
     setSettingsForm((previous) => ({
@@ -799,6 +809,14 @@ function FoundationDashboardPage() {
               <span>기부엔토큰<br />바로가기</span>
             </span>
           </a>
+          <button
+            type="button"
+            className="mt-1 flex w-full items-center gap-2 rounded-2xl px-3 py-2 text-left text-sm text-slate-500 hover:bg-slate-50"
+            onClick={handleLogout}
+          >
+            <LogOut size={14} className="shrink-0" />
+            <span>로그아웃</span>
+          </button>
         </aside>
 
         <section className="space-y-4">

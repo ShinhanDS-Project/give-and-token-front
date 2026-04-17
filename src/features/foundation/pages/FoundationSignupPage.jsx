@@ -1,7 +1,6 @@
 import { useState, useRef } from "react";
 import { Check } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import FoundationChrome from "../components/FoundationChrome";
 import "../css/FoundationSignupPage.css";
 
 const foundationTypeOptions = [
@@ -151,15 +150,13 @@ export default function FoundationSignupPage() {
   }
 
   return (
-    <>
-      <FoundationChrome />
-      <section className="min-h-screen bg-surface text-ink watercolor-bg">
-        <div className="fs-wrapper">
+    <section className="bg-white">
+      <div className="fs-wrapper">
         <div className="mb-10">
-          <h1 className="text-3xl font-black tracking-tight text-ink">
+          <h1 className="text-3xl font-black tracking-tight text-black">
             단체 등록 신청
           </h1>
-          <p className="mt-3 text-sm font-medium text-ink/60">
+          <p className="mt-3 text-sm font-medium text-stone-500">
             정확한 정보를 입력해 주시면 검토 후 승인 여부를 안내해 드립니다.
           </p>
         </div>
@@ -289,8 +286,7 @@ export default function FoundationSignupPage() {
             신청 등록 후 승인 여부가 이메일로 회신됩니다.
           </p>
         </form>
-        </div>
-      </section>
-    </>
+      </div>
+    </section>
   );
 }

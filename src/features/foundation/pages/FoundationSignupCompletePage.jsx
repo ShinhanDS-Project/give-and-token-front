@@ -1,6 +1,5 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { CheckCircle } from "lucide-react";
-import FoundationChrome from "../components/FoundationChrome";
 import "../css/FoundationSignupCompletePage.css";
 
 const REVIEW_STATUS_LABEL = {
@@ -42,17 +41,14 @@ export default function FoundationSignupCompletePage() {
 
   if (!result) {
     return (
-      <>
-        <FoundationChrome />
-        <section className="min-h-screen bg-surface text-ink watercolor-bg">
-          <div className="fsc-wrapper">
+      <section className="bg-white">
+        <div className="fsc-wrapper">
           <p className="fsc-no-data">잘못된 접근입니다.</p>
           <button className="fsc-home-button" onClick={() => navigate("/")}>
             메인으로 돌아가기
           </button>
-          </div>
-        </section>
-      </>
+        </div>
+      </section>
     );
   }
 
@@ -61,10 +57,8 @@ export default function FoundationSignupCompletePage() {
   const statusDescription = REVIEW_STATUS_DESCRIPTION[result.reviewStatus];
 
   return (
-    <>
-      <FoundationChrome />
-      <section className="min-h-screen bg-surface text-ink watercolor-bg">
-        <div className="fsc-wrapper">
+    <section className="bg-white">
+      <div className="fsc-wrapper">
         {/* 완료 헤더 */}
         <div className="fsc-header">
           <div className="fsc-icon-wrap">
@@ -101,8 +95,7 @@ export default function FoundationSignupCompletePage() {
         <button className="fsc-home-button" onClick={() => navigate("/")}>
           메인으로 돌아가기
         </button>
-        </div>
-      </section>
-    </>
+      </div>
+    </section>
   );
 }
