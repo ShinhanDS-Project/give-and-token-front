@@ -201,7 +201,6 @@ export default function DonationApp() {
           <Route path="/signup/google" element={<GoogleSignupPage />} />
 
           {/* 마이페이지 */}
-          <Route path="/mypage" element={<MyPageMain />} />
          <Route path="/mypage" element={<MyPageLayout />}>
             <Route index element={<MyPageMain />} />
             <Route path="profile-edit" element={<MyPageProfileEdit />} />
