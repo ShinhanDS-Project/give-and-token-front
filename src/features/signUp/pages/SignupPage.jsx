@@ -1,7 +1,9 @@
 import React, { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import SignupRoleSelector from "../components/SignupRoleSelector";
 import SignupFormFields from "../components/SignupFormFields";
+import "../styles/SignupPage.css";
 import {
   checkNickname,
   sendEmailVerification,
@@ -209,32 +211,61 @@ const SignupPage = () => {
   };
 
   return (
-      <div>
-        <h1>회원가입</h1>
-        <form onSubmit={handleSubmit}>
+    <div className="signup-container">
+      <motion.div 
+        className="signup-card"
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+      >
+        <div className="signup-header">
+          <h1 className="signup-title">Create Account</h1>
+          <p className="signup-subtitle">하나뿐인 소중한 나눔을 시작해보세요</p>
+        </div>
+        
+        <form onSubmit={handleSubmit} className="signup-form">
           <SignupRoleSelector
               role={formData.role}
               onChange={handleChange}
           />
-          <SignupFormFields
-              role={formData.role}
-              formData={formData}
-              onChange={handleChange}
-              onFileChange={handleFileChange}
-              onNicknameCheck={handleNicknameCheck}
-              onSendVerification={handleSendVerification}
-              verificationCode={verificationCode}
-              onVerificationCodeChange={(e) => setVerificationCode(e.target.value)}
-              onVerifyCode={handleVerifyCode}
-              showVerificationInput={showVerificationInput}
-              isEmailVerified={isEmailVerified}
-              isGoogleSignup={false}
-          />
-          <button type="submit" disabled={submitting}>
-            {submitting ? "가입 중..." : "가입 완료"}
-          </button>
+          
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={formData.role}
+              initial={{ opacity: 0, x: 10 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -10 }}
+              transition={{ duration: 0.3 }}
+            >
+              <SignupFormFields
+                  role={formData.role}
+                  formData={formData}
+                  onChange={handleChange}
+                  onFileChange={handleFileChange}
+                  onNicknameCheck={handleNicknameCheck}
+                  onSendVerification={handleSendVerification}
+                  verificationCode={verificationCode}
+                  onVerificationCodeChange={(e) => setVerificationCode(e.target.value)}
+                  onVerifyCode={handleVerifyCode}
+                  showVerificationInput={showVerificationInput}
+                  isEmailVerified={isEmailVerified}
+                  isGoogleSignup={false}
+              />
+            </motion.div>
+          </AnimatePresence>
+
+          <motion.button 
+            type="submit" 
+            disabled={submitting} 
+            className="submit-button"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            {submitting ? "Processing..." : "가입하기"}
+          </motion.button>
         </form>
-      </div>
+      </motion.div>
+    </div>
   );
 };
 

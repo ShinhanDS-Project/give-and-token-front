@@ -2,28 +2,36 @@
 
 export default function SignupRoleSelector({ role, onChange }) {
   return (
-      <div>
-        <h3>가입 유형 선택</h3>
-        <label>
+    <div className="role-selector-container">
+      <h3 className="role-title">가입 유형 선택</h3>
+      <div className="role-options">
+        <label className="role-option">
           <input
-              type="radio"
-              name="role"
-              value="user"
-              checked={role === "user"}
-              onChange={onChange}
+            type="radio"
+            name="role"
+            value="user"
+            checked={role === "user"}
+            onChange={onChange}
           />
-          일반 사용자
+          <div className="role-card">
+            <span className="role-icon">👤</span>
+            <span className="role-label">일반 사용자</span>
+          </div>
         </label>
-        <label>
+        <label className="role-option">
           <input
-              type="radio"
-              name="role"
-              value="beneficiary"
-              checked={role === "beneficiary"}
-              onChange={onChange}
+            type="radio"
+            name="role"
+            value="beneficiary"
+            checked={role === "beneficiary"}
+            onChange={onChange}
           />
-          수혜자
+          <div className="role-card">
+            <span className="role-icon">🎁</span>
+            <span className="role-label">수혜자</span>
+          </div>
         </label>
       </div>
+    </div>
   );
 }

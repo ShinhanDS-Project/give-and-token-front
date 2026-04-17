@@ -24,7 +24,7 @@ import MyPageProfileEdit from "../myPageUser/pages/MyPageProfileEdit";
 import FoundationRegisterPage from "../foundation/pages/FoundationRegisterPage";
 import FoundationDashboardPage from "../foundation/pages/FoundationDashboardPage";
 import GoogleSignupPage from "../signUp/pages/GoogleSignupPage";
-import BeneficiaryMainPage from "../beneficiary/pages/BeneficiaryMainPage";
+
 
 // [가빈]
 import DonatePage from "./pages/DonatePage";
@@ -35,6 +35,8 @@ import FoundationDetailPage from "../foundation/pages/FoundationDetailPage";
 import FoundationListPage from "../foundation/pages/FoundationListPage";
 import FoundationSignupPage from "../foundation/pages/FoundationSignupPage";
 import FoundationSignupCompletePage from "../foundation/pages/FoundationSignupCompletePage";
+import BeneficiaryMainPage from "../beneficiary/pages/BeneficiaryMainPage";
+import MyPageLayout from '../myPageUser/pages/MyPageLayout';
 
 function HomePage() {
   useEffect(() => {
@@ -201,10 +203,13 @@ export default function DonationApp() {
           <Route path="/signup/google" element={<GoogleSignupPage />} />
 
           {/* 마이페이지 */}
-          <Route path="/mypage" element={<MyPageMain />} />
-          <Route path="/mypage/profile" element={<MyPageProfileEdit />} />
-          <Route path="/mypage/history" element={<MyPageDonationHistory />} />
-          <Route path="/mypage/password" element={<MyPagePasswordChange />} />
+         <Route path="/mypage" element={<MyPageLayout />}>
+            <Route index element={<MyPageMain />} />
+            <Route path="profile-edit" element={<MyPageProfileEdit />} />
+            <Route path="donation-history" element={<MyPageDonationHistory />} />
+            <Route path="password-change" element={<MyPagePasswordChange />} />
+          </Route>
+
 
           <Route path="/foundation/me" element={<FoundationDashboardPage />} />
           <Route path="/foundation/register" element={<FoundationRegisterPage />} />

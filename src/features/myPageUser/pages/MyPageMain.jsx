@@ -1,25 +1,51 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import ProfileCard from "../components/ProfileCardPage";
+import { useNavigate, useOutletContext } from "react-router-dom";
 import WalletCard from "../components/MyWalletCard";
 import DonationSummaryCard from "../components/MyDonationSummaryCard";
 import DonationHistorySection from "../components/DonationHistorySection";
+import MicroTrackingModal from "../components/MicroTrackingModal";
 import "../styles/MyPage.css";
 import {
-  getMyPageInfo,
   getTransactionHistory,
   getWalletInfo,
+  getMicroTracking,
 } from "../api/mypageApi";
 
 export default function MyPageMain() {
   const navigate = useNavigate();
+  const { myInfo } = useOutletContext();
 
-  const [myInfo, setMyInfo] = useState(null);
   const [walletInfo, setWalletInfo] = useState(null);
   const [transactionList, setTransactionList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  const [isTrackingModalOpen, setTrackingModalOpen] = useState(false);
+  const [trackingData, setTrackingData] = useState(null);
+  const [isTrackingLoading, setTrackingLoading] = useState(false);
+
+  const handleOpenTrackingModal = async (campaignNo) => {
+    if (!campaignNo) return;
+    setTrackingLoading(true);
+    setTrackingModalOpen(true);
+    try {
+      const res = await getMicroTracking(campaignNo);
+      setTrackingData(res.data);
+      console.log(res.data);
+    } catch (error) {
+      console.error("Failed to fetch micro tracking data", error);
+      setTrackingData(null); // Clear previous data on error
+    } finally {
+      setTrackingLoading(false);
+    }
+
+  };
+
+  const handleCloseTrackingModal = () => {
+    setTrackingModalOpen(false);
+    setTrackingData(null);
+  };
+  
   // 로그인 여부 확인용 헬퍼 함수
   const getIsLoggedIn = () => {
     const cookies = document.cookie.split(';');
@@ -39,18 +65,17 @@ export default function MyPageMain() {
     // 2. 데이터 불러오기
     fetchMyPageData();
   }, [navigate]);
+
   const fetchMyPageData = async () => {
     try {
       setLoading(true);
       setError("");
 
-      const [myInfoRes, walletRes, transactionRes] = await Promise.all([
-        getMyPageInfo(),
+      const [walletRes, transactionRes] = await Promise.all([
         getWalletInfo(),
         getTransactionHistory(),
       ]);
 
-      setMyInfo(myInfoRes.data);
       setWalletInfo(walletRes.data);
       setTransactionList(transactionRes.data ?? []);
     } catch (err) {
@@ -84,57 +109,49 @@ export default function MyPageMain() {
   }
 
   return (
-    <div className="mypage-main-page">
-      <div className="flex flex-col lg:flex-row gap-16">
-        {/* 좌측 사이드바: 프로필 정보 */}
-        <aside className="w-full lg:w-80 shrink-0">
-          <div className="lg:sticky lg:top-48 h-full">
-            <ProfileCard
-              myInfo={myInfo}
-              onEditProfile={() => navigate("/mypage/profile")}
-              onChangePassword={() => navigate("/mypage/password")}
-              onViewDonations={() => navigate("/mypage/history")}
+    <>
+      <div className="flex-1 min-w-0 space-y-12">
+        {/* 제목 */}
+        <header className="mb-12 relative">
+          <div className="absolute -left-8 top-1/2 -translate-y-1/2 w-1.5 h-16 bg-primary rounded-full hidden lg:block" />
+          <div className="flex items-center gap-3 mb-2">
+            <span className="px-3 py-1 rounded-full bg-orange-100 text-primary text-[10px] font-black uppercase tracking-widest">
+              Member Dashboard
+            </span>
+          </div>
+          <h1 className="text-5xl font-black text-ink tracking-tight !mb-0 !text-left">
+            반가워요, <span className="text-primary">{myInfo?.name || "사용자"}</span>님!
+          </h1>
+          <p className="text-ink/40 mt-4 text-lg font-medium">
+            오늘도 따뜻한 마음을 나눠주셔서 감사합니다.
+          </p>
+        </header>
+
+        {/* 1단: 지갑 정보 */}
+        <div className="w-full">
+          <WalletCard walletInfo={walletInfo} />
+        </div>
+
+        {/* 2단: 요약 & 기부내역 */}
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-stretch">
+          <div className="xl:col-span-4">
+            <DonationSummaryCard summary={summary} />
+          </div>
+          <div className="xl:col-span-8">
+            <DonationHistorySection
+              donationHistory={transactionList}
+              onViewAll={() => navigate("/mypage/donation-history")}
+              onOpenTracking={handleOpenTrackingModal}
             />
-          </div>
-        </aside>
-
-        {/* 우측 메인 콘텐츠 영역 */}
-        <div className="flex-1 min-w-0 space-y-12">
-          {/* 제목: 대폭 강화 (4xl -> 5xl급) */}
-          <header className="mb-12 relative">
-            <div className="absolute -left-8 top-1/2 -translate-y-1/2 w-1.5 h-16 bg-primary rounded-full hidden lg:block" />
-            <div className="flex items-center gap-3 mb-2">
-              <span className="px-3 py-1 rounded-full bg-orange-100 text-primary text-[10px] font-black uppercase tracking-widest">
-                Member Dashboard
-              </span>
-            </div>
-            <h1 className="text-5xl font-black text-ink tracking-tight !mb-0 !text-left">
-              반가워요, <span className="text-primary">{myInfo?.name || "사용자"}</span>님!
-            </h1>
-            <p className="text-ink/40 mt-4 text-lg font-medium">
-              오늘도 따뜻한 마음을 나눠주셔서 감사합니다.
-            </p>
-          </header>
-
-          {/* 1단: 지갑 정보 (상단 배치) */}
-          <div className="w-full">
-            <WalletCard walletInfo={walletInfo} />
-          </div>
-
-          {/* 2단: 요약(좌) & 기부내역(우) */}
-          <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-stretch">
-            <div className="xl:col-span-4">
-              <DonationSummaryCard summary={summary} />
-            </div>
-            <div className="xl:col-span-8">
-              <DonationHistorySection
-                donationHistory={transactionList}
-                onViewAll={() => navigate("/mypage/history")}
-              />
-            </div>
           </div>
         </div>
       </div>
-    </div>
+      <MicroTrackingModal
+        isOpen={isTrackingModalOpen}
+        onClose={handleCloseTrackingModal}
+        trackingData={trackingData}
+        isLoading={isTrackingLoading}
+      />
+    </>
   );
 }

@@ -7,7 +7,7 @@ import {
 } from "../api/authApi";
 import { Mail, User, ShieldCheck, Lock, ArrowRight, RefreshCw, CheckCircle2, AlertCircle } from "lucide-react";
 
-export default function PasswordResetModal({ onClose }) {
+export default function PasswordResetModal({ role, onClose }) {
   const [step, setStep] = useState(1);
 
   const [form, setForm] = useState({
@@ -33,12 +33,13 @@ export default function PasswordResetModal({ onClose }) {
   };
 
   const handleSendCode = async () => {
+    const nameLabel = role === "foundation" ? "단체명" : "성함";
     if (!form.email.trim()) {
       alert("이메일을 입력해 주세요.");
       return;
     }
     if (!form.name.trim()) {
-      alert("성함을 입력해 주세요.");
+      alert(`${nameLabel}을 입력해 주세요.`);
       return;
     }
 
@@ -46,14 +47,17 @@ export default function PasswordResetModal({ onClose }) {
       setSending(true);
       setMessage("");
 
-      const response = await requestPasswordReset({
+      const response = await requestPasswordReset(role, {
         email: form.email,
         name: form.name,
       });
 
       if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(errorText || "가입 정보를 확인할 수 없거나 인증번호 발송에 실패했습니다.");
+        const message = await extractErrorMessage(
+            response,
+            "가입 정보를 확인할 수 없거나 인증번호 발송에 실패했습니다."
+        );
+        throw new Error(message);
       }
 
       setStep(2);
@@ -76,7 +80,7 @@ export default function PasswordResetModal({ onClose }) {
       setVerifying(true);
       setMessage("");
 
-      const response = await verifyEmailCode({
+      const response = await verifyEmailCode(role, {
         email: form.email,
         code: form.code,
       });
@@ -119,7 +123,7 @@ export default function PasswordResetModal({ onClose }) {
       setResetting(true);
       setMessage("");
 
-      const response = await confirmPasswordReset({
+      const response = await confirmPasswordReset(role, {
         email: form.email,
         newPassword: form.newPassword,
         newPassword2: form.newPassword2,
@@ -170,7 +174,7 @@ export default function PasswordResetModal({ onClose }) {
                 <AlertCircle className="text-primary mt-1 shrink-0" size={18} />
                 <p className="text-sm text-slate-500 leading-relaxed">
                   비밀번호를 재설정할 계정의 이메일과<br />
-                  가입 시 등록한 이름을 입력해주세요.
+                  가입 시 등록한 {role === "foundation" ? "단체명" : "이름"}을 입력해주세요.
                 </p>
               </div>
 
@@ -191,7 +195,9 @@ export default function PasswordResetModal({ onClose }) {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1.5 ml-1">이름</label>
+                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1.5 ml-1">
+                    {role === "foundation" ? "단체명" : "이름"}
+                  </label>
                   <div className="relative group">
                     <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary transition-colors" size={20} />
                     <input
@@ -199,7 +205,7 @@ export default function PasswordResetModal({ onClose }) {
                       name="name"
                       value={form.name}
                       onChange={handleChange}
-                      placeholder="성함 입력"
+                      placeholder={role === "foundation" ? "단체명 입력" : "성함 입력"}
                       className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-primary focus:bg-white focus:outline-none transition-all text-slate-700 font-medium"
                     />
                   </div>

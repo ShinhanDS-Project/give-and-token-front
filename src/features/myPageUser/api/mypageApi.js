@@ -1,17 +1,33 @@
 import axios from "axios";
 
-// 모든 요청에 로컬스토리지 토큰이 있으면 헤더에 추가하는 인터셉터 설정
+// 요청 인터셉터 - 토큰 자동 주입
 axios.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem("accessToken");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    (config) => {
+      const token = localStorage.getItem("accessToken");
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+      return config;
+    },
+    (error) => {
+      return Promise.reject(error);
     }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
+);
+
+// 응답 인터셉터 - 401 시 자동 로그아웃
+let isRedirecting = false;
+
+axios.interceptors.response.use(
+    (response) => response,
+    (error) => {
+      if (error.response?.status === 401 && !isRedirecting) {
+        isRedirecting = true;
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('userRole');
+        window.location.href = '/login';
+      }
+      return Promise.reject(error);
+    }
 );
 
 export function getMyPageInfo() {
@@ -30,13 +46,10 @@ export function updateMyPageInfo(formData) {
 }
 
 export function checkNicknameDuplicate(nameHash) {
-  return axios.get(
-      "/api/signup/nickname",
-      {
-        params: { nameHash },
-        withCredentials: true,
-      }
-  );
+  return axios.get("/api/signup/nickname", {
+    params: { nameHash },
+    withCredentials: true,
+  });
 }
 
 export function getWalletInfo() {

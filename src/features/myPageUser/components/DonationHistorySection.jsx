@@ -19,6 +19,7 @@ function formatDate(dateValue) {
 export default function DonationHistorySection({
   donationHistory = [],
   onViewAll,
+  onOpenTracking,
 }) {
   return (
     <section className="mypage-card">
@@ -53,7 +54,7 @@ export default function DonationHistorySection({
                 <div className="flex items-center justify-center md:justify-start gap-3">
                   <span className="flex items-center gap-1 text-[11px] font-bold text-stone-400 bg-surface px-2 py-1 rounded-md border border-line">
                     <Calendar size={12} />
-                    {formatDate(item.transaction?.sentAt || item.transaction?.createdAt)}
+                    {formatDate(item.transaction?.sentAt || item.transaction?.createdAt || item.donatedAt)}
                   </span>
                   <span className="text-[11px] font-bold text-stone-300 uppercase tracking-tighter">#ID-{item.campaignNo}</span>
                 </div>
@@ -61,6 +62,13 @@ export default function DonationHistorySection({
 
               <div className="flex flex-col items-center md:items-end gap-2 mt-4 md:mt-0">
                 <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => onOpenTracking(item.campaignNo)}
+                    className="text-xs font-bold text-primary hover:underline"
+                  >
+                    마이크로트래킹
+                  </button>
                   <span className={`status-tag-clean ${
                     item.transaction?.status === 'SUCCESS' ? 'text-emerald-500 border-emerald-100' : 
                     item.transaction?.status === 'PENDING' ? 'text-amber-500 border-amber-100' : 'text-rose-500 border-rose-100'
@@ -68,7 +76,7 @@ export default function DonationHistorySection({
                     • {item.transaction?.status ?? "PENDING"}
                   </span>
                   <p className="text-2xl font-black text-ink">
-                    {formatAmount(item.transaction?.amount)}
+                    {formatAmount(item.priceamount)}
                   </p>
                 </div>
                 {item.transaction?.txHash && (

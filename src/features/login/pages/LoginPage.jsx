@@ -117,12 +117,14 @@ const LoginPage = () => {
           errorMessage={loginError}
         />
 
-        <LoginLinks
-          onOpenFindEmail={() => setIsEmailFindOpen(true)}
-          onOpenPasswordReset={() => setIsPasswordResetOpen(true)}
-        />
-
         {loginData.role === "user" && (
+          <LoginLinks
+            onOpenFindEmail={() => setIsEmailFindOpen(true)}
+            onOpenPasswordReset={() => setIsPasswordResetOpen(true)}
+          />
+        )}
+
+        {loginData.role !== "foundation" && (
           <>
             <div className="relative flex py-5 items-center">
               <div className="flex-grow border-t border-gray-300"></div>
@@ -133,6 +135,7 @@ const LoginPage = () => {
             </div>
 
             <SocialLoginSection
+              role={loginData.role}
               onGoToSignUp={goToSignUp}
               onGoogleLogin={handleGoogleLogin}
             />
@@ -141,11 +144,17 @@ const LoginPage = () => {
 
         <AnimatePresence>
           {isEmailFindOpen && (
-            <EmailFindModal onClose={() => setIsEmailFindOpen(false)} />
+            <EmailFindModal
+              role={loginData.role}
+              onClose={() => setIsEmailFindOpen(false)}
+            />
           )}
 
           {isPasswordResetOpen && (
-            <PasswordResetModal onClose={() => setIsPasswordResetOpen(false)} />
+            <PasswordResetModal
+              role={loginData.role}
+              onClose={() => setIsPasswordResetOpen(false)}
+            />
           )}
         </AnimatePresence>
       </div>

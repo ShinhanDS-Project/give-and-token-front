@@ -15,7 +15,6 @@ import {
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   fetchFoundationMyInfo,
-  fetchFoundationPublicDetail,
   fetchFoundationMyStats,
   fetchCampaignDetail,
   fetchCampaignDetailPublic,
@@ -27,6 +26,7 @@ import {
   getFoundationNoFromAccessToken,
   logoutFoundationAccount,
   requestFoundationRedemption,
+  updateFoundationPassword,
   updateFoundationMyInfo,
 } from "../api/foundationApi";
 
@@ -235,6 +235,11 @@ function FoundationDashboardPage() {
   const [settingsMessage, setSettingsMessage] = useState("");
   const [settingsError, setSettingsError] = useState("");
   const [settingsEditMode, setSettingsEditMode] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
   const [walletInfo, setWalletInfo] = useState(null);
   const [settlements, setSettlements] = useState([]);
   const [redemptions, setRedemptions] = useState([]);
@@ -335,44 +340,6 @@ function FoundationDashboardPage() {
     }));
     setSettingsInitialized(true);
   }, [foundation, settingsInitialized]);
-
-  useEffect(() => {
-    if (!foundation?.foundationNo) {
-      return;
-    }
-
-    let mounted = true;
-    const loadPublicDetail = async () => {
-      try {
-        const publicDetail = await fetchFoundationPublicDetail(foundation.foundationNo);
-        if (!mounted) {
-          return;
-        }
-
-        setFoundation((previous) => ({
-          ...previous,
-          bankName: publicDetail.bankName ?? previous.bankName,
-          feeRate: publicDetail.feeRate ?? previous.feeRate,
-        }));
-
-        setSettingsForm((previous) => ({
-          ...previous,
-          bankName: publicDetail.bankName ?? previous.bankName,
-          feeRate:
-            publicDetail.feeRate !== undefined && publicDetail.feeRate !== null
-              ? String(publicDetail.feeRate)
-              : previous.feeRate,
-        }));
-      } catch {
-        // /me 응답에 없는 필드를 보완 조회하는 용도라 실패해도 화면은 유지한다.
-      }
-    };
-
-    loadPublicDetail();
-    return () => {
-      mounted = false;
-    };
-  }, [foundation?.foundationNo]);
 
   const summary = useMemo(
     () => {
@@ -551,6 +518,16 @@ function FoundationDashboardPage() {
     setSettingsMessage("");
   };
 
+  const handlePasswordChange = (event) => {
+    const { name, value } = event.target;
+    setPasswordForm((previous) => ({
+      ...previous,
+      [name]: value,
+    }));
+    setSettingsError("");
+    setSettingsMessage("");
+  };
+
   const handleSettingsSubmit = async (event) => {
     event.preventDefault();
 
@@ -568,6 +545,27 @@ function FoundationDashboardPage() {
     if (Number.isNaN(feeRateNumber) || feeRateNumber < 0 || feeRateNumber > 1) {
       setSettingsError("수수료율은 0~1 사이 숫자로 입력해주세요.");
       return;
+    }
+
+    const shouldUpdatePassword =
+      passwordForm.currentPassword.trim() ||
+      passwordForm.newPassword.trim() ||
+      passwordForm.confirmPassword.trim();
+
+    if (shouldUpdatePassword) {
+      if (
+        !passwordForm.currentPassword.trim() ||
+        !passwordForm.newPassword.trim() ||
+        !passwordForm.confirmPassword.trim()
+      ) {
+        setSettingsError("비밀번호 변경 항목을 모두 입력해주세요.");
+        return;
+      }
+
+      if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+        setSettingsError("새 비밀번호와 비밀번호 확인이 일치하지 않습니다.");
+        return;
+      }
     }
 
     try {
@@ -594,8 +592,25 @@ function FoundationDashboardPage() {
             : previous.feeRate,
         profileImageFile: null,
       }));
+
+      if (shouldUpdatePassword) {
+        await updateFoundationPassword({
+          currentPassword: passwordForm.currentPassword,
+          newPassword: passwordForm.newPassword,
+        });
+      }
+
+      setPasswordForm({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
       setSettingsEditMode(false);
-      setSettingsMessage("기부단체 정보가 저장되었습니다.");
+      setSettingsMessage(
+        shouldUpdatePassword
+          ? "기부단체 정보와 비밀번호가 저장되었습니다."
+          : "기부단체 정보가 저장되었습니다.",
+      );
     } catch (error) {
       setSettingsError(error.message || "기부단체 정보 수정에 실패했습니다.");
     } finally {
@@ -606,6 +621,11 @@ function FoundationDashboardPage() {
   const handleStartSettingsEdit = () => {
     setSettingsMessage("");
     setSettingsError("");
+    setPasswordForm({
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+    });
     setSettingsEditMode(true);
   };
 
@@ -625,6 +645,11 @@ function FoundationDashboardPage() {
     setSettingsEditMode(false);
     setSettingsError("");
     setSettingsMessage("");
+    setPasswordForm({
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+    });
   };
 
   const loadSettlementData = async () => {
@@ -737,7 +762,7 @@ function FoundationDashboardPage() {
   return (
     <main className="min-h-screen bg-surface pt-28 text-ink watercolor-bg">
       <div className="mx-auto grid max-w-[1320px] grid-cols-1 gap-6 px-4 py-4 lg:grid-cols-[220px_1fr]">
-        <aside className="storybook-card p-4 lg:mt-[96px]">
+        <aside className="storybook-card self-start p-4 lg:mt-[96px] lg:h-[560px]">
           <div className="mb-6 text-3xl font-black leading-tight text-ink">
             기부엔토큰
           </div>
@@ -1485,6 +1510,47 @@ function FoundationDashboardPage() {
                       </p>
                     )}
                   </label>
+
+                  {settingsEditMode ? (
+                    <div className="grid gap-5 border-t border-slate-100 pt-5 md:grid-cols-3">
+                      <label className="block">
+                        <span className="text-xs font-medium text-slate-400">현재 비밀번호</span>
+                        <input
+                          type="password"
+                          name="currentPassword"
+                          value={passwordForm.currentPassword}
+                          onChange={handlePasswordChange}
+                          autoComplete="current-password"
+                          className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
+                          placeholder="변경 시 입력"
+                        />
+                      </label>
+                      <label className="block">
+                        <span className="text-xs font-medium text-slate-400">새 비밀번호</span>
+                        <input
+                          type="password"
+                          name="newPassword"
+                          value={passwordForm.newPassword}
+                          onChange={handlePasswordChange}
+                          autoComplete="new-password"
+                          className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
+                          placeholder="변경 시 입력"
+                        />
+                      </label>
+                      <label className="block">
+                        <span className="text-xs font-medium text-slate-400">새 비밀번호 확인</span>
+                        <input
+                          type="password"
+                          name="confirmPassword"
+                          value={passwordForm.confirmPassword}
+                          onChange={handlePasswordChange}
+                          autoComplete="new-password"
+                          className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
+                          placeholder="변경 시 입력"
+                        />
+                      </label>
+                    </div>
+                  ) : null}
 
                   {settingsError ? <p className="text-sm text-rose-600">{settingsError}</p> : null}
                   {settingsMessage ? <p className="text-sm text-emerald-600">{settingsMessage}</p> : null}

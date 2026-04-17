@@ -94,8 +94,7 @@ export default function MyPageDonationHistory() {
 
                   <div className="md:col-span-5 flex flex-col md:items-end gap-3">
                     <p className="card-label-clean md:text-right">Donation Amount</p>
-                    <p className="text-3xl font-black text-ink">{formatAmount(item.transaction?.amount)}</p>
-                    
+                    <p className="text-3xl font-black text-ink">{formatAmount(item.amount)}</p>
                     <div className="flex items-center gap-3 mt-2">
                        <span className={`status-tag-clean ${
                         item.transaction?.status === 'SUCCESS' ? 'text-emerald-500 border-emerald-100' : 
