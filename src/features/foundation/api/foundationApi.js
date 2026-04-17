@@ -231,7 +231,24 @@ export async function checkFoundationWalletAvailability() {
 }
 
 export async function fetchFoundationMyInfo() {
-  return requestWithFoundationAuth(`${FOUNDATION_BASE_PATH}/me`);
+  const myInfo = await requestWithFoundationAuth(`${FOUNDATION_BASE_PATH}/me`);
+
+  const foundationNo = myInfo?.foundationNo || getFoundationNoFromAccessToken();
+  if (!foundationNo) {
+    return myInfo;
+  }
+
+  try {
+    const publicDetail = await fetchFoundationPublicDetail(foundationNo);
+    return {
+      ...myInfo,
+      bankName: publicDetail?.bankName ?? myInfo?.bankName ?? "",
+      feeRate: publicDetail?.feeRate ?? myInfo?.feeRate ?? null,
+    };
+  } catch {
+    // /me 조회는 유지하고, 공개 상세 조회 실패 시에는 기존 myInfo를 그대로 사용한다.
+    return myInfo;
+  }
 }
 
 export async function fetchFoundationPublicDetail(foundationNo) {
@@ -334,6 +351,27 @@ export async function updateFoundationMyInfo(formValues) {
   }
 
   return response.json();
+}
+
+export async function updateFoundationPassword({
+  currentPassword,
+  newPassword,
+}) {
+  const response = await fetch(`${FOUNDATION_BASE_PATH}/me/password`, {
+    method: "PATCH",
+    headers: {
+      ...buildAuthorizedHeaders(),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      currentPassword: String(currentPassword || "").trim(),
+      newPassword: String(newPassword || "").trim(),
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(await parseErrorResponse(response));
+  }
 }
 
 export async function fetchFoundationRecentCampaigns({
