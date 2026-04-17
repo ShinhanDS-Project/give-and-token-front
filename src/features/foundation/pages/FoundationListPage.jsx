@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
+import FoundationChrome from "../components/FoundationChrome";
 
 //기부단체의 캠페인 목록 조회 페이지
 export default function FoundationListPage() {
@@ -29,11 +30,13 @@ export default function FoundationListPage() {
     return () => { cancelled = true; };
   }, [foundationNo]);
 
-  if (loading) return <p>불러오는 중...</p>;
-  if (error) return <p>오류: {error}</p>;
+  if (loading) return <><FoundationChrome /><p>불러오는 중...</p></>;
+  if (error) return <><FoundationChrome /><p>오류: {error}</p></>;
 
   return (
-    <div style={{ color: "#1e293b", padding: 32, paddingTop: 144 }}>
+    <>
+      <FoundationChrome />
+      <div style={{ color: "#1e293b", padding: 32, paddingTop: 144 }}>
       <h1>캠페인 전체 목록</h1>
 
       {campaigns.length === 0 ? (
@@ -74,6 +77,7 @@ export default function FoundationListPage() {
           })}
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 }

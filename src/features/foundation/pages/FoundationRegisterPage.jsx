@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import FoundationApplicationForm from "../components/FoundationApplicationForm";
 import FoundationApplicationResult from "../components/FoundationApplicationResult";
+import FoundationChrome from "../components/FoundationChrome";
 import {
   checkBeneficiary,
   checkFoundationWalletAvailability,
@@ -42,6 +43,7 @@ const INITIAL_FORM_VALUES = {
   entryCode: "",
   usePlans: [createUsePlan()],
   detailImageFiles: [createDetailImageItem()],
+  deletedDetailImageNos: [],
 };
 
 function isEmpty(value) {
@@ -82,7 +84,7 @@ export default function FoundationRegisterPage() {
   const [formValues, setFormValues] = useState(INITIAL_FORM_VALUES);
   const [existingRepresentativeImagePath, setExistingRepresentativeImagePath] =
     useState("");
-  const [existingDetailImagePaths, setExistingDetailImagePaths] = useState([]);
+  const [existingDetailImages, setExistingDetailImages] = useState([]);
   const [beneficiaryInfo, setBeneficiaryInfo] = useState(null);
   const [beneficiaryChecked, setBeneficiaryChecked] = useState(false);
   const [beneficiaryStatusMessage, setBeneficiaryStatusMessage] = useState(
@@ -185,11 +187,20 @@ export default function FoundationRegisterPage() {
         setExistingRepresentativeImagePath(
           detail.representativeImagePath || "",
         );
-        setExistingDetailImagePaths(
-          Array.isArray(detail.detailImagePaths)
-            ? detail.detailImagePaths.filter(Boolean)
-            : [],
-        );
+        const detailImages = Array.isArray(detail.images)
+          ? detail.images
+              .filter((image) => String(image?.purpose || "").toUpperCase() === "DETAIL")
+              .map((image) => ({
+                imgNo: image.imgNo,
+                imgPath: image.imgPath,
+              }))
+              .filter((image) => image.imgNo && image.imgPath)
+          : Array.isArray(detail.detailImagePaths)
+            ? detail.detailImagePaths
+                .filter(Boolean)
+                .map((imgPath) => ({ imgNo: null, imgPath }))
+            : [];
+        setExistingDetailImages(detailImages);
 
         setBeneficiaryChecked(Boolean(detail.entryCode));
         setBeneficiaryStatusMessage(
@@ -316,6 +327,22 @@ export default function FoundationRegisterPage() {
           : previousValues.detailImageFiles.filter(
               (imageItem) => imageItem.id !== itemId,
             ),
+    }));
+  };
+
+  const handleRemoveExistingDetailImage = (imageNo) => {
+    if (!imageNo) {
+      return;
+    }
+
+    setExistingDetailImages((previousImages) =>
+      previousImages.filter((image) => image.imgNo !== imageNo),
+    );
+    setFormValues((previousValues) => ({
+      ...previousValues,
+      deletedDetailImageNos: Array.from(
+        new Set([...(previousValues.deletedDetailImageNos || []), imageNo]),
+      ),
     }));
   };
 
@@ -456,44 +483,48 @@ export default function FoundationRegisterPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#f2f4f7] px-4 py-4 text-slate-900">
-      <div className="mx-auto max-w-[1320px] space-y-4">
-        <header className="rounded-[28px] bg-white px-6 py-4">
-          <button
-            type="button"
-            className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100"
-            onClick={() => navigate("/foundation/me")}
-          >
-            <ArrowLeft size={16} />
-            뒤로가기
-          </button>
-        </header>
+    <>
+      <FoundationChrome />
+      <main className="min-h-screen bg-surface px-4 py-4 pt-28 text-ink watercolor-bg">
+        <div className="mx-auto max-w-[1320px] space-y-4">
+          <header className="storybook-card px-6 py-4">
+            <button
+              type="button"
+              className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100"
+              onClick={() => navigate("/foundation/me")}
+            >
+              <ArrowLeft size={16} />
+              뒤로가기
+            </button>
+          </header>
 
-        <section className="rounded-[28px] bg-white p-2 md:p-4">
-          <FoundationApplicationForm
-            formValues={formValues}
-            beneficiaryInfo={beneficiaryInfo}
-            beneficiaryChecked={beneficiaryChecked}
-            beneficiaryStatusMessage={beneficiaryStatusMessage}
-            submitting={submitting}
-            errorMessage={errorMessage}
-            onChange={handleChange}
-            onFileChange={handleFileChange}
-            onDetailImageChange={handleDetailImageChange}
-            onAddUsePlan={handleAddUsePlan}
-            onRemoveUsePlan={handleRemoveUsePlan}
-            onUsePlanChange={handleUsePlanChange}
-            onAddDetailImage={handleAddDetailImage}
-            onRemoveDetailImage={handleRemoveDetailImage}
-            onBeneficiaryCheck={handleBeneficiaryCheck}
-            onCancel={handleCancel}
-            isEditMode={isEditMode}
-            existingRepresentativeImagePath={existingRepresentativeImagePath}
-            existingDetailImagePaths={existingDetailImagePaths}
-            onSubmit={handleSubmit}
-          />
-        </section>
-      </div>
-    </main>
+          <section className="storybook-card p-2 md:p-4">
+            <FoundationApplicationForm
+              formValues={formValues}
+              beneficiaryInfo={beneficiaryInfo}
+              beneficiaryChecked={beneficiaryChecked}
+              beneficiaryStatusMessage={beneficiaryStatusMessage}
+              submitting={submitting}
+              errorMessage={errorMessage}
+              onChange={handleChange}
+              onFileChange={handleFileChange}
+              onDetailImageChange={handleDetailImageChange}
+              onAddUsePlan={handleAddUsePlan}
+              onRemoveUsePlan={handleRemoveUsePlan}
+              onUsePlanChange={handleUsePlanChange}
+              onAddDetailImage={handleAddDetailImage}
+              onRemoveDetailImage={handleRemoveDetailImage}
+              onBeneficiaryCheck={handleBeneficiaryCheck}
+              onCancel={handleCancel}
+              isEditMode={isEditMode}
+              existingRepresentativeImagePath={existingRepresentativeImagePath}
+              existingDetailImages={existingDetailImages}
+              onRemoveExistingDetailImage={handleRemoveExistingDetailImage}
+              onSubmit={handleSubmit}
+            />
+          </section>
+        </div>
+      </main>
+    </>
   );
 }

@@ -7,6 +7,7 @@ import {
   FileClock,
   House,
   Layers,
+  LogOut,
   Settings,
   Wallet,
   Pencil,
@@ -14,20 +15,23 @@ import {
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   fetchFoundationMyInfo,
-  fetchFoundationPublicDetail,
   fetchFoundationMyStats,
   fetchCampaignDetail,
+  fetchCampaignDetailPublic,
   fetchPendingCampaignEditDetail,
   fetchFoundationRecentCampaigns,
   fetchFoundationWalletInfo,
   fetchFoundationSettlements,
   fetchFoundationRedemptions,
   getFoundationNoFromAccessToken,
+  logoutFoundationAccount,
   requestFoundationRedemption,
+  updateFoundationPassword,
   updateFoundationMyInfo,
 } from "../api/foundationApi";
 
-const BRAND_COLOR = "#FFF200";
+const BRAND_COLOR = "#FF8A65";
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/$/, "");
 
 function formatWon(value) {
   return Number(value || 0).toLocaleString("ko-KR");
@@ -51,15 +55,96 @@ function toImageSrc(path) {
     return "";
   }
 
-  if (path.startsWith("http://") || path.startsWith("https://")) {
-    return path;
+  const rawPath = String(path).trim();
+  if (!rawPath) return "";
+  if (/^(https?:\/\/|data:image\/|blob:)/i.test(rawPath)) return rawPath;
+
+  const noFileScheme = rawPath.replace(/^file:(\/\/\/|\/\/)?/i, "");
+  const normalized = noFileScheme.replace(/\\/g, "/");
+  const uploadMatch = normalized.match(/(?:^|\/)uploads\/(.+)$/i);
+  if (uploadMatch) {
+    const uploadPath = `/uploads/${uploadMatch[1].replace(/^\/+/, "")}`;
+    return API_BASE_URL ? `${API_BASE_URL}${uploadPath}` : uploadPath;
   }
 
-  if (path.startsWith("/")) {
-    return path;
-  }
+  if (/^[a-zA-Z]:\//.test(normalized)) return "";
+  if (!API_BASE_URL) return rawPath;
+  return rawPath.startsWith("/") ? `${API_BASE_URL}${rawPath}` : `${API_BASE_URL}/${rawPath}`;
+}
 
-  return `/${path}`;
+function normalizeCampaignDetail(detail, fallbackCampaign) {
+  const safeDetail = detail || {};
+  const imagesFromSummary = Array.isArray(safeDetail.images)
+    ? safeDetail.images.map((item) => item?.imgPath || item?.imagePath || item?.path || "")
+    : [];
+  const detailImages = Array.isArray(safeDetail.detailImagePaths)
+    ? safeDetail.detailImagePaths
+    : Array.isArray(safeDetail.detailImages)
+      ? safeDetail.detailImages.map((item) =>
+          typeof item === "string"
+            ? item
+            : item?.imagePath || item?.path || item?.url || "",
+        )
+      : imagesFromSummary.length > 0
+        ? imagesFromSummary
+      : [];
+
+  return {
+    ...fallbackCampaign,
+    ...safeDetail,
+    title: safeDetail.title || safeDetail.campaignTitle || fallbackCampaign?.title || "",
+    description:
+      safeDetail.description ||
+      safeDetail.historyDescription ||
+      safeDetail.content ||
+      fallbackCampaign?.description ||
+      "",
+    representativeImagePath:
+      safeDetail.representativeImagePath ||
+      safeDetail.imagePath ||
+      safeDetail.thumbnailPath ||
+      safeDetail.mainImagePath ||
+      fallbackCampaign?.imagePath ||
+      fallbackCampaign?.representativeImagePath ||
+      "",
+    detailImagePaths: detailImages.filter(Boolean),
+    rejectReason:
+      safeDetail.rejectReason ||
+      safeDetail.rejectionReason ||
+      fallbackCampaign?.rejectReason ||
+      "",
+    campaignStatus:
+      safeDetail.campaignStatus || safeDetail.status || fallbackCampaign?.campaignStatus,
+    approvalStatus:
+      safeDetail.approvalStatus || safeDetail.reviewStatus || fallbackCampaign?.approvalStatus,
+  };
+}
+
+function mergeCampaignDetailSources(sources, fallbackCampaign) {
+  const validSources = (sources || []).filter(Boolean);
+  const merged = validSources.reduce((acc, item) => ({ ...acc, ...item }), {});
+  const mergedDetailImages = validSources.flatMap((item) => {
+    if (Array.isArray(item?.detailImagePaths)) return item.detailImagePaths;
+    if (Array.isArray(item?.detailImages)) {
+      return item.detailImages.map((image) =>
+        typeof image === "string"
+          ? image
+          : image?.imagePath || image?.path || image?.url || "",
+      );
+    }
+    return [];
+  }).filter(Boolean);
+
+  return normalizeCampaignDetail(
+    {
+      ...merged,
+      detailImagePaths:
+        mergedDetailImages.length > 0
+          ? Array.from(new Set(mergedDetailImages))
+          : merged.detailImagePaths,
+    },
+    fallbackCampaign,
+  );
 }
 
 function formatStatusLabel(value) {
@@ -150,6 +235,11 @@ function FoundationDashboardPage() {
   const [settingsMessage, setSettingsMessage] = useState("");
   const [settingsError, setSettingsError] = useState("");
   const [settingsEditMode, setSettingsEditMode] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
   const [walletInfo, setWalletInfo] = useState(null);
   const [settlements, setSettlements] = useState([]);
   const [redemptions, setRedemptions] = useState([]);
@@ -199,7 +289,7 @@ function FoundationDashboardPage() {
           await Promise.all([
             fetchFoundationMyInfo(),
             fetchFoundationMyStats(),
-            fetchFoundationRecentCampaigns({ size: 50 }),
+            fetchFoundationRecentCampaigns({ size: 500 }),
           ]);
 
         if (!mounted) {
@@ -251,51 +341,25 @@ function FoundationDashboardPage() {
     setSettingsInitialized(true);
   }, [foundation, settingsInitialized]);
 
-  useEffect(() => {
-    if (!foundation?.foundationNo) {
-      return;
-    }
-
-    let mounted = true;
-    const loadPublicDetail = async () => {
-      try {
-        const publicDetail = await fetchFoundationPublicDetail(foundation.foundationNo);
-        if (!mounted) {
-          return;
-        }
-
-        setFoundation((previous) => ({
-          ...previous,
-          bankName: publicDetail.bankName ?? previous.bankName,
-          feeRate: publicDetail.feeRate ?? previous.feeRate,
-        }));
-
-        setSettingsForm((previous) => ({
-          ...previous,
-          bankName: publicDetail.bankName ?? previous.bankName,
-          feeRate:
-            publicDetail.feeRate !== undefined && publicDetail.feeRate !== null
-              ? String(publicDetail.feeRate)
-              : previous.feeRate,
-        }));
-      } catch {
-        // /me 응답에 없는 필드를 보완 조회하는 용도라 실패해도 화면은 유지한다.
-      }
-    };
-
-    loadPublicDetail();
-    return () => {
-      mounted = false;
-    };
-  }, [foundation?.foundationNo]);
-
   const summary = useMemo(
-    () => ({
-      foundationName: foundation?.foundationName || "단체명",
-      activeCount: stats?.activeCampaignCount ?? 0,
-      monthlyAmount: stats?.thisMonthDonationAmount ?? 0,
-    }),
-    [foundation, stats],
+    () => {
+      const activeCampaignsFromList = campaigns.filter((campaign) =>
+        isMatchCampaignFilter(campaign, "active"),
+      ).length;
+      const statsActiveCount = Number(stats?.activeCampaignCount ?? 0);
+      const monthlyAmount =
+        stats?.thisMonthDonationAmount ??
+        stats?.monthlyDonationAmount ??
+        stats?.thisMonthAmount ??
+        0;
+
+      return {
+        foundationName: foundation?.foundationName || "단체명",
+        activeCount: Math.max(statsActiveCount, activeCampaignsFromList),
+        monthlyAmount,
+      };
+    },
+    [campaigns, foundation, stats],
   );
 
   const recentCampaigns = useMemo(() => campaigns.slice(0, 2), [campaigns]);
@@ -307,12 +371,38 @@ function FoundationDashboardPage() {
       ),
     [campaignFilter, campaigns],
   );
+  const selectedCampaignFromList = useMemo(
+    () => campaigns.find((item) => item.campaignNo === selectedCampaignNo) || null,
+    [campaigns, selectedCampaignNo],
+  );
+  const campaignDetailForView = useMemo(
+    () => mergeCampaignDetailSources([campaignDetail], selectedCampaignFromList),
+    [campaignDetail, selectedCampaignFromList],
+  );
 
   const canEditPendingCampaign = useMemo(() => {
-    const approval = String(campaignDetail?.approvalStatus || "").toUpperCase();
-    const status = String(campaignDetail?.campaignStatus || "").toUpperCase();
+    const approval = String(campaignDetailForView?.approvalStatus || "").toUpperCase();
+    const status = String(campaignDetailForView?.campaignStatus || "").toUpperCase();
     return approval === "PENDING" && status === "PENDING";
-  }, [campaignDetail]);
+  }, [campaignDetailForView]);
+
+  const isRejectedCampaignDetail = useMemo(() => {
+    const approval = String(
+      campaignDetailForView?.approvalStatus || "",
+    ).toUpperCase();
+    const status = String(
+      campaignDetailForView?.campaignStatus || "",
+    ).toUpperCase();
+    return approval === "REJECTED" || status === "REJECTED" || status === "CANCELLED";
+  }, [campaignDetailForView]);
+
+  const campaignRejectReason = useMemo(
+    () =>
+      campaignDetailForView?.rejectReason ||
+      campaignDetailForView?.rejectionReason ||
+      "",
+    [campaignDetailForView],
+  );
 
   const isPendingCampaign = (campaign) => {
     const approval = String(campaign?.approvalStatus || "").toUpperCase();
@@ -342,19 +432,39 @@ function FoundationDashboardPage() {
       }
 
       const isPendingHint = campaign ? isPendingCampaign(campaign) : false;
-      let detail = null;
+      const detailCandidates = [];
 
       if (isPendingHint) {
-        detail = await fetchPendingCampaignEditDetail(campaignNo);
-      } else {
         try {
-          detail = await fetchCampaignDetail(campaignNo);
+          detailCandidates.push(await fetchPendingCampaignEditDetail(campaignNo));
         } catch {
-          detail = await fetchPendingCampaignEditDetail(campaignNo);
+          // keep going
         }
       }
 
-      setCampaignDetail(detail);
+      try {
+        detailCandidates.push(await fetchCampaignDetail(campaignNo));
+      } catch {
+        // keep going
+      }
+
+      try {
+        detailCandidates.push(await fetchPendingCampaignEditDetail(campaignNo));
+      } catch {
+        // keep going
+      }
+
+      try {
+        detailCandidates.push(await fetchCampaignDetailPublic(campaignNo));
+      } catch {
+        // keep going
+      }
+
+      if (detailCandidates.length === 0 && !campaign) {
+        throw new Error("캠페인 상세를 불러오지 못했습니다.");
+      }
+
+      setCampaignDetail(mergeCampaignDetailSources(detailCandidates, campaign));
     } catch (error) {
       setCampaignDetailError(
         error.message || "캠페인 상세를 불러오지 못했습니다.",
@@ -380,6 +490,14 @@ function FoundationDashboardPage() {
     navigate("/foundation/me");
   };
 
+  const handleLogout = async () => {
+    try {
+      await logoutFoundationAccount();
+    } finally {
+      navigate("/", { replace: true });
+    }
+  };
+
   const handleSettingsChange = (event) => {
     const { name, value } = event.target;
     setSettingsForm((previous) => ({
@@ -395,6 +513,16 @@ function FoundationDashboardPage() {
     setSettingsForm((previous) => ({
       ...previous,
       profileImageFile: nextFile,
+    }));
+    setSettingsError("");
+    setSettingsMessage("");
+  };
+
+  const handlePasswordChange = (event) => {
+    const { name, value } = event.target;
+    setPasswordForm((previous) => ({
+      ...previous,
+      [name]: value,
     }));
     setSettingsError("");
     setSettingsMessage("");
@@ -417,6 +545,27 @@ function FoundationDashboardPage() {
     if (Number.isNaN(feeRateNumber) || feeRateNumber < 0 || feeRateNumber > 1) {
       setSettingsError("수수료율은 0~1 사이 숫자로 입력해주세요.");
       return;
+    }
+
+    const shouldUpdatePassword =
+      passwordForm.currentPassword.trim() ||
+      passwordForm.newPassword.trim() ||
+      passwordForm.confirmPassword.trim();
+
+    if (shouldUpdatePassword) {
+      if (
+        !passwordForm.currentPassword.trim() ||
+        !passwordForm.newPassword.trim() ||
+        !passwordForm.confirmPassword.trim()
+      ) {
+        setSettingsError("비밀번호 변경 항목을 모두 입력해주세요.");
+        return;
+      }
+
+      if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+        setSettingsError("새 비밀번호와 비밀번호 확인이 일치하지 않습니다.");
+        return;
+      }
     }
 
     try {
@@ -443,8 +592,25 @@ function FoundationDashboardPage() {
             : previous.feeRate,
         profileImageFile: null,
       }));
+
+      if (shouldUpdatePassword) {
+        await updateFoundationPassword({
+          currentPassword: passwordForm.currentPassword,
+          newPassword: passwordForm.newPassword,
+        });
+      }
+
+      setPasswordForm({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
       setSettingsEditMode(false);
-      setSettingsMessage("기부단체 정보가 저장되었습니다.");
+      setSettingsMessage(
+        shouldUpdatePassword
+          ? "기부단체 정보와 비밀번호가 저장되었습니다."
+          : "기부단체 정보가 저장되었습니다.",
+      );
     } catch (error) {
       setSettingsError(error.message || "기부단체 정보 수정에 실패했습니다.");
     } finally {
@@ -455,6 +621,11 @@ function FoundationDashboardPage() {
   const handleStartSettingsEdit = () => {
     setSettingsMessage("");
     setSettingsError("");
+    setPasswordForm({
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+    });
     setSettingsEditMode(true);
   };
 
@@ -474,6 +645,11 @@ function FoundationDashboardPage() {
     setSettingsEditMode(false);
     setSettingsError("");
     setSettingsMessage("");
+    setPasswordForm({
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+    });
   };
 
   const loadSettlementData = async () => {
@@ -560,7 +736,7 @@ function FoundationDashboardPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-[#f2f4f7] p-8 text-sm text-slate-600">
+      <main className="min-h-screen bg-surface p-8 pt-28 text-sm text-ink">
         불러오는 중...
       </main>
     );
@@ -568,8 +744,8 @@ function FoundationDashboardPage() {
 
   if (errorMessage) {
     return (
-      <main className="min-h-screen bg-[#f2f4f7] p-8">
-        <div className="mx-auto max-w-4xl rounded-3xl border border-rose-200 bg-white p-6">
+      <main className="min-h-screen bg-surface p-8 pt-28">
+        <div className="storybook-card mx-auto max-w-4xl p-6">
           <p className="text-sm text-rose-600">{errorMessage}</p>
           <button
             type="button"
@@ -584,10 +760,10 @@ function FoundationDashboardPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#f7f5f2] text-slate-900">
-      <div className="mx-auto grid max-w-[1320px] grid-cols-1 gap-6 px-4 py-4 lg:grid-cols-[160px_1fr]">
-        <aside className="rounded-[28px] bg-white p-4">
-          <div className="mb-8 flex items-center gap-2 text-sm font-bold">
+    <main className="min-h-screen bg-surface pt-28 text-ink watercolor-bg">
+      <div className="mx-auto grid max-w-[1320px] grid-cols-1 gap-6 px-4 py-4 lg:grid-cols-[220px_1fr]">
+        <aside className="storybook-card self-start p-4 lg:mt-[96px] lg:h-[560px]">
+          <div className="mb-6 text-3xl font-black leading-tight text-ink">
             기부엔토큰
           </div>
 
@@ -649,19 +825,37 @@ function FoundationDashboardPage() {
               </span>
             </button>
           </nav>
+          <a
+            href="http://localhost:5173/"
+            className="mt-2 flex w-full rounded-2xl px-3 py-2 text-left text-sm text-slate-500 hover:bg-slate-50"
+          >
+            <span className="flex items-center gap-2 leading-tight">
+              <House size={14} className="shrink-0" />
+              <span>기부엔토큰<br />바로가기</span>
+            </span>
+          </a>
+          <button
+            type="button"
+            className="mt-1 flex w-full items-center gap-2 rounded-2xl px-3 py-2 text-left text-sm text-slate-500 hover:bg-slate-50"
+            onClick={handleLogout}
+          >
+            <LogOut size={14} className="shrink-0" />
+            <span>로그아웃</span>
+          </button>
         </aside>
 
         <section className="space-y-4">
-          <header className="flex items-center justify-between rounded-[28px] bg-white px-6 py-4">
-            <h1 className="text-lg font-bold">기부단체 마이페이지</h1>
+          <header className="flex items-center justify-between px-2 py-4">
+            <h1 className="text-5xl font-black leading-tight text-ink">
+              기부단체 마이페이지
+            </h1>
           </header>
 
           {activeMenu === "home" ? (
             <>
               <div className="grid gap-5 xl:grid-cols-[360px_1fr]">
                 <article
-                  className="rounded-[28px] p-6 text-slate-900 shadow-xl"
-                  style={{ background: "linear-gradient(135deg, #eef8a3 0%, #E0F218 100%)" }}
+                  className="rounded-[2rem] bg-primary p-6 text-white shadow-xl shadow-primary/20"
                 >
                   <p className="text-xs text-slate-700">반갑습니다</p>
                   <h2 className="mt-2 text-2xl font-bold leading-tight">
@@ -684,22 +878,22 @@ function FoundationDashboardPage() {
                   </div>
                 </article>
 
-                <article className="rounded-[28px] bg-white p-5">
+                <article className="storybook-card p-5">
                   <div className="mb-4 flex items-center justify-between">
-                    <h3 className="text-sm font-bold text-slate-700">
+                    <h3 className="text-sm font-bold text-ink">
                       최근 신청 현황
                     </h3>
                     <button
                       type="button"
                       className="text-xs font-semibold text-slate-700"
-                      style={{ color: "#7c8600" }}
+                      style={{ color: BRAND_COLOR }}
                       onClick={() => handleOpenMenu("campaign")}
                     >
                       전체보기
                     </button>
                   </div>
 
-                  <div className="grid gap-4 md:grid-cols-2">
+                  <div className="grid gap-4">
                     {recentCampaigns.length === 0 ? (
                       <div className="rounded-2xl border border-dashed border-slate-200 p-4 text-sm text-slate-500">
                         최근 신청한 캠페인이 없습니다.
@@ -769,7 +963,7 @@ function FoundationDashboardPage() {
           ) : null}
 
           {activeMenu === "campaign" ? (
-            <section className="rounded-[28px] bg-white p-6">
+            <section className="storybook-card p-6">
               {selectedCampaignNo ? (
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
@@ -803,30 +997,36 @@ function FoundationDashboardPage() {
                       상세 불러오는 중...
                     </p>
                   ) : null}
-                  {campaignDetailError ? (
+                  {campaignDetailError && !campaignDetailForView ? (
                     <p className="text-sm text-rose-600">
                       {campaignDetailError}
                     </p>
                   ) : null}
 
-                  {campaignDetail ? (
+                  {campaignDetailForView ? (
                     <article className="space-y-6 rounded-2xl border border-slate-200 p-5">
+                      {isRejectedCampaignDetail ? (
+                        <p className="text-sm font-semibold text-rose-600">
+                          반려 사유: {campaignRejectReason || "반려 사유가 등록되지 않았습니다."}
+                        </p>
+                      ) : null}
+
                       <header className="space-y-3">
                         <div className="flex flex-wrap items-center justify-between gap-2">
-                          <h3 className="text-2xl font-bold">{campaignDetail.title}</h3>
+                          <h3 className="text-2xl font-bold">{campaignDetailForView.title}</h3>
                           <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
-                            {formatStatusLabel(campaignDetail.campaignStatus || campaignDetail.approvalStatus)}
+                            {formatStatusLabel(campaignDetailForView.campaignStatus || campaignDetailForView.approvalStatus)}
                           </span>
                         </div>
                       </header>
 
-                      {campaignDetail.representativeImagePath ? (
+                      {campaignDetailForView.representativeImagePath ? (
                         <div className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
                           <img
                             src={toImageSrc(
-                              campaignDetail.representativeImagePath,
+                              campaignDetailForView.representativeImagePath,
                             )}
-                            alt={campaignDetail.title}
+                            alt={campaignDetailForView.title}
                             className="h-72 w-full object-cover"
                           />
                         </div>
@@ -834,14 +1034,14 @@ function FoundationDashboardPage() {
 
                       <section className="space-y-2">
                         <h4 className="text-base font-bold">상세 설명</h4>
-                        <p className="text-sm leading-6 text-slate-600">{campaignDetail.description || "-"}</p>
+                        <p className="text-sm leading-6 text-slate-600">{campaignDetailForView.description || "-"}</p>
                       </section>
 
-                      {campaignDetail.detailImagePaths?.length > 0 ? (
+                      {campaignDetailForView.detailImagePaths?.length > 0 ? (
                         <section className="space-y-2">
                           <h4 className="text-base font-bold">상세 이미지</h4>
                           <div className="grid gap-3 md:grid-cols-3">
-                          {campaignDetail.detailImagePaths.map(
+                          {campaignDetailForView.detailImagePaths.map(
                             (imagePath, index) => (
                               <div
                                 key={`${imagePath}-${index}`}
@@ -861,52 +1061,52 @@ function FoundationDashboardPage() {
 
                       <div className="grid gap-3 md:grid-cols-2">
                         <div className="rounded-xl bg-slate-50 p-3 text-sm">
-                          카테고리: {campaignDetail.category || "-"}
+                          카테고리: {campaignDetailForView.category || "-"}
                         </div>
                         <div className="rounded-xl bg-slate-50 p-3 text-sm">
-                          수혜자 코드: {campaignDetail.entryCode || "-"}
+                          수혜자 코드: {campaignDetailForView.entryCode || "-"}
                         </div>
                         <div className="rounded-xl bg-slate-50 p-3 text-sm">
-                          목표 금액: {formatWon(campaignDetail.targetAmount)}원
+                          목표 금액: {formatWon(campaignDetailForView.targetAmount)}원
                         </div>
                         <div className="rounded-xl bg-slate-50 p-3 text-sm">
-                          현재 금액: {formatWon(campaignDetail.currentAmount)}원
+                          현재 금액: {formatWon(campaignDetailForView.currentAmount)}원
                         </div>
                         <div className="rounded-xl bg-slate-50 p-3 text-sm">
                           모집 시작일:{" "}
-                          {campaignDetail.startAt?.slice?.(0, 10) || "-"}
+                          {campaignDetailForView.startAt?.slice?.(0, 10) || "-"}
                         </div>
                         <div className="rounded-xl bg-slate-50 p-3 text-sm">
                           모집 종료일:{" "}
-                          {campaignDetail.endAt?.slice?.(0, 10) || "-"}
+                          {campaignDetailForView.endAt?.slice?.(0, 10) || "-"}
                         </div>
                         <div className="rounded-xl bg-slate-50 p-3 text-sm">
                           사업 시작일:{" "}
-                          {campaignDetail.usageStartAt?.slice?.(0, 10) || "-"}
+                          {campaignDetailForView.usageStartAt?.slice?.(0, 10) || "-"}
                         </div>
                         <div className="rounded-xl bg-slate-50 p-3 text-sm">
                           사업 종료일:{" "}
-                          {campaignDetail.usageEndAt?.slice?.(0, 10) || "-"}
+                          {campaignDetailForView.usageEndAt?.slice?.(0, 10) || "-"}
                         </div>
                         <div className="rounded-xl bg-slate-50 p-3 text-sm">
-                          진행률: {campaignDetail.progressPercent ?? 0}%
+                          진행률: {campaignDetailForView.progressPercent ?? 0}%
                         </div>
                         <div className="rounded-xl bg-slate-50 p-3 text-sm">
-                          남은 기간: D-{campaignDetail.daysLeft ?? 0}
+                          남은 기간: D-{campaignDetailForView.daysLeft ?? 0}
                         </div>
                         <div className="rounded-xl bg-slate-50 p-3 text-sm">
-                          지갑 주소: {campaignDetail.walletAddress || "-"}
+                          지갑 주소: {campaignDetailForView.walletAddress || "-"}
                         </div>
                         <div className="rounded-xl bg-slate-50 p-3 text-sm">
-                          상태: {formatStatusLabel(campaignDetail.campaignStatus || campaignDetail.approvalStatus)}
+                          상태: {formatStatusLabel(campaignDetailForView.campaignStatus || campaignDetailForView.approvalStatus)}
                         </div>
                       </div>
 
                       <section className="space-y-2">
                         <h4 className="text-base font-bold">지출 계획</h4>
-                        {campaignDetail.usePlans?.length > 0 ? (
+                        {campaignDetailForView.usePlans?.length > 0 ? (
                           <div className="space-y-2">
-                            {campaignDetail.usePlans.map((plan) => (
+                            {campaignDetailForView.usePlans.map((plan) => (
                               <div
                                 key={plan.usePlanNo || plan.planContent}
                                 className="rounded-xl border border-slate-200 p-3 text-sm"
@@ -929,7 +1129,7 @@ function FoundationDashboardPage() {
                     </article>
                   ) : null}
 
-                  {!campaignDetailLoading && !campaignDetailError && !campaignDetail ? (
+                  {!campaignDetailLoading && !campaignDetailError && !campaignDetailForView ? (
                     <div className="rounded-2xl border border-dashed border-slate-200 p-6 text-sm text-slate-500">
                       상세 정보를 준비 중입니다. 잠시 후 다시 시도해주세요.
                     </div>
@@ -1032,7 +1232,7 @@ function FoundationDashboardPage() {
           ) : null}
 
           {activeMenu === "settlement" ? (
-            <section className="rounded-[28px] bg-white p-6">
+            <section className="storybook-card p-6">
               <div className="mb-5 flex items-center justify-between">
                 <div>
                   <h2 className="text-xl font-bold">정산 관리</h2>
@@ -1310,6 +1510,47 @@ function FoundationDashboardPage() {
                       </p>
                     )}
                   </label>
+
+                  {settingsEditMode ? (
+                    <div className="grid gap-5 border-t border-slate-100 pt-5 md:grid-cols-3">
+                      <label className="block">
+                        <span className="text-xs font-medium text-slate-400">현재 비밀번호</span>
+                        <input
+                          type="password"
+                          name="currentPassword"
+                          value={passwordForm.currentPassword}
+                          onChange={handlePasswordChange}
+                          autoComplete="current-password"
+                          className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
+                          placeholder="변경 시 입력"
+                        />
+                      </label>
+                      <label className="block">
+                        <span className="text-xs font-medium text-slate-400">새 비밀번호</span>
+                        <input
+                          type="password"
+                          name="newPassword"
+                          value={passwordForm.newPassword}
+                          onChange={handlePasswordChange}
+                          autoComplete="new-password"
+                          className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
+                          placeholder="변경 시 입력"
+                        />
+                      </label>
+                      <label className="block">
+                        <span className="text-xs font-medium text-slate-400">새 비밀번호 확인</span>
+                        <input
+                          type="password"
+                          name="confirmPassword"
+                          value={passwordForm.confirmPassword}
+                          onChange={handlePasswordChange}
+                          autoComplete="new-password"
+                          className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
+                          placeholder="변경 시 입력"
+                        />
+                      </label>
+                    </div>
+                  ) : null}
 
                   {settingsError ? <p className="text-sm text-rose-600">{settingsError}</p> : null}
                   {settingsMessage ? <p className="text-sm text-emerald-600">{settingsMessage}</p> : null}

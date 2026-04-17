@@ -1,0 +1,175 @@
+.foundation-chrome {
+  position: fixed;
+  z-index: 60;
+  top: 128px;
+  left: 24px;
+  width: 220px;
+  min-height: calc(100vh - 152px);
+  padding: 24px;
+  border: 4px solid var(--color-line);
+  border-radius: 2rem;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 30px 60px -15px rgba(255, 138, 101, 0.16);
+  backdrop-filter: blur(18px);
+}
+
+.foundation-chrome h1 {
+  margin: 0;
+  color: var(--color-ink);
+  font-size: 2rem;
+  font-weight: 900;
+  line-height: 1.15;
+  letter-spacing: 0;
+}
+
+.foundation-chrome-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 24px;
+}
+
+.foundation-chrome-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 36px;
+  padding: 8px 12px;
+  border-radius: 1rem;
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.foundation-chrome-link svg {
+  flex-shrink: 0;
+}
+
+.foundation-chrome-link:hover {
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+.foundation-chrome ~ main,
+.foundation-chrome ~ section,
+.foundation-chrome ~ div {
+  padding-left: 268px !important;
+}
+
+.foundation-chrome ~ main,
+.foundation-chrome ~ section,
+.foundation-chrome ~ div {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 18% 18%, rgba(255, 138, 101, 0.1) 0%, transparent 34%),
+    radial-gradient(circle at 86% 64%, rgba(149, 117, 205, 0.1) 0%, transparent 34%),
+    var(--color-surface);
+  color: var(--color-ink);
+}
+
+.foundation-chrome ~ main > p,
+.foundation-chrome ~ p {
+  margin: 0;
+  padding-top: 8rem;
+  text-align: center;
+  color: rgba(78, 52, 46, 0.65);
+  font-weight: 700;
+}
+
+.foundation-chrome ~ main > div[style],
+.foundation-chrome ~ div[style] {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 8rem 1rem 4rem !important;
+  color: var(--color-ink) !important;
+}
+
+.foundation-chrome ~ main section[style],
+.foundation-chrome ~ main article,
+.foundation-chrome ~ main form.fs-card,
+.foundation-chrome ~ section .fsc-card {
+  border: 4px solid var(--color-line) !important;
+  border-radius: 2rem !important;
+  background: #fff !important;
+  box-shadow: 0 30px 60px -15px rgba(255, 138, 101, 0.12);
+}
+
+.foundation-chrome ~ main section[style] {
+  padding: 1.5rem !important;
+}
+
+.foundation-chrome ~ main article {
+  overflow: hidden;
+  padding: 1rem;
+}
+
+.foundation-chrome ~ main article img {
+  aspect-ratio: 4 / 3;
+  width: 100%;
+  object-fit: cover;
+  border-radius: 1.5rem;
+}
+
+.foundation-chrome ~ main h1,
+.foundation-chrome ~ main h2,
+.foundation-chrome ~ main h3,
+.foundation-chrome ~ section h1,
+.foundation-chrome ~ section h2,
+.foundation-chrome ~ section h3 {
+  color: var(--color-ink) !important;
+}
+
+.foundation-chrome ~ main a {
+  color: var(--color-primary) !important;
+  font-weight: 800;
+}
+
+.foundation-chrome ~ main button,
+.foundation-chrome ~ section button,
+.foundation-chrome ~ section .fs-submit-button,
+.foundation-chrome ~ section .fsc-home-button {
+  border-radius: 999px;
+}
+
+.foundation-chrome ~ main input:focus,
+.foundation-chrome ~ main textarea:focus,
+.foundation-chrome ~ main select:focus,
+.foundation-chrome ~ section input:focus,
+.foundation-chrome ~ section textarea:focus,
+.foundation-chrome ~ section select:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(255, 138, 101, 0.18);
+}
+
+@media (max-width: 768px) {
+  .foundation-chrome {
+    position: sticky;
+    top: 0;
+    left: 0;
+    width: auto;
+    min-height: auto;
+    margin: 0;
+    border-radius: 0;
+  }
+
+  .foundation-chrome h1 {
+    font-size: 1.5rem;
+  }
+
+.foundation-chrome ~ main,
+.foundation-chrome ~ section,
+.foundation-chrome ~ div {
+    padding-left: 0 !important;
+  }
+
+  .foundation-chrome ~ main > div[style],
+  .foundation-chrome ~ div[style] {
+    padding-top: 7rem !important;
+  }
+
+  .foundation-chrome ~ main section[style] {
+    display: block !important;
+  }
+}

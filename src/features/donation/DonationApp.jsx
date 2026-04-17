@@ -8,8 +8,6 @@ import TransparencyReport from "./components/TransparencyReport";
 import Footer from "./components/Footer";
 import CampaignList from "./pages/CampaignList";
 import CampaignDetail from "./pages/CampaignDetail";
-import DonatePage from "./pages/DonatePage";
-import DonationGuidePage from "./pages/DonationGuidePage";
 import LedgerPage from "./pages/LedgerPage";
 import LegalPage from "./pages/LegalPage";
 import MissionPage from "./pages/MissionPage";
@@ -26,6 +24,12 @@ import MyPageProfileEdit from "../myPageUser/pages/MyPageProfileEdit";
 import FoundationRegisterPage from "../foundation/pages/FoundationRegisterPage";
 import FoundationDashboardPage from "../foundation/pages/FoundationDashboardPage";
 import GoogleSignupPage from "../signUp/pages/GoogleSignupPage";
+import BeneficiaryMainPage from "../beneficiary/pages/BeneficiaryMainPage";
+
+// [가빈]
+import DonatePage from "./pages/DonatePage";
+import DonationReturnPage from "./pages/DonationReturnPage";
+import DonationGuidePage from "./pages/DonationGuidePage";
 import TestCampaignPage from "../foundation/pages/GabeenCampaignPageTest";
 import FoundationDetailPage from "../foundation/pages/FoundationDetailPage";
 import FoundationListPage from "../foundation/pages/FoundationListPage";
@@ -33,6 +37,7 @@ import FoundationSignupPage from "../foundation/pages/FoundationSignupPage";
 import FoundationSignupCompletePage from "../foundation/pages/FoundationSignupCompletePage";
 import BeneficiaryMainPage from "../beneficiary/pages/BeneficiaryMainPage";
 import MyPageLayout from '../myPageUser/pages/MyPageLayout';
+
 function HomePage() {
   useEffect(() => {
     document.documentElement.classList.add("home-scroll-snap");
@@ -164,10 +169,7 @@ export default function DonationApp() {
       <main>
         <Routes>
           <Route path="/" element={<HomePage />} />
-          <Route
-            path="/donation-return"
-            element={<Navigate to="/" replace />}
-          />
+          <Route path="/donation-return" element={<DonationReturnPage />} />
           <Route path="/campaigns" element={<CampaignList />} />
           <Route path="/campaign/:id" element={<CampaignDetail />} />
           <Route path="/campaign/:id/donate" element={<DonatePage />} />

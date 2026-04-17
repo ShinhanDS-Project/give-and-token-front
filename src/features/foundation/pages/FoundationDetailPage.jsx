@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
+import FoundationChrome from "../components/FoundationChrome";
 
 function FoundationCampaignCard({ campaign }) {
     const imageUrl =
@@ -80,11 +81,13 @@ export default function FoundationDetailPage() {
         return () => { cancelled = true; };
     }, [foundationNo]);
 
-    if (loading) return <p>불러오는 중...</p>;
-    if (error) return <p>오류: {error}</p>;
-    if (!foundation) return <p>데이터 없음</p>;
+    if (loading) return <><FoundationChrome /><p>불러오는 중...</p></>;
+    if (error) return <><FoundationChrome /><p>오류: {error}</p></>;
+    if (!foundation) return <><FoundationChrome /><p>데이터 없음</p></>;
 
     return (
+      <>
+        <FoundationChrome />
         <div style={{ color: "#1e293b", padding: 32, paddingTop: 144 }}>
 
             {/* 1. 상단 프로필 Hero: 왼쪽 이미지 / 오른쪽 단체명+유형+지갑정보 */}
@@ -172,5 +175,6 @@ export default function FoundationDetailPage() {
             </section>
 
         </div>
+      </>
     );
 }

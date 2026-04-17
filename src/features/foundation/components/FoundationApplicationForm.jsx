@@ -11,13 +11,13 @@ const CAMPAIGN_CATEGORY_OPTIONS = [
 ];
 
 function SectionTitle({ children }) {
-  return <h2 className="text-lg font-semibold text-slate-900">{children}</h2>;
+  return <h2 className="text-lg font-bold text-ink">{children}</h2>;
 }
 
 function Field({ label, required, children, hint }) {
   return (
     <label className="flex flex-col gap-2">
-      <span className="text-sm font-medium text-slate-700">
+      <span className="text-sm font-semibold text-ink">
         {label}
         {required ? " *" : ""}
       </span>
@@ -76,7 +76,7 @@ export default function FoundationApplicationForm({
   errorMessage,
   isEditMode,
   existingRepresentativeImagePath,
-  existingDetailImagePaths,
+  existingDetailImages,
   onChange,
   onFileChange,
   onDetailImageChange,
@@ -85,6 +85,7 @@ export default function FoundationApplicationForm({
   onUsePlanChange,
   onAddDetailImage,
   onRemoveDetailImage,
+  onRemoveExistingDetailImage,
   onBeneficiaryCheck,
   onCancel,
   onSubmit,
@@ -92,18 +93,18 @@ export default function FoundationApplicationForm({
   return (
     <form className="mx-auto flex max-w-5xl flex-col gap-6 px-4 py-6" onSubmit={onSubmit}>
       <header className="space-y-2 text-center">
-        <p className="text-sm text-slate-500">{isEditMode ? "캠페인 정보 수정" : "새 캠페인 신청"}</p>
-        <h1 className="text-3xl font-semibold text-slate-900">
+        <p className="text-sm font-bold text-primary">{isEditMode ? "캠페인 정보 수정" : "새 캠페인 신청"}</p>
+        <h1 className="text-3xl font-bold text-ink">
           {isEditMode ? "기부단체 캠페인 수정" : "기부단체 캠페인 등록"}
         </h1>
-        <p className="text-sm text-slate-500">
+        <p className="text-sm text-ink/60">
           {isEditMode
             ? "PENDING 상태 캠페인 정보를 수정하고 다시 제출하세요."
             : "필수 정보를 입력하고 등록 요청을 진행하세요."}
         </p>
       </header>
 
-      <section className="space-y-4 rounded-3xl border border-slate-200 bg-white p-5">
+      <section className="space-y-4 rounded-[2rem] border-4 border-line bg-white p-5">
         <Field label="캠페인명" required>
           <input
             name="title"
@@ -208,30 +209,39 @@ export default function FoundationApplicationForm({
         </Field>
       </section>
 
-      <section className="space-y-4 rounded-3xl border border-slate-200 bg-white p-5">
+      <section className="space-y-4 rounded-[2rem] border-4 border-line bg-white p-5">
         <div className="flex items-center justify-between">
           <SectionTitle>상세 이미지</SectionTitle>
           <button
             type="button"
-            className="rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-200"
+            className="rounded-full bg-line px-3 py-1.5 text-xs font-bold text-primary hover:bg-primary hover:text-white"
             onClick={onAddDetailImage}
           >
             + 항목 추가
           </button>
         </div>
 
-        {isEditMode && existingDetailImagePaths?.length > 0 ? (
+        {isEditMode && existingDetailImages?.length > 0 ? (
           <div className="grid gap-3 md:grid-cols-3">
-            {existingDetailImagePaths.map((imagePath, index) => (
+            {existingDetailImages.map((image, index) => (
               <div
-                key={`${imagePath}-${index}`}
+                key={`${image.imgNo || image.imgPath}-${index}`}
                 className="overflow-hidden rounded-xl border border-slate-200 bg-slate-50"
               >
                 <img
-                  src={toImageSrc(imagePath)}
+                  src={toImageSrc(image.imgPath)}
                   alt={`기존 상세 이미지 ${index + 1}`}
                   className="h-32 w-full object-cover"
                 />
+                {image.imgNo ? (
+                  <button
+                    type="button"
+                    className="w-full bg-white px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50"
+                    onClick={() => onRemoveExistingDetailImage(image.imgNo)}
+                  >
+                    삭제
+                  </button>
+                ) : null}
               </div>
             ))}
           </div>
@@ -276,12 +286,12 @@ export default function FoundationApplicationForm({
         </div>
       </section>
 
-      <section className="space-y-4 rounded-3xl border border-slate-200 bg-white p-5">
+      <section className="space-y-4 rounded-[2rem] border-4 border-line bg-white p-5">
         <div className="flex items-center justify-between">
           <SectionTitle>지출 계획</SectionTitle>
           <button
             type="button"
-            className="rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-200"
+            className="rounded-full bg-line px-3 py-1.5 text-xs font-bold text-primary hover:bg-primary hover:text-white"
             onClick={onAddUsePlan}
           >
             + 항목 추가
@@ -324,12 +334,12 @@ export default function FoundationApplicationForm({
         </div>
       </section>
 
-      <section className="space-y-4 rounded-3xl border border-slate-200 bg-white p-5">
+      <section className="space-y-4 rounded-[2rem] border-4 border-line bg-white p-5">
         <div className="flex items-center justify-between">
           <SectionTitle>수혜자 확인</SectionTitle>
           <button
             type="button"
-            className="rounded-full bg-blue-500 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-600"
+            className="rounded-full bg-primary px-4 py-2 text-xs font-bold text-white hover:bg-primary/90"
             onClick={onBeneficiaryCheck}
           >
             수혜자 확인
@@ -385,14 +395,14 @@ export default function FoundationApplicationForm({
       <div className="flex justify-end gap-3">
         <button
           type="button"
-          className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+          className="rounded-full border-2 border-primary bg-white px-5 py-2.5 text-sm font-bold text-primary hover:bg-primary/5"
           onClick={onCancel}
         >
           취소
         </button>
         <button
           type="submit"
-          className="rounded-xl bg-blue-500 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-600 disabled:cursor-not-allowed disabled:opacity-50"
+          className="rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-primary/20 hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
           disabled={submitting}
         >
           {submitting ? (isEditMode ? "수정 중..." : "신청 중...") : isEditMode ? "수정 완료" : "신청 완료"}

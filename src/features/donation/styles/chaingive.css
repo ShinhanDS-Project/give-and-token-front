@@ -96,3 +96,17 @@ body.page-scroll-snap .page-snap-target {
   scroll-snap-align: start;
   scroll-snap-stop: normal;
 }
+
+@keyframes donation-confetti-fall {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(var(--confetti-drift, 40px), 110vh, 0) rotate(540deg);
+    opacity: 0;
+  }
+}

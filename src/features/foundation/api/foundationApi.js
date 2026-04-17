@@ -84,6 +84,13 @@ function saveFoundationAuth(authResponse) {
   );
 }
 
+export function clearFoundationAuth() {
+  window.localStorage.removeItem(FOUNDATION_AUTH_STORAGE_KEY);
+  window.localStorage.removeItem(FOUNDATION_INFO_STORAGE_KEY);
+  window.localStorage.removeItem("accessToken");
+  window.localStorage.removeItem("userRole");
+}
+
 function buildAuthorizedHeaders() {
   const accessToken = getStoredAccessToken();
 
@@ -152,6 +159,23 @@ export async function loginFoundationAccount({ email, password }) {
   return data;
 }
 
+export async function logoutFoundationAccount() {
+  const accessToken = getStoredAccessToken();
+
+  try {
+    if (accessToken) {
+      await fetch(`${FOUNDATION_BASE_PATH}/logout`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+    }
+  } finally {
+    clearFoundationAuth();
+  }
+}
+
 export async function checkBeneficiary(entryCode) {
   const query = new URLSearchParams({
     entryCode: String(entryCode || "").trim(),
@@ -207,7 +231,24 @@ export async function checkFoundationWalletAvailability() {
 }
 
 export async function fetchFoundationMyInfo() {
-  return requestWithFoundationAuth(`${FOUNDATION_BASE_PATH}/me`);
+  const myInfo = await requestWithFoundationAuth(`${FOUNDATION_BASE_PATH}/me`);
+
+  const foundationNo = myInfo?.foundationNo || getFoundationNoFromAccessToken();
+  if (!foundationNo) {
+    return myInfo;
+  }
+
+  try {
+    const publicDetail = await fetchFoundationPublicDetail(foundationNo);
+    return {
+      ...myInfo,
+      bankName: publicDetail?.bankName ?? myInfo?.bankName ?? "",
+      feeRate: publicDetail?.feeRate ?? myInfo?.feeRate ?? null,
+    };
+  } catch {
+    // /me 조회는 유지하고, 공개 상세 조회 실패 시에는 기존 myInfo를 그대로 사용한다.
+    return myInfo;
+  }
 }
 
 export async function fetchFoundationPublicDetail(foundationNo) {
@@ -312,6 +353,27 @@ export async function updateFoundationMyInfo(formValues) {
   return response.json();
 }
 
+export async function updateFoundationPassword({
+  currentPassword,
+  newPassword,
+}) {
+  const response = await fetch(`${FOUNDATION_BASE_PATH}/me/password`, {
+    method: "PATCH",
+    headers: {
+      ...buildAuthorizedHeaders(),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      currentPassword: String(currentPassword || "").trim(),
+      newPassword: String(newPassword || "").trim(),
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(await parseErrorResponse(response));
+  }
+}
+
 export async function fetchFoundationRecentCampaigns({
   campaignStatus,
   keyword = "",
@@ -339,6 +401,18 @@ export async function fetchCampaignDetail(campaignNo) {
   );
 }
 
+export async function fetchCampaignDetailPublic(campaignNo) {
+  const response = await fetch(
+    `${FOUNDATION_CAMPAIGN_BASE_PATH}/${campaignNo}/detail`,
+  );
+
+  if (!response.ok) {
+    throw new Error(await parseErrorResponse(response));
+  }
+
+  return response.json();
+}
+
 export async function fetchPendingCampaignEditDetail(campaignNo) {
   return requestWithFoundationAuth(
     `${FOUNDATION_CAMPAIGN_BASE_PATH}/${campaignNo}/edit-detail`,
@@ -364,6 +438,11 @@ function buildCampaignMultipartData(formValues) {
         planAmount: Number(plan.planAmount),
       }))
       .filter((plan) => plan.planContent && !Number.isNaN(plan.planAmount)),
+    deletedDetailImageNos: Array.isArray(formValues.deletedDetailImageNos)
+      ? formValues.deletedDetailImageNos
+          .map((imageNo) => Number(imageNo))
+          .filter((imageNo) => Number.isFinite(imageNo) && imageNo > 0)
+      : [],
   };
 
   multipartData.append(
