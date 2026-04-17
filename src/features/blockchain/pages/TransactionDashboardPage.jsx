@@ -63,12 +63,29 @@ function formatLocaleNumber(value, options) {
   return numericValue.toLocaleString("ko-KR", options);
 }
 
-function formatTokenAmount(value) {
-  if (typeof value === "string" && /^\d+$/.test(value)) {
-    return `${BigInt(value).toLocaleString("ko-KR")} GT`;
+function toBigIntValue(value) {
+  if (typeof value === "bigint") {
+    return value;
   }
 
-  return `${formatLocaleNumber(value)} GT`;
+  if (typeof value === "string" && /^\d+$/.test(value)) {
+    return BigInt(value);
+  }
+
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return BigInt(Math.trunc(value));
+  }
+
+  return null;
+}
+
+function formatTokenAmount(value) {
+  const raw = toBigIntValue(value);
+
+  if (raw === null) {
+    return `${formatLocaleNumber(value)} GNT`;
+  }
+  return `${raw.toLocaleString("ko-KR")} GNT`;
 }
 
 function TransactionDashboardPage() {
@@ -81,7 +98,8 @@ function TransactionDashboardPage() {
     latestBlock: 0,
     avgBlockTimeSec: 0,
     totalTransactions: 0,
-    tokenAmount: 0
+    tokenAmount: 0,
+    tokenDecimals: 18
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -241,7 +259,7 @@ function TransactionDashboardPage() {
           <StatCard
             label="Token Amount"
             value={formatTokenAmount(overview.tokenAmount)}
-            helper="토큰 관련 이벤트 금액 합계"
+            helper="성공한 기부 이벤트 금액 합계"
             icon={<TokenIcon />}
           />
         </div>

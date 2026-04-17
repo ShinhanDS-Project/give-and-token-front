@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { getTransactionDetail } from "../api/blockchainApi";
 
@@ -44,6 +44,18 @@ function DetailCell({ label, value, linkTo }) {
         )}
       </td>
     </tr>
+  );
+}
+
+function isGasChargeEvent(eventType, eventTypeLabel) {
+  const normalizedType = String(eventType || "").toUpperCase();
+  const normalizedLabel = String(eventTypeLabel || "").trim();
+
+  return (
+    normalizedType === "GAS_CHARGE" ||
+    normalizedType === "GAS_TOPUP" ||
+    normalizedType === "GAS_RECHARGE" ||
+    normalizedLabel === "가스 충전"
   );
 }
 
@@ -99,10 +111,11 @@ function TransactionDetailPage() {
   }
 
   if (error || !data) {
-    return (
-      <div className="panel empty-state">{error || "트랜잭션을 찾을 수 없습니다."}</div>
-    );
+    return <div className="panel empty-state">{error || "트랜잭션을 찾을 수 없습니다."}</div>;
   }
+
+  const isGasCharge = isGasChargeEvent(data.eventType, data.eventTypeLabel);
+  const amountUnit = isGasCharge ? "POL" : "GNT";
 
   return (
     <section className="detail-page">
@@ -135,8 +148,7 @@ function TransactionDetailPage() {
               <DetailCell label="트랜잭션 코드" value={data.transactionCode} />
               <DetailCell label="상태" value={data.status} />
               <DetailCell label="이벤트 타입" value={data.eventTypeLabel} />
-              <DetailCell label="금액" value={`${data.amount.toLocaleString()} GT`} />
-              <DetailCell label="가스비" value={`${data.gasFee} ETH`} />
+              <DetailCell label={`금액 (${amountUnit})`} value={`${data.amount.toLocaleString()} ${amountUnit}`} />
               <DetailCell label="블록 번호" value={String(data.blockNum)} />
               <DetailCell label="전송 시각" value={formatDateTime(data.sentAt)} />
             </tbody>

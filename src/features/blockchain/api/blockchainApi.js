@@ -1,4 +1,4 @@
-const DASHBOARD_PAGE_SIZE = 10;
+﻿const DASHBOARD_PAGE_SIZE = 10;
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 const TRANSACTIONS_CACHE_TTL_MS = 60 * 1000;
 const TRANSACTIONS_CACHE_PREFIX = "dashboard-transactions:api:v1";
@@ -15,8 +15,11 @@ const EVENT_TYPE_LABELS = {
   DONATION: "기부",
   SETTLEMENT: "정산",
   TOKENIZATION: "토큰화",
-  CASHOUT: "현금화",
-  WITHDRAWAL: "현금화"
+  GAS_CHARGE: "가스 충전",
+  GAS_TOPUP: "가스 충전",
+  GAS_RECHARGE: "가스 충전",
+  CASHOUT: "출금",
+  WITHDRAWAL: "출금"
 };
 
 async function request(path) {
@@ -46,14 +49,14 @@ function getWalletDisplayInfo(wallet) {
 
   if (wallet.ownerType === "CAMPAIGN") {
     return {
-      nameLabel: "캠페인명",
+      nameLabel: "罹좏럹?몃챸",
       nameValue: wallet.campaignName || "-"
     };
   }
 
   if (wallet.ownerType === "BENEFICIARY") {
     return {
-      nameLabel: "수혜처명",
+      nameLabel: "수혜자명",
       nameValue: wallet.foundationName || "-"
     };
   }
@@ -141,6 +144,59 @@ async function requestTransactionsPage({ page, keyword, pageSize }) {
   return normalizeTransactionsResponse(
     await request(`/api/blockchain/transactions?${query.toString()}`)
   );
+}
+
+async function requestDonationTransactionsPage({ page, pageSize = 200 }) {
+  const query = new URLSearchParams({
+    page: String(page),
+    size: String(pageSize),
+    status: "SUCCESS",
+    eventType: "DONATION"
+  });
+
+  return normalizeTransactionsResponse(
+    await request(`/api/blockchain/transactions?${query.toString()}`)
+  );
+}
+
+function toBigIntAmount(value) {
+  if (typeof value === "bigint") {
+    return value;
+  }
+
+  if (typeof value === "string" && /^\d+$/.test(value)) {
+    return BigInt(value);
+  }
+
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return BigInt(Math.trunc(value));
+  }
+
+  return 0n;
+}
+
+async function getDonationTokenAmount() {
+  const firstPage = await requestDonationTransactionsPage({ page: 1 });
+  const totalPages = Number(firstPage?.pageInfo?.totalPages || 1);
+  const safeTotalPages = Math.max(1, Math.min(totalPages, 200));
+  let sum = 0n;
+
+  const addDonationAmounts = (items = []) => {
+    items.forEach((item) => {
+      if (String(item?.eventType || "").toUpperCase() === "DONATION") {
+        sum += toBigIntAmount(item?.amount);
+      }
+    });
+  };
+
+  addDonationAmounts(firstPage?.items || []);
+
+  for (let page = 2; page <= safeTotalPages; page += 1) {
+    const response = await requestDonationTransactionsPage({ page });
+    addDonationAmounts(response?.items || []);
+  }
+
+  return sum.toString();
 }
 
 async function getServerPaginatedDashboardTransactions({ page, keyword, pageSize }) {
@@ -291,12 +347,25 @@ export async function getTransactions({
 
 export async function getDashboardOverview() {
   const summary = await request("/api/blockchain/summary?status=SUCCESS");
+  let donationTokenAmount = "0";
+
+  try {
+    donationTokenAmount = await getDonationTokenAmount();
+  } catch {
+    donationTokenAmount = String(
+      summary.donationTokenAmount ??
+      summary.totalDonationAmount ??
+      summary.donationAmount ??
+      0
+    );
+  }
 
   return {
     latestBlock: summary.latestBlock || 0,
     avgBlockTimeSec: Number(summary.avgBlockTimeSec || 0),
     totalTransactions: summary.totalTx || 0,
-    tokenAmount: summary.tokenAmount || 0
+    tokenAmount: donationTokenAmount,
+    tokenDecimals: Number(summary.tokenDecimals ?? summary.decimals ?? 18)
   };
 }
 
@@ -318,3 +387,4 @@ export async function resolveSearchTarget(keyword) {
   const query = new URLSearchParams({ keyword });
   return request(`/api/blockchain/search/resolve?${query.toString()}`);
 }
+

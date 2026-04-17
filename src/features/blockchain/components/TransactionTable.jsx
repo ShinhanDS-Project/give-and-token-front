@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+﻿import { Link } from "react-router-dom";
 
 function formatDateTime(value) {
   const date = new Date(value);
@@ -10,6 +10,22 @@ function formatDateTime(value) {
   const seconds = String(date.getSeconds()).padStart(2, "0");
 
   return `${year}/${month}/${day} ${hours}:${minutes}:${seconds}`;
+}
+
+function isGasChargeEvent(eventType, eventTypeLabel) {
+  const normalizedType = String(eventType || "").toUpperCase();
+  const normalizedLabel = String(eventTypeLabel || "").trim();
+
+  return (
+    normalizedType === "GAS_CHARGE" ||
+    normalizedType === "GAS_TOPUP" ||
+    normalizedType === "GAS_RECHARGE" ||
+    normalizedLabel === "가스 충전"
+  );
+}
+
+function getAmountUnit(transaction) {
+  return isGasChargeEvent(transaction.eventType, transaction.eventTypeLabel) ? "POL" : "GNT";
 }
 
 function TransactionTable({ transactions }) {
@@ -73,8 +89,11 @@ function TransactionTable({ transactions }) {
                   </p>
                 </td>
                 <td className="data-table__col data-table__col--amount">
-                  <span className="table-ellipsis" title={`${transaction.amount.toLocaleString()} GT`}>
-                    {transaction.amount.toLocaleString()} GT
+                  <span
+                    className="table-ellipsis"
+                    title={`${transaction.amount.toLocaleString()} ${getAmountUnit(transaction)}`}
+                  >
+                    {transaction.amount.toLocaleString()} {getAmountUnit(transaction)}
                   </span>
                 </td>
                 <td className="data-table__col data-table__col--time">
