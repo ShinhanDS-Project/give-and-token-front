@@ -24,7 +24,7 @@ import MyPageProfileEdit from "../myPageUser/pages/MyPageProfileEdit";
 import FoundationRegisterPage from "../foundation/pages/FoundationRegisterPage";
 import FoundationDashboardPage from "../foundation/pages/FoundationDashboardPage";
 import GoogleSignupPage from "../signUp/pages/GoogleSignupPage";
-import BeneficiaryMainPage from "../beneficiary/pages/BeneficiaryMainPage";
+
 
 // [가빈]
 import DonatePage from "./pages/DonatePage";
