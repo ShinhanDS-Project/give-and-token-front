@@ -84,6 +84,13 @@ function saveFoundationAuth(authResponse) {
   );
 }
 
+export function clearFoundationAuth() {
+  window.localStorage.removeItem(FOUNDATION_AUTH_STORAGE_KEY);
+  window.localStorage.removeItem(FOUNDATION_INFO_STORAGE_KEY);
+  window.localStorage.removeItem("accessToken");
+  window.localStorage.removeItem("userRole");
+}
+
 function buildAuthorizedHeaders() {
   const accessToken = getStoredAccessToken();
 
@@ -150,6 +157,23 @@ export async function loginFoundationAccount({ email, password }) {
   const data = await response.json();
   saveFoundationAuth(data);
   return data;
+}
+
+export async function logoutFoundationAccount() {
+  const accessToken = getStoredAccessToken();
+
+  try {
+    if (accessToken) {
+      await fetch(`${FOUNDATION_BASE_PATH}/logout`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+    }
+  } finally {
+    clearFoundationAuth();
+  }
 }
 
 export async function checkBeneficiary(entryCode) {
