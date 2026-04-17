@@ -35,6 +35,7 @@ import FoundationDetailPage from "../foundation/pages/FoundationDetailPage";
 import FoundationListPage from "../foundation/pages/FoundationListPage";
 import FoundationSignupPage from "../foundation/pages/FoundationSignupPage";
 import FoundationSignupCompletePage from "../foundation/pages/FoundationSignupCompletePage";
+import NotificationsPage from "./pages/NotificationsPage";
 
 function HomePage() {
   useEffect(() => {
@@ -199,6 +200,9 @@ export default function DonationApp() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/signup/google" element={<GoogleSignupPage />} />
+
+          {/* 알림 */}
+          <Route path="/notifications" element={<NotificationsPage />} />
 
           {/* 마이페이지 */}
           <Route path="/mypage" element={<MyPageMain />} />

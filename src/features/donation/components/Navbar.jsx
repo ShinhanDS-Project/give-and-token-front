@@ -1,21 +1,41 @@
-import { Sparkles, LogOut, User } from "lucide-react";
+import { Sparkles, LogOut, User, Bell } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+
+function getAuthToken() {
+  const localToken = localStorage.getItem("accessToken");
+  if (localToken) return localToken;
+  const match = document.cookie.split(";").map(c => c.trim()).find(c => c.startsWith("accessToken="));
+  return match ? match.split("=")[1] : null;
+}
+
+function formatTimeAgo(value) {
+  if (!value) return "";
+  const date = Array.isArray(value)
+    ? new Date(value[0], value[1] - 1, value[2], value[3] ?? 0, value[4] ?? 0)
+    : new Date(value);
+  if (isNaN(date.getTime())) return "";
+  const diff = Math.floor((Date.now() - date.getTime()) / 1000);
+  if (diff < 60) return "방금 전";
+  if (diff < 3600) return `${Math.floor(diff / 60)}분 전`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}시간 전`;
+  return `${Math.floor(diff / 86400)}일 전`;
+}
 
 export default function Navbar() {
   const navigate = useNavigate();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userRole, setUserRole] = useState(null);
+  const [showNotiDropdown, setShowNotiDropdown] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const notiRef = useRef(null);
 
-  // 쿠키 및 로컬스토리지에서 로그인 상태를 확인하는 함수
   const checkLoginStatus = () => {
-    // 1. 쿠키 확인
     const cookies = document.cookie.split(';');
     const hasCookieToken = cookies.some(cookie => cookie.trim().startsWith('accessToken='));
-    
-    // 2. 로컬스토리지 확인 (로컬 로그인 시 사용)
     const hasLocalStorageToken = !!localStorage.getItem('accessToken');
-    
+
     if (hasCookieToken || hasLocalStorageToken) {
         setUserRole(localStorage.getItem('userRole') || 'user');
         return true;
@@ -23,15 +43,74 @@ export default function Navbar() {
     return false;
   };
 
-  useEffect(() => {
-    // 마운트 시 로그인 상태 체크
-    setIsLoggedIn(checkLoginStatus());
+  const fetchUnreadCount = useCallback(async () => {
+    const token = getAuthToken();
+    if (!token) return;
+    try {
+      const res = await fetch("/api/notifications/unread-count", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const count = await res.json();
+        setUnreadCount(count);
+      }
+    } catch { /* ignore */ }
+  }, []);
 
-    // 페이지 이동이나 포커스 시 주기적으로 체크하여 상태 업데이트
+  const fetchRecentNotifications = useCallback(async () => {
+    const token = getAuthToken();
+    if (!token) return;
+    try {
+      const res = await fetch("/api/notifications?page=0&size=5&sort=created_at,desc", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setNotifications(data.content ?? []);
+      }
+    } catch { /* ignore */ }
+  }, []);
+
+  const markAsRead = useCallback(async (notificationNo) => {
+    const token = getAuthToken();
+    if (!token) return;
+    try {
+      await fetch(`/api/notifications/${notificationNo}/read`, {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setNotifications(prev => prev.map(n => n.notificationNo === notificationNo ? { ...n, read: true } : n));
+      setUnreadCount(prev => Math.max(0, prev - 1));
+    } catch { /* ignore */ }
+  }, []);
+
+  useEffect(() => {
+    setIsLoggedIn(checkLoginStatus());
     const handleFocus = () => setIsLoggedIn(checkLoginStatus());
     window.addEventListener('focus', handleFocus);
-    
     return () => window.removeEventListener('focus', handleFocus);
+  }, []);
+
+  useEffect(() => {
+    if (isLoggedIn) {
+      fetchUnreadCount();
+      const interval = setInterval(fetchUnreadCount, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [isLoggedIn, fetchUnreadCount]);
+
+  useEffect(() => {
+    if (showNotiDropdown) fetchRecentNotifications();
+  }, [showNotiDropdown, fetchRecentNotifications]);
+
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (notiRef.current && !notiRef.current.contains(e.target)) {
+        setShowNotiDropdown(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const handleLogout = async () => {
@@ -100,18 +179,74 @@ export default function Navbar() {
             </Link>
           </div>
 
-          {/*가빈- 알림 버튼 추가*/}
           <div className="flex items-center gap-4">
             {isLoggedIn ? (
               <div className="flex items-center gap-2">
-                <Link 
-                  to={getDashboardLink()} 
+                {/* 알림 벨 */}
+                <div className="relative" ref={notiRef}>
+                  <button
+                    type="button"
+                    onClick={() => setShowNotiDropdown(prev => !prev)}
+                    className="relative bg-stone-100 text-stone-600 w-10 h-10 rounded-full flex items-center justify-center hover:bg-stone-200 transition-all"
+                    title="알림"
+                  >
+                    <Bell size={18} />
+                    {unreadCount > 0 && (
+                      <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1 leading-none">
+                        {unreadCount > 99 ? "99+" : unreadCount}
+                      </span>
+                    )}
+                  </button>
+
+                  {showNotiDropdown && (
+                    <div className="absolute right-0 top-full mt-2 w-80 bg-white border border-stone-200 rounded-2xl shadow-2xl shadow-stone-200/50 z-[999] overflow-hidden">
+                      <div className="px-4 py-3 border-b border-stone-100 flex items-center justify-between">
+                        <span className="text-sm font-bold text-ink">알림</span>
+                        {unreadCount > 0 && (
+                          <span className="text-xs font-bold text-primary">{unreadCount}개 안읽음</span>
+                        )}
+                      </div>
+                      <div className="max-h-72 overflow-y-auto">
+                        {notifications.length ? (
+                          notifications.map(noti => (
+                            <button
+                              key={noti.notificationNo}
+                              type="button"
+                              className={`w-full text-left px-4 py-3 border-b border-stone-50 hover:bg-stone-50 transition-colors ${noti.read ? "opacity-60" : ""}`}
+                              onClick={() => {
+                                if (!noti.read) markAsRead(noti.notificationNo);
+                                setShowNotiDropdown(false);
+                              }}
+                            >
+                              <p className="text-sm text-ink leading-snug line-clamp-2">{noti.content}</p>
+                              <span className="text-xs text-stone-400 mt-1 block">{formatTimeAgo(noti.createdAt)}</span>
+                            </button>
+                          ))
+                        ) : (
+                          <div className="px-4 py-8 text-center text-sm text-stone-400">알림이 없습니다</div>
+                        )}
+                      </div>
+                      <div className="border-t border-stone-100">
+                        <Link
+                          to="/notifications"
+                          onClick={() => setShowNotiDropdown(false)}
+                          className="block text-center py-3 text-sm font-bold text-primary hover:bg-primary/5 transition-colors"
+                        >
+                          전체보기
+                        </Link>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <Link
+                  to={getDashboardLink()}
                   className="bg-primary text-white px-6 py-2.5 rounded-full text-sm font-bold shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all flex items-center gap-2"
                 >
                   <User size={16} />
                   {userRole === 'beneficiary' ? '수혜자 홈' : (userRole === 'foundation' ? '단체 대시보드' : '마이페이지')}
                 </Link>
-                <button 
+                <button
                   onClick={handleLogout}
                   className="bg-stone-100 text-stone-600 px-4 py-2.5 rounded-full text-sm font-bold hover:bg-stone-200 transition-all flex items-center gap-2"
                   title="로그아웃"
@@ -120,8 +255,8 @@ export default function Navbar() {
                 </button>
               </div>
             ) : (
-              <Link 
-                to="/login" 
+              <Link
+                to="/login"
                 className="bg-primary text-white px-8 py-3 rounded-full text-sm font-bold shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all"
               >
                 로그인

@@ -50,7 +50,10 @@ export default function AdminFoundationDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [processing, setProcessing] = useState(false);
+  const [processingAction, setProcessingAction] = useState("");
   const [showDeactivateModal, setShowDeactivateModal] = useState(false);
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [rejectReasonInput, setRejectReasonInput] = useState("");
   const [detail, setDetail] = useState(null);
   const [wallet, setWallet] = useState({ walletAddress: "", balance: 0 });
   const [campaigns, setCampaigns] = useState([]);
@@ -138,10 +141,15 @@ export default function AdminFoundationDetailPage() {
   }, [campaigns]);
 
   const isActive = detail?.accountStatus === "ACTIVE";
+  const canReview =
+    detail?.accountStatus === "PRE_REGISTERED" &&
+    detail?.reviewStatus !== "APPROVED" &&
+    detail?.reviewStatus !== "REJECTED";
 
   const handleDeactivate = async () => {
     try {
       setProcessing(true);
+      setProcessingAction("deactivate");
       const response = await fetch(getAdminApiUrl(`/foundation/${foundationNo}/deactivate`), {
         method: "PATCH",
         headers: getAdminAuthHeaders(),
@@ -161,24 +169,94 @@ export default function AdminFoundationDetailPage() {
       window.alert(err.message || "Failed to deactivate foundation.");
     } finally {
       setProcessing(false);
+      setProcessingAction("");
+    }
+  };
+
+  const handleApprove = async () => {
+    try {
+      setProcessing(true);
+      setProcessingAction("approve");
+      const response = await fetch(getAdminApiUrl(`/foundation/${foundationNo}/approve`), {
+        method: "PATCH",
+        headers: getAdminAuthHeaders(),
+      });
+
+      if (!response.ok) {
+        const text = await response.text().catch(() => "");
+        throw new Error(text || "Approve request failed.");
+      }
+
+      setDetail((prev) => ({
+        ...prev,
+        reviewStatus: "APPROVED",
+        accountStatus: "ACTIVE",
+      }));
+      window.alert("Foundation approved.");
+    } catch (err) {
+      window.alert(err.message || "Failed to approve foundation.");
+    } finally {
+      setProcessing(false);
+      setProcessingAction("");
+    }
+  };
+
+  const handleReject = async () => {
+    const trimmedReason = rejectReasonInput.trim();
+    if (!trimmedReason) {
+      window.alert("Please enter reject reason.");
+      return;
+    }
+
+    try {
+      setProcessing(true);
+      setProcessingAction("reject");
+      const response = await fetch(
+        getAdminApiUrl(`/foundation/${foundationNo}/reject?reason=${encodeURIComponent(trimmedReason)}`),
+        {
+          method: "PATCH",
+          headers: getAdminAuthHeaders({
+            "Content-Type": "application/json",
+          }),
+          body: JSON.stringify({ reason: trimmedReason }),
+        },
+      );
+
+      if (!response.ok) {
+        const text = await response.text().catch(() => "");
+        throw new Error(text || "Reject request failed.");
+      }
+
+      setDetail((prev) => ({
+        ...prev,
+        reviewStatus: "REJECTED",
+        accountStatus: "INACTIVE",
+      }));
+      setShowRejectModal(false);
+      setRejectReasonInput("");
+      window.alert("Foundation rejected.");
+    } catch (err) {
+      window.alert(err.message || "Failed to reject foundation.");
+    } finally {
+      setProcessing(false);
+      setProcessingAction("");
     }
   };
 
   return (
-    <div className="admin-dashboard-page">
-      <div className="admin-dashboard-main">
-        <header className="admin-dashboard-topbar">
-          <div className="admin-dashboard-topbar__title">
-            <button type="button" className="admin-dashboard-topbar__menu" onClick={() => navigate("/admin/dashboard")}>
-              <span />
-              <span />
-              <span />
-            </button>
-            <h1>Foundation Detail</h1>
-          </div>
-        </header>
+    <>
+      <header className="admin-dashboard-topbar">
+        <div className="admin-dashboard-topbar__title">
+          <button type="button" className="admin-dashboard-topbar__menu" onClick={() => navigate(-1)}>
+            <span />
+            <span />
+            <span />
+          </button>
+          <h1>Foundation Detail</h1>
+        </div>
+      </header>
 
-        <main className="admin-dashboard-content">
+      <main className="admin-dashboard-content">
           {loading ? <p className="admin-dashboard-empty-text">Loading detail...</p> : null}
           {error ? <p className="admin-dashboard-empty-text">{error}</p> : null}
 
@@ -229,6 +307,27 @@ export default function AdminFoundationDetailPage() {
                     <strong>{detail.description || "-"}</strong>
                   </div>
                 </div>
+
+                {canReview ? (
+                  <div className="admin-foundation-detail-actions">
+                    <button
+                      type="button"
+                      className="admin-foundation-detail-approve"
+                      onClick={handleApprove}
+                      disabled={processing}
+                    >
+                      {processing && processingAction === "approve" ? "Processing..." : "Approve Foundation"}
+                    </button>
+                    <button
+                      type="button"
+                      className="admin-foundation-detail-reject"
+                      onClick={() => setShowRejectModal(true)}
+                      disabled={processing}
+                    >
+                      Reject Foundation
+                    </button>
+                  </div>
+                ) : null}
 
                 {isActive ? (
                   <button
@@ -299,8 +398,31 @@ export default function AdminFoundationDetailPage() {
               </article>
             </section>
           ) : null}
-        </main>
-      </div>
+      </main>
+
+      {showRejectModal ? (
+        <div className="admin-modal-overlay" role="dialog" aria-modal="true">
+          <div className="admin-modal">
+            <h4>Reject Foundation</h4>
+            <p>Please write reject reason before request.</p>
+            <textarea
+              className="admin-modal-textarea"
+              value={rejectReasonInput}
+              onChange={(e) => setRejectReasonInput(e.target.value)}
+              placeholder="Reject reason"
+              disabled={processing}
+            />
+            <div className="admin-modal-actions">
+              <button type="button" onClick={() => setShowRejectModal(false)} disabled={processing}>
+                Cancel
+              </button>
+              <button type="button" className="danger" onClick={handleReject} disabled={processing || !rejectReasonInput.trim()}>
+                {processing && processingAction === "reject" ? "Processing..." : "Reject"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {showDeactivateModal ? (
         <div className="admin-modal-overlay" role="dialog" aria-modal="true">
@@ -318,6 +440,6 @@ export default function AdminFoundationDetailPage() {
           </div>
         </div>
       ) : null}
-    </div>
+    </>
   );
 }
