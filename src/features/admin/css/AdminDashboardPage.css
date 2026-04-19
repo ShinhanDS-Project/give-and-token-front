@@ -199,6 +199,117 @@
   opacity: 1;
 }
 
+/* 그룹 헤더 분리형 (라벨 클릭 → 이동 / 화살표 클릭 → 토글) */
+.admin-sidebar-group__header-wrap {
+  display: flex;
+  align-items: center;
+  margin: 0 6px;
+  width: calc(100% - 12px);
+  border-radius: 7px;
+  transition: background 0.13s;
+}
+.admin-sidebar-group__header-wrap:hover {
+  background: #f5f7fa;
+}
+.admin-sidebar-group__header-wrap.has-active .admin-sidebar-group__label-btn {
+  color: #1a202c;
+  font-weight: 800;
+}
+.admin-sidebar-group__label-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 6px 9px 14px;
+  background: transparent;
+  border: none;
+  color: #374151;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: 'Nanum Gothic', 'Apple SD Gothic Neo', sans-serif;
+  text-align: left;
+  border-radius: 7px 0 0 7px;
+}
+.admin-sidebar-group__label-btn:hover {
+  color: #1a202c;
+}
+.admin-sidebar-group__toggle-btn {
+  display: flex;
+  align-items: center;
+  padding: 9px 10px;
+  background: transparent;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
+  border-radius: 0 7px 7px 0;
+}
+.admin-sidebar-group__toggle-btn:hover {
+  color: #374151;
+}
+
+/* 단체 조회 패널 — 여백 확장 */
+.admin-panel--spacious .admin-panel__header {
+  padding: 22px 32px;
+}
+.admin-panel--spacious .admin-foundation-stats {
+  padding: 20px 32px;
+  gap: 20px;
+}
+.admin-panel--spacious .admin-filter-bar {
+  padding: 14px 32px;
+}
+.admin-panel--spacious .admin-table-wrap {
+  padding: 0 32px;
+}
+.admin-panel--spacious .admin-table th {
+  padding: 12px 18px;
+}
+.admin-panel--spacious .admin-table td {
+  padding: 16px 18px;
+}
+.admin-panel--spacious .admin-pagination {
+  padding: 18px 32px;
+}
+.admin-panel--spacious .admin-empty-text {
+  padding: 48px 32px;
+}
+
+/* 단체 조회 스탯 카드 */
+.admin-foundation-stats {
+  display: flex;
+  gap: 16px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--admin-border, #e2e8f0);
+}
+.admin-foundation-stat {
+  flex: 1;
+  border-radius: 10px;
+  padding: 14px 18px;
+  border: 1px solid #e2e8f0;
+  background: transparent;
+}
+.admin-foundation-stat__label {
+  font-size: 12px;
+  font-weight: 800;
+  margin-bottom: 6px;
+  color: #475569;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+.admin-foundation-stat__value {
+  font-size: 26px;
+  font-weight: 900;
+  color: #0f172a;
+  line-height: 1;
+}
+.admin-foundation-stat__unit {
+  font-size: 13px;
+  font-weight: 700;
+  color: #64748b;
+  margin-left: 4px;
+}
+
 /* 접힌 상태: 아이콘 전용 버튼 */
 .admin-sidebar-group__icon-btn {
   width: 40px;
@@ -665,6 +776,8 @@
 .admin-table-wrap {
   width: 100%;
   overflow-x: auto;
+  padding: 0 20px;
+  box-sizing: border-box;
 }
 
 .admin-table {
@@ -697,6 +810,18 @@
 
 .admin-table tbody tr:last-child {
   border-bottom: none;
+}
+
+/* 목록 패널 테이블 — 헤더 보더 강조 (대시보드 홈 제외) */
+.admin-panel--list .admin-table thead tr {
+  background: transparent;
+  border-bottom: 2px solid #1e293b;
+}
+.admin-panel--list .admin-table th {
+  font-size: 12px;
+  font-weight: 900;
+  color: #1e293b;
+  letter-spacing: 0.03em;
 }
 
 .admin-table tbody tr:hover {
@@ -872,9 +997,25 @@
   gap: 8px;
 }
 
+.admin-select-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+.admin-select-chevron {
+  position: absolute;
+  right: 8px;
+  pointer-events: none;
+  color: #94a3b8;
+  font-size: 13px;
+  line-height: 1;
+}
+
 .admin-select {
   height: 32px;
-  padding: 0 8px;
+  padding: 0 26px 0 10px;
+  appearance: none;
+  -webkit-appearance: none;
   border: 1px solid #e2e8f0;
   border-radius: 6px;
   background: #fff;
@@ -932,7 +1073,50 @@
 
 .admin-period-selector {
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   gap: 4px;
+}
+
+.admin-period-range {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.admin-period-range input[type="date"] {
+  height: 26px;
+  padding: 0 6px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 11px;
+  font-family: 'Nanum Gothic', 'Apple SD Gothic Neo', sans-serif;
+  color: #374151;
+  background: #fff;
+  cursor: pointer;
+}
+
+.admin-period-range span {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.admin-period-range__apply {
+  height: 26px;
+  padding: 0 10px;
+  border: 1px solid #2563eb;
+  border-radius: 6px;
+  background: #2563eb;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: 'Nanum Gothic', 'Apple SD Gothic Neo', sans-serif;
+}
+
+.admin-period-range__apply:disabled {
+  opacity: 0.45;
+  cursor: default;
 }
 
 .admin-period-btn {
@@ -2736,6 +2920,353 @@
   color: #718096;
   font-size: 12px;
   font-weight: 700;
+}
+
+/* =============================================
+   단체 상세 — 신규 레이아웃 (afd-*)
+   ============================================= */
+
+.afd-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) 300px;
+  gap: 16px;
+  align-items: start;
+}
+
+.afd-main {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* 프로필 카드 */
+.afd-profile__header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 18px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #f0f2f7;
+}
+
+.afd-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 10px;
+  object-fit: cover;
+  border: 1px solid #e8ecf2;
+  flex-shrink: 0;
+}
+
+.afd-avatar--fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: 900;
+  color: #2563eb;
+  background: #ebf0ff;
+}
+
+.afd-profile__name {
+  margin: 0 0 4px;
+  font-size: 20px;
+  font-weight: 900;
+  color: #1a202c;
+}
+
+.afd-profile__email {
+  margin: 0;
+  font-size: 13px;
+  color: #718096;
+}
+
+.afd-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.afd-field {
+  border: 1px solid #edf0f5;
+  background: #f8f9fc;
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.afd-field--wide {
+  grid-column: 1 / -1;
+}
+
+.afd-field span {
+  display: block;
+  color: #a0aec0;
+  font-size: 11px;
+  font-weight: 800;
+  margin-bottom: 5px;
+  letter-spacing: 0.02em;
+}
+
+.afd-field strong {
+  color: #1a202c;
+  font-size: 13px;
+  font-weight: 800;
+  word-break: break-word;
+}
+
+.afd-field__desc {
+  margin: 0;
+  color: #1a202c;
+  font-size: 13px;
+  font-weight: 400;
+  word-break: break-word;
+  line-height: 1.6;
+}
+
+/* 탭 */
+.afd-tabs {
+  display: flex;
+  border-bottom: 1px solid #f0f2f7;
+}
+
+.afd-tab {
+  height: 44px;
+  padding: 0 20px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  font-size: 13px;
+  font-weight: 800;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: color 0.13s, border-color 0.13s;
+  font-family: 'Nanum Gothic', 'Apple SD Gothic Neo', sans-serif;
+  margin-bottom: -1px;
+}
+
+.afd-tab.is-active {
+  color: #2563eb;
+  border-bottom-color: #2563eb;
+}
+
+.afd-tab-content {
+  padding: 16px;
+}
+
+/* 캠페인 현황 탭 */
+.afd-campaign-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.afd-campaign-item {
+  border: 1px solid #edf0f5;
+  background: #f8f9fc;
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.afd-campaign-item strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 800;
+  color: #1a202c;
+  margin-bottom: 4px;
+}
+
+.afd-campaign-item p,
+.afd-campaign-item span {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: #718096;
+}
+
+/* 플랫폼 활동 탭 */
+.afd-activity-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.afd-activity-item {
+  border: 1px solid #edf0f5;
+  background: #f8f9fc;
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.afd-activity-item span {
+  display: block;
+  color: #a0aec0;
+  font-size: 10px;
+  font-weight: 800;
+  margin-bottom: 4px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.afd-activity-item strong {
+  display: block;
+  color: #1a202c;
+  font-size: 13px;
+  font-weight: 800;
+  word-break: break-all;
+}
+
+/* 오른쪽 사이드바 */
+.afd-sidebar {
+  position: sticky;
+  top: 16px;
+}
+
+.afd-status-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.afd-status-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #f0f2f7;
+  margin-bottom: 14px;
+}
+
+.afd-status-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.afd-status-row span {
+  font-size: 12px;
+  font-weight: 700;
+  color: #94a3b8;
+}
+
+.afd-status-row strong {
+  font-size: 13px;
+  font-weight: 800;
+}
+
+/* 불법단체 검사 결과 */
+.afd-illegal-box {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 14px;
+}
+
+.afd-illegal-box__title {
+  margin: 0 0 10px;
+  font-size: 12px;
+  font-weight: 900;
+  color: #374151;
+}
+
+.afd-illegal-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 8px;
+}
+
+.afd-illegal-rows + .afd-illegal-rows {
+  padding-top: 10px;
+  border-top: 1px solid #e2e8f0;
+  margin-top: 6px;
+}
+
+.afd-illegal-row {
+  display: flex;
+  gap: 8px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.afd-illegal-row span:first-child {
+  flex-shrink: 0;
+  width: 40px;
+  font-weight: 800;
+  color: #94a3b8;
+}
+
+.afd-illegal-row span:last-child {
+  color: #374151;
+  word-break: break-word;
+}
+
+/* 액션 버튼들 */
+.afd-action-group {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #f0f2f7;
+  margin-bottom: 10px;
+}
+
+.afd-deactivate-wrap {
+  /* spacing handled by parent flex gap */
+}
+
+.afd-btn {
+  width: 100%;
+  height: 38px;
+  border-radius: 7px;
+  border: none;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.13s;
+  font-family: 'Nanum Gothic', 'Apple SD Gothic Neo', sans-serif;
+}
+
+.afd-btn--approve {
+  background: none;
+  color: #2563eb;
+  border: 1px solid #cbd5e1;
+}
+
+.afd-btn--approve:hover:not(:disabled) {
+  border-color: #2563eb;
+}
+
+.afd-btn--reject {
+  background: none;
+  color: #dc2626;
+  border: 1px solid #cbd5e1;
+}
+
+.afd-btn--reject:hover:not(:disabled) {
+  border-color: #dc2626;
+}
+
+.afd-btn--danger {
+  background: #dc2626;
+  color: #fff;
+}
+
+.afd-btn--danger:hover {
+  background: #b91c1c;
+}
+
+.afd-btn--disabled {
+  background: #f0f2f7;
+  color: #a0aec0;
+  cursor: default;
+}
+
+.afd-btn:disabled {
+  opacity: 0.55;
+  cursor: default;
 }
 
 /* =============================================
