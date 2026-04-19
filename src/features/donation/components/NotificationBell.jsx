@@ -36,7 +36,7 @@ function timeAgo(value) {
   return `${Math.floor(h / 24)}일 전`;
 }
 
-export default function NotificationBell({ userRole }) {
+export default function NotificationBell({ userRole, dropPosition = "right", onViewAll }) {
   const [recent, setRecent] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [open, setOpen] = useState(false);
@@ -86,7 +86,7 @@ export default function NotificationBell({ userRole }) {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-2xl shadow-xl border border-stone-100 z-50 overflow-hidden">
+        <div className={`absolute ${dropPosition === "left" ? "left-0" : "right-0"} top-full mt-2 w-80 bg-white rounded-2xl shadow-xl border border-stone-100 z-50 overflow-hidden`}>
           <div className="flex items-center justify-between px-4 py-3 border-b border-stone-100">
             <span className="font-bold text-sm text-ink">알림</span>
             {unreadCount > 0 && (
@@ -129,7 +129,8 @@ export default function NotificationBell({ userRole }) {
             <button
               onClick={() => {
                 setOpen(false);
-                navigate(getNotificationsPath(userRole));
+                if (onViewAll) onViewAll();
+                else navigate(getNotificationsPath(userRole));
               }}
               className="w-full text-center text-sm font-bold text-primary hover:text-primary/80 transition-colors py-1"
             >
