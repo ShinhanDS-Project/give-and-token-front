@@ -21,6 +21,18 @@ function formatDate(value) {
   return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleDateString("ko-KR");
 }
 
+function formatPhone(value) {
+  if (!value) return "-";
+  const d = String(value).replace(/\D/g, "");
+  if (d.length === 11) return `${d.slice(0, 3)}-${d.slice(3, 7)}-${d.slice(7)}`;
+  if (d.length === 10) {
+    if (d.startsWith("02")) return `${d.slice(0, 2)}-${d.slice(2, 6)}-${d.slice(6)}`;
+    return `${d.slice(0, 3)}-${d.slice(3, 6)}-${d.slice(6)}`;
+  }
+  if (d.length === 9 && d.startsWith("02")) return `${d.slice(0, 2)}-${d.slice(2, 5)}-${d.slice(5)}`;
+  return value;
+}
+
 function normalizePageContent(payload) {
   if (Array.isArray(payload)) return payload;
   if (payload && Array.isArray(payload.content)) return payload.content;
@@ -192,51 +204,39 @@ export default function AdminFoundationDetailPage() {
         {!loading && !error && detail && (
           <div className="afd-layout">
 
-            {/* ── 왼쪽: 프로필 카드 + 탭 ── */}
-            <div className="afd-main">
-
-              {/* 프로필 */}
-              <section className="admin-dashboard-panel afd-profile">
-                <div className="afd-profile__header">
-                  {detail.profilePath ? (
-                    <img src={detail.profilePath} alt="" className="afd-avatar" />
-                  ) : (
-                    <div className="afd-avatar afd-avatar--fallback">
-                      {(detail.foundationName || "G").slice(0, 1)}
-                    </div>
-                  )}
-                  <div>
-                    <h2 className="afd-profile__name">{detail.foundationName || "-"}</h2>
-                    <p className="afd-profile__email">{detail.foundationEmail || "-"}</p>
+            {/* 프로필 */}
+            <section className="admin-dashboard-panel afd-profile">
+              <div className="afd-profile__body">
+                {detail.profilePath ? (
+                  <img src={detail.profilePath} alt="" className="afd-avatar" />
+                ) : (
+                  <div className="afd-avatar afd-avatar--fallback">
+                    {(detail.foundationName || "G").slice(0, 1)}
+                  </div>
+                )}
+                <div className="afd-profile__info">
+                  <h2 className="afd-profile__name">{detail.foundationName || "-"}</h2>
+                  <p className="afd-profile__email">{detail.foundationEmail || "-"}</p>
+                  <div className="afd-profile__rows">
+                    {[
+                      { label: "대표자",    value: detail.representativeName || "-" },
+                      { label: "사업자 번호", value: detail.businessRegistrationNumber || "-" },
+                      { label: "연락처",    value: formatPhone(detail.contactPhone) },
+                      { label: "단체 유형",  value: detail.foundationType || "-" },
+                      { label: "단체 소개",  value: detail.description || "-", desc: true },
+                    ].map(({ label, value, desc }) => (
+                      <div key={label} className={`afd-profile__row${desc ? " afd-profile__row--desc" : ""}`}>
+                        <span>{label}</span>
+                        <p>{value}</p>
+                      </div>
+                    ))}
                   </div>
                 </div>
+              </div>
+            </section>
 
-                <div className="afd-fields">
-                  <div className="afd-field">
-                    <span>대표자</span>
-                    <strong>{detail.representativeName || "-"}</strong>
-                  </div>
-                  <div className="afd-field">
-                    <span>사업자 번호</span>
-                    <strong>{detail.businessRegistrationNumber || "-"}</strong>
-                  </div>
-                  <div className="afd-field">
-                    <span>연락처</span>
-                    <strong>{detail.contactPhone || "-"}</strong>
-                  </div>
-                  <div className="afd-field">
-                    <span>단체 유형</span>
-                    <strong>{detail.foundationType || "-"}</strong>
-                  </div>
-                  <div className="afd-field afd-field--wide">
-                    <span>단체 소개</span>
-                    <p className="afd-field__desc">{detail.description || "-"}</p>
-                  </div>
-                </div>
-              </section>
-
-              {/* 탭 */}
-              <section className="admin-dashboard-panel" style={{ padding: 0 }}>
+            {/* 탭 */}
+            <section className="admin-dashboard-panel afd-tabs-section" style={{ padding: 0 }}>
                 <div className="afd-tabs">
                   <button
                     type="button"
@@ -270,17 +270,17 @@ export default function AdminFoundationDetailPage() {
                   )}
 
                   {activeTab === "activity" && (
-                    <div className="afd-activity-grid">
+                    <div className="afd-activity-rows">
                       {[
-                        { label: "지갑 주소", value: wallet?.walletAddress || "-" },
-                        { label: "지갑 잔액", value: formatCurrency(wallet?.balance) },
-                        { label: "전체 캠페인", value: formatNumber(activitySummary.campaignCount) },
-                        { label: "진행 중 캠페인", value: formatNumber(activitySummary.ongoingCount) },
-                        { label: "모금액", value: formatCurrency(activitySummary.totalCurrent) },
-                        { label: "목표금액", value: formatCurrency(activitySummary.totalTarget) },
-                        { label: "달성률", value: `${activitySummary.achievementRate.toFixed(1)}%` },
+                        { label: "지갑 주소",    value: wallet?.walletAddress || "-" },
+                        { label: "지갑 잔액",    value: formatCurrency(wallet?.balance) },
+                        { label: "전체 캠페인",  value: formatNumber(activitySummary.campaignCount) },
+                        { label: "진행 중",      value: formatNumber(activitySummary.ongoingCount) },
+                        { label: "모금액",       value: formatCurrency(activitySummary.totalCurrent) },
+                        { label: "목표금액",     value: formatCurrency(activitySummary.totalTarget) },
+                        { label: "달성률",       value: `${activitySummary.achievementRate.toFixed(1)}%` },
                       ].map(({ label, value }) => (
-                        <div key={label} className="afd-activity-item">
+                        <div key={label} className="afd-activity-row">
                           <span>{label}</span>
                           <strong>{value}</strong>
                         </div>
@@ -288,8 +288,7 @@ export default function AdminFoundationDetailPage() {
                     </div>
                   )}
                 </div>
-              </section>
-            </div>
+            </section>
 
             {/* ── 오른쪽: 상태 + 불법 검사 + 액션 ── */}
             <div className="afd-sidebar">
@@ -331,9 +330,9 @@ export default function AdminFoundationDetailPage() {
                   </div>
                 )}
 
-                {/* 승인 / 반려 */}
+                {/* 승인 / 반려 — 아래 배치 */}
                 {canReview && (
-                  <div className="afd-action-group">
+                  <div className="afd-action-group" style={{ marginTop: "auto" }}>
                     <button
                       type="button"
                       className="afd-btn afd-btn--approve"

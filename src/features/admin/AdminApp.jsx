@@ -21,6 +21,8 @@ import AdminDashboardPage from "./pages/AdminDashboardPage";
 import AdminCampaignDetailPage from "./pages/AdminCampaignDetailPage";
 import AdminEventDetailPage from "./pages/AdminEventDetailPage";
 import AdminFoundationDetailPage from "./pages/AdminFoundationDetailPage";
+import AdminReportDetailPage from "./pages/AdminReportDetailPage";
+import AdminMemberDetailPage from "./pages/AdminMemberDetailPage";
 import AdminLoginPage from "./pages/AdminLoginPage";
 import { logoutAdmin } from "./util";
 import "./css/AdminDashboardPage.css";
@@ -67,6 +69,7 @@ const NAV_GROUPS = [
       { key: "requests", label: "새 요청" },
       { key: "logs", label: "관리자 로그" },
       { key: "send-history", label: "발송 내역" },
+      { key: "wallet", label: "지갑 정보" },
     ],
   },
 ];
@@ -84,6 +87,7 @@ const KEY_TO_URL = {
   requests:               "/admin/dashboard?tab=requests",
   logs:                   "/admin/dashboard?tab=logs",
   "send-history":         "/admin/dashboard?tab=send-history",
+  wallet:                 "/admin/dashboard?tab=wallet",
 };
 
 function SidebarGroup({ group, activeKey, onSelect, sidebarCollapsed, onOpenFlyout, isActiveFlyout }) {
@@ -184,6 +188,7 @@ function AdminShell() {
     if (location.pathname.startsWith("/admin/report/")) return "reports-approval";
     if (location.pathname.startsWith("/admin/request/")) return "requests";
     if (location.pathname.startsWith("/admin/log/")) return "logs";
+    if (location.pathname.startsWith("/admin/member/")) return "members";
 
     if (tab === "foundations-list") return "foundations-list";
     if (tab === "foundations") return "foundations-approval";
@@ -338,7 +343,8 @@ export default function AdminApp() {
         <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
         <Route path="/admin/foundation/:foundationNo" element={<AdminFoundationDetailPage />} />
         <Route path="/admin/campaign/:campaignNo" element={<AdminCampaignDetailPage />} />
-        <Route path="/admin/report/:reportNo" element={<AdminEventDetailPage kind="report" />} />
+        <Route path="/admin/report/:reportNo" element={<AdminReportDetailPage />} />
+        <Route path="/admin/member/:userNo" element={<AdminMemberDetailPage />} />
         <Route path="/admin/request/:requestNo" element={<AdminEventDetailPage kind="request" />} />
         <Route path="/admin/log/:logNo" element={<AdminEventDetailPage kind="log" />} />
       </Route>
