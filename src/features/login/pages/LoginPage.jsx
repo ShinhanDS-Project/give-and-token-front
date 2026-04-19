@@ -47,25 +47,41 @@ const LoginPage = () => {
 
   const handleLocalLogin = async (e) => {
     e.preventDefault();
+
+    const extractErrorMessage = async (response) => {
+      try {
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          const data = await response.json();
+          return data.message || "로그인에 실패했습니다.";
+        } else {
+          const text = await response.text();
+          return text || "로그인에 실패했습니다.";
+        }
+      } catch (e) {
+        return "로그인에 실패했습니다.";
+      }
+    };
+
     try {
       setLoginError("");
+
       const response = await loginLocal(loginData.role, {
         email: loginData.email,
         password: loginData.password,
       });
 
       if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(errorText || "로그인에 실패했습니다.");
+        const message = await extractErrorMessage(response);
+        throw new Error(message);
       }
 
       const data = await response.json().catch(() => null);
       console.log("로그인 성공:", data);
 
-      // 토큰 및 사용자 역할 저장
       const rawToken = String(data?.accessToken || "")
-        .replace(/^Bearer\s+/i, "")
-        .trim();
+          .replace(/^Bearer\s+/i, "")
+          .trim();
 
       if (rawToken) {
         window.localStorage.setItem("accessToken", rawToken);
@@ -76,13 +92,13 @@ const LoginPage = () => {
       if (loginData.role === "foundation") {
         window.localStorage.setItem("foundationAccessToken", rawToken);
         window.localStorage.setItem(
-          "foundationAuthInfo",
-          JSON.stringify({
-            foundationNo: data?.foundationNo ?? null,
-            foundationName: data?.foundationName ?? "",
-            email: data?.email ?? loginData.email,
-            tokenType: data?.tokenType ?? "Bearer",
-          }),
+            "foundationAuthInfo",
+            JSON.stringify({
+              foundationNo: data?.foundationNo ?? null,
+              foundationName: data?.foundationName ?? "",
+              email: data?.email ?? loginData.email,
+              tokenType: data?.tokenType ?? "Bearer",
+            }),
         );
       }
 

@@ -12,7 +12,7 @@ export default function DonationHistorySection({ donationHistory, onViewAll }) {
       </div>
 
       {donationHistory.length === 0 ? (
-        <div>기부내역이 없어.</div>
+        <div>기부내역이 없습니다.</div>
       ) : (
         <div>
           {donationHistory.map((item, index) => (

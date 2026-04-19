@@ -47,38 +47,28 @@ export default function DonationHistorySection({
           {donationHistory.slice(0, 5).map((item, index) => (
             <div
               key={item.transaction?.transactionNo ?? `${item.campaignNo}-${index}`}
-              className="donation-log-item"
+              className="bg-white rounded-2xl border border-slate-100 p-5 flex flex-col md:flex-row justify-between items-center gap-4 hover:shadow-lg hover:shadow-primary/5 transition-all group"
             >
               <div className="flex-1 text-center md:text-left">
-                <p className="text-lg font-bold text-ink mb-2">{item.title}</p>
+                <div className="flex items-center justify-center md:justify-start gap-2 mb-1.5">
+                  <p className="text-base font-bold text-ink group-hover:text-primary transition-colors line-clamp-1">{item.title}</p>
+                </div>
                 <div className="flex items-center justify-center md:justify-start gap-3">
-                  <span className="flex items-center gap-1 text-[11px] font-bold text-stone-400 bg-surface px-2 py-1 rounded-md border border-line">
-                    <Calendar size={12} />
+                  <span className="flex items-center gap-1 text-[11px] font-bold text-stone-400">
+                    <Calendar size={12} className="text-primary/40" />
                     {formatDate(item.transaction?.sentAt || item.transaction?.createdAt || item.donatedAt)}
                   </span>
-                  <span className="text-[11px] font-bold text-stone-300 uppercase tracking-tighter">#ID-{item.campaignNo}</span>
                 </div>
               </div>
 
-              <div className="flex flex-col items-center md:items-end gap-2 mt-4 md:mt-0">
-                <div className="flex items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() => onOpenTracking(item.campaignNo)}
-                    className="text-xs font-bold text-primary hover:underline"
-                  >
-                    마이크로트래킹
-                  </button>
-                  <span className={`status-tag-clean ${
-                    item.transaction?.status === 'SUCCESS' ? 'text-emerald-500 border-emerald-100' : 
-                    item.transaction?.status === 'PENDING' ? 'text-amber-500 border-amber-100' : 'text-rose-500 border-rose-100'
-                  }`}>
-                    • {item.transaction?.status ?? "PENDING"}
+              <div className="flex flex-col items-center md:items-end gap-1 shrink-0">
+                <div className="flex items-baseline gap-1">
+                  <span className="text-xl font-black text-ink tracking-tight">
+                    {Number(item.priceamount || 0).toLocaleString()}
                   </span>
-                  <p className="text-2xl font-black text-ink">
-                    {formatAmount(item.priceamount)}
-                  </p>
+                  <span className="text-xs font-bold text-stone-400">원</span>
                 </div>
+                
                 {item.transaction?.txHash && (
                   <a 
                     href={`/blockchain/transactions/${item.transaction.txHash}`}
@@ -86,7 +76,8 @@ export default function DonationHistorySection({
                     target="_blank"
                     rel="noreferrer"
                   >
-                    내역 증명서 확인 <ExternalLink size={10} />
+                    <ReceiptText size={11} />
+                    증명서 확인 <ExternalLink size={10} className="opacity-40" />
                   </a>
                 )}
               </div>

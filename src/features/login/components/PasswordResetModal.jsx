@@ -24,6 +24,21 @@ export default function PasswordResetModal({ role, onClose }) {
   const [resetting, setResetting] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
 
+  const extractErrorMessage = async (response, defaultMsg) => {
+    try {
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.includes("application/json")) {
+        const data = await response.json();
+        return data.message || defaultMsg;
+      } else {
+        const text = await response.text();
+        return text || defaultMsg;
+      }
+    } catch (e) {
+      return defaultMsg;
+    }
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({
@@ -53,11 +68,11 @@ export default function PasswordResetModal({ role, onClose }) {
       });
 
       if (!response.ok) {
-        const message = await extractErrorMessage(
+        const errorMsg = await extractErrorMessage(
             response,
-            "가입 정보를 확인할 수 없거나 인증번호 발송에 실패했습니다."
+            "입력하신 정보와 일치하는 계정을 찾을 수 없습니다. (소셜 로그인 계정은 비밀번호 재설정이 불가능합니다)"
         );
-        throw new Error(message);
+        throw new Error(errorMsg);
       }
 
       setStep(2);
@@ -86,13 +101,13 @@ export default function PasswordResetModal({ role, onClose }) {
       });
 
       if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(errorText || "인증번호가 일치하지 않습니다.");
+        const errorMsg = await extractErrorMessage(response, "인증번호가 일치하지 않거나 만료되었습니다.");
+        throw new Error(errorMsg);
       }
 
       setIsVerified(true);
       setStep(3);
-      setMessage("이메일 인증이 완료되었습니다.");
+      setMessage("이메일 인증이 완료되었습니다. 새 비밀번호를 설정해주세요.");
     } catch (error) {
       console.error(error);
       setIsVerified(false);
@@ -131,8 +146,8 @@ export default function PasswordResetModal({ role, onClose }) {
       });
 
       if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(errorText || "비밀번호 재설정에 실패했습니다.");
+        const errorMsg = await extractErrorMessage(response, "비밀번호 재설정에 실패했습니다.");
+        throw new Error(errorMsg);
       }
 
       alert("비밀번호가 성공적으로 재설정되었습니다.");

@@ -106,6 +106,15 @@
   --accent-green: linear-gradient(135deg, rgba(190, 204, 227, 0.2), rgba(255, 255, 255, 0.92));
 }
 
+/* 스크롤바 숨기기 유틸리티 */
+.scrollbar-hide, body, html {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+.scrollbar-hide::-webkit-scrollbar, body::-webkit-scrollbar, html::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
+}
+
 * {
   box-sizing: border-box;
 }

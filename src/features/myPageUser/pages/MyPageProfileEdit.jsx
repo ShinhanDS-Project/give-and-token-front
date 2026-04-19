@@ -50,8 +50,8 @@ export default function MyPageProfileEdit() {
         setPreviewImage(fullPath);
       }
       
-      setNicknameChecked(true);
-      setNicknameMessage("현재 사용 중인 닉네임입니다.");
+      setNicknameChecked(false);
+      setNicknameMessage("");
     }
   }, [myInfo]);
 
@@ -62,12 +62,6 @@ export default function MyPageProfileEdit() {
       ...prev,
       nameHash: value,
     }));
-
-    if (value === originalNickname) {
-      setNicknameChecked(true);
-      setNicknameMessage("현재 사용 중인 닉네임입니다.");
-      return;
-    }
 
     setNicknameChecked(false);
     setNicknameMessage("");
@@ -166,8 +160,8 @@ export default function MyPageProfileEdit() {
   };
 
   return (
-    <div className="mypage-main-page">
-      <div className="max-w-2xl mx-auto">
+    <div className="mypage-sub-page scrollbar-hide">
+      <div className="max-w-2xl mx-auto scrollbar-hide">
         <header className="flex items-center gap-4 mb-12">
           <button 
             type="button"

@@ -82,8 +82,8 @@ export default function MyPagePasswordChange() {
   };
 
   return (
-    <div className="mypage-main-page">
-      <div className="max-w-xl mx-auto">
+    <div className="mypage-sub-page scrollbar-hide">
+      <div className="max-w-2xl mx-auto scrollbar-hide">
         <header className="flex items-center gap-4 mb-12">
           <button 
             className="p-3 bg-white rounded-full shadow-md hover:scale-110 transition-transform text-primary border border-line"

@@ -1,24 +1,40 @@
 /* MyPage.css - 최종 디자인 보정: 아이보리 감성 및 색감 강화 */
 
 .mypage-main-page {
-    /* 상단 여백 최종 미세 조정 (pt-28 -> pt-32) */
-    @apply max-w-7xl mx-auto px-8 py-16 min-h-screen pt-32 bg-surface;
+    /* 상단 여백을 충분히 주어 콘텐츠가 화면 상단에 너무 붙지 않게 조정 */
+    @apply max-w-6xl mx-auto px-6 py-12 min-h-screen pt-44 bg-surface transition-all duration-500;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
 }
 
-/* 제목: 잉크색(ink: #4E342E) 스타일로 변경 */
+.mypage-sub-page {
+    /* 서브 페이지들은 MyPageLayout에서 pt-44를 이미 받았으므로, 중복 padding을 제거하고 상단 여백을 미세 조정 */
+    @apply w-full min-h-0 pt-0;
+}
+
+.mypage-main-page::-webkit-scrollbar {
+    display: none;
+}
+
+/* 제목: 가독성을 위해 자간과 굵기 미세 조정 */
 .mypage-main-page h1 {
-    @apply text-4xl font-bold text-ink tracking-tight;
+    @apply text-4xl font-black text-ink tracking-tight mb-2;
 }
 
-/* 카드 기본: 얇고 선명한 테두리 (line: #FBE9E7 컬러 활용) */
+/* 카드 디자인: 스크롤바가 없을 때 더 돋보이는 부드러운 깊이감 */
 .mypage-card {
-    @apply bg-white border border-line rounded-2xl p-8 transition-all duration-300 relative h-full;
-    box-shadow: 0 4px 20px -5px rgba(78, 52, 46, 0.05);
+    @apply bg-white border border-slate-100 rounded-[2rem] p-10 transition-all duration-500 relative h-full;
+    box-shadow: 0 10px 40px -15px rgba(78, 52, 46, 0.08);
 }
 
 .mypage-card:hover {
-    @apply border-primary/30 translate-y-[-2px];
-    box-shadow: 0 12px 30px -10px rgba(255, 138, 101, 0.15);
+    @apply border-primary/20 translate-y-[-4px];
+    box-shadow: 0 20px 50px -15px rgba(255, 138, 101, 0.12);
+}
+
+/* 사이드바와 메인 콘텐츠 간의 균형감 있는 간격 */
+.mypage-layout-grid {
+    @apply flex flex-col lg:flex-row gap-12 lg:gap-20;
 }
 
 /* 색상 및 폰트 디테일: 잉크색의 연한 브라운 톤 */
