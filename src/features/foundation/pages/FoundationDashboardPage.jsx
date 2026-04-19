@@ -1,8 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft,
+  Bell,
   Building2,
   Camera,
+  ChevronLeft,
+  ChevronRight,
   CirclePlus,
   FileClock,
   House,
@@ -13,7 +16,8 @@ import {
   Pencil,
 } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import NotificationBell from "../../donation/components/NotificationBell";  //[가빈] 알림벨 추가 
+import NotificationBell from "../../donation/components/NotificationBell";  //[가빈] 알림벨 추가
+import "../css/FoundationDashboardPage.css";
 import {
   fetchFoundationMyInfo,
   fetchFoundationMyStats,
@@ -203,6 +207,110 @@ function isMatchCampaignFilter(campaign, filterKey) {
   return true;
 }
 
+function NotificationPanel({ token }) {
+  const [notifications, setNotifications] = useState([]);
+  const [loadingNotif, setLoadingNotif] = useState(true);
+  const [page, setPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [markingAll, setMarkingAll] = useState(false);
+
+  const fetchNotifs = async (p = 0) => {
+    if (!token) { setLoadingNotif(false); return; }
+    try {
+      setLoadingNotif(true);
+      const res = await fetch(`/api/notifications?page=${p}&size=20&sort=created_at,desc`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setNotifications(data.content ?? []);
+        setTotalPages(data.totalPages ?? 0);
+      }
+    } catch {} finally { setLoadingNotif(false); }
+  };
+
+  useEffect(() => { fetchNotifs(page); }, [page, token]);
+
+  const markAsRead = async (no) => {
+    try {
+      await fetch(`/api/notifications/${no}/read`, { method: "PATCH", headers: { Authorization: `Bearer ${token}` } });
+      setNotifications((prev) => prev.map((n) => n.notificationNo === no ? { ...n, read: true } : n));
+    } catch {}
+  };
+
+  const markAllAsRead = async () => {
+    try {
+      setMarkingAll(true);
+      await fetch("/api/notifications/read-all", { method: "PATCH", headers: { Authorization: `Bearer ${token}` } });
+      setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    } catch {} finally { setMarkingAll(false); }
+  };
+
+  return (
+    <div className="fd-panel">
+      <div className="fd-panel__header" style={{ marginBottom: 16 }}>
+        <h2 style={{ fontSize: 16, fontWeight: 800, margin: 0, color: "#1a202c" }}>알림</h2>
+        <button
+          type="button"
+          onClick={markAllAsRead}
+          disabled={markingAll}
+          className="fd-panel-action-btn fd-panel-action-btn--outline"
+          style={{ fontSize: 13 }}
+        >
+          전체 읽음
+        </button>
+      </div>
+
+      {loadingNotif ? (
+        <div className="fd-empty">알림을 불러오는 중...</div>
+      ) : notifications.length === 0 ? (
+        <div className="fd-empty">알림이 없습니다.</div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {notifications.map((n) => (
+            <div
+              key={n.notificationNo}
+              style={{
+                display: "flex",
+                alignItems: "flex-start",
+                gap: 12,
+                padding: "14px 16px",
+                borderRadius: 10,
+                border: `1px solid ${n.read ? "#e8ecf2" : "#ffd6c8"}`,
+                background: n.read ? "#fff" : "#fff8f5",
+                opacity: n.read ? 0.75 : 1,
+              }}
+            >
+              <div style={{ width: 8, height: 8, borderRadius: "50%", background: n.read ? "#d1d5db" : "#FF8A65", flexShrink: 0, marginTop: 5 }} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ fontSize: 14, color: "#1a202c", margin: "0 0 5px", lineHeight: 1.6 }}>{n.content}</p>
+                <span style={{ fontSize: 12, color: "#9ca3af" }}>{n.createdAt ? new Date(Array.isArray(n.createdAt) ? new Date(n.createdAt[0], n.createdAt[1]-1, n.createdAt[2], n.createdAt[3]??0, n.createdAt[4]??0) : n.createdAt).toLocaleString("ko-KR") : ""}</span>
+              </div>
+              {!n.read && (
+                <button
+                  type="button"
+                  onClick={() => markAsRead(n.notificationNo)}
+                  style={{ background: "none", border: "none", cursor: "pointer", fontSize: 12, color: "#FF8A65", fontWeight: 700, flexShrink: 0 }}
+                >
+                  읽음
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {totalPages > 1 && (
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 16 }}>
+          <button type="button" className="fd-btn-secondary" disabled={page <= 0} onClick={() => setPage((p) => p - 1)} style={{ padding: "6px 14px", fontSize: 13 }}>이전</button>
+          <span style={{ fontSize: 13, color: "#6b7280" }}>{page + 1} / {totalPages}</span>
+          <button type="button" className="fd-btn-secondary" disabled={page >= totalPages - 1} onClick={() => setPage((p) => p + 1)} style={{ padding: "6px 14px", fontSize: 13 }}>다음</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function FoundationDashboardPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -212,6 +320,7 @@ function FoundationDashboardPage() {
     searchParams.get("menu") || "home",
   );
   const [campaignFilter, setCampaignFilter] = useState("all");
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   const [foundation, setFoundation] = useState(null);
   const [stats, setStats] = useState(null);
@@ -300,6 +409,23 @@ function FoundationDashboardPage() {
         setFoundation(foundationInfo);
         setStats(foundationStats);
         setCampaigns(campaignPage?.content || []);
+
+        // 지갑·정산·현금화 정보 비동기 로드 (홈 대시보드 표시용)
+        try {
+          const foundationNo = getFoundationNoFromAccessToken() || foundationInfo?.foundationNo;
+          const [wallet, settlementPage, redemptionPage] = await Promise.all([
+            foundationNo ? fetchFoundationWalletInfo(foundationNo) : Promise.resolve(null),
+            fetchFoundationSettlements({ page: 0, size: 2 }),
+            fetchFoundationRedemptions({ page: 0, size: 2 }),
+          ]);
+          if (mounted) {
+            if (wallet) setWalletInfo(wallet);
+            setSettlements(settlementPage?.content || []);
+            setRedemptions(redemptionPage?.content || []);
+          }
+        } catch {
+          // 부가 정보 없어도 대시보드 정상 표시
+        }
       } catch (error) {
         if (!mounted) {
           return;
@@ -737,436 +863,347 @@ function FoundationDashboardPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-surface p-8 pt-28 text-sm text-ink">
+      <div style={{ padding: "40px", fontSize: "14px", color: "#64748b", fontFamily: "'Nanum Gothic', sans-serif" }}>
         불러오는 중...
-      </main>
+      </div>
     );
   }
 
   if (errorMessage) {
     return (
-      <main className="min-h-screen bg-surface p-8 pt-28">
-        <div className="storybook-card mx-auto max-w-4xl p-6">
-          <p className="text-sm text-rose-600">{errorMessage}</p>
-          <button
-            type="button"
-            className="mt-4 rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white"
-            onClick={() => navigate("/login")}
-          >
+      <div style={{ padding: "40px", fontFamily: "'Nanum Gothic', sans-serif" }}>
+        <div className="fd-panel" style={{ maxWidth: 480 }}>
+          <p className="fd-error-text">{errorMessage}</p>
+          <button type="button" className="fd-btn-primary" style={{ marginTop: 12 }} onClick={() => navigate("/login")}>
             로그인으로 이동
           </button>
         </div>
-      </main>
+      </div>
     );
   }
 
   return (
-    <main className="min-h-screen bg-surface pt-28 text-ink watercolor-bg">
-      <div className="mx-auto grid max-w-[1320px] grid-cols-1 gap-6 px-4 py-4 lg:grid-cols-[220px_1fr]">
-        <aside className="storybook-card self-start p-4 lg:mt-[96px] lg:h-[560px]">
-          <div className="mb-6 text-3xl font-black leading-tight text-ink">
-            기부엔토큰
+    <div className={`fd-page${sidebarCollapsed ? " sidebar-collapsed" : ""}`}>
+
+      {/* ── 사이드바 래퍼 ── */}
+      <div className="fd-sidebar-wrapper" style={{ position: "relative" }}>
+        <aside className="fd-sidebar">
+          <div className="fd-sidebar__brand">
+            <div className="fd-sidebar__brand-logo">g</div>
+            <div className="fd-sidebar__brand-info">
+              <span className="fd-sidebar__brand-name">give N token</span>
+              <span className="fd-sidebar__brand-sub">기부단체 콘솔</span>
+            </div>
+            <div className="fd-notif-wrap">
+              <NotificationBell userRole="foundation" dropPosition="left" onViewAll={() => handleOpenMenu("notification")} />
+            </div>
           </div>
 
-          <nav className="space-y-2 text-sm">
-            <button
-              type="button"
-              className={`w-full rounded-2xl px-3 py-2 text-left ${
-                activeMenu === "home"
-                  ? "font-semibold text-slate-900"
-                  : "text-slate-500 hover:bg-slate-50"
-              }`}
-              style={activeMenu === "home" ? { backgroundColor: BRAND_COLOR } : undefined}
-              onClick={handleGoHome}
-            >
-              <span className="flex items-center gap-2">
-                <House size={14} /> 홈
-              </span>
+          <nav className="fd-sidebar__nav">
+            <button type="button" className={`fd-nav-btn ${activeMenu === "home" ? "is-active" : ""}`} onClick={handleGoHome} title="홈">
+              <House size={14} /><span>홈</span>
             </button>
-            <button
-              type="button"
-              className={`w-full rounded-2xl px-3 py-2 text-left ${
-                activeMenu === "campaign"
-                  ? "font-semibold text-slate-900"
-                  : "text-slate-500 hover:bg-slate-50"
-              }`}
-              style={activeMenu === "campaign" ? { backgroundColor: BRAND_COLOR } : undefined}
-              onClick={() => handleOpenMenu("campaign")}
-            >
-              <span className="flex items-center gap-2">
-                <Layers size={14} /> 캠페인
-              </span>
+            <button type="button" className={`fd-nav-btn ${activeMenu === "campaign" ? "is-active" : ""}`} onClick={() => handleOpenMenu("campaign")} title="캠페인">
+              <Layers size={14} /><span>캠페인</span>
             </button>
-            <button
-              type="button"
-              className={`w-full rounded-2xl px-3 py-2 text-left ${
-                activeMenu === "settlement"
-                  ? "font-semibold text-slate-900"
-                  : "text-slate-500 hover:bg-slate-50"
-              }`}
-              style={activeMenu === "settlement" ? { backgroundColor: BRAND_COLOR } : undefined}
-              onClick={() => handleOpenMenu("settlement")}
-            >
-              <span className="flex items-center gap-2">
-                <Wallet size={14} /> 정산
-              </span>
+            <button type="button" className={`fd-nav-btn ${activeMenu === "settlement" ? "is-active" : ""}`} onClick={() => handleOpenMenu("settlement")} title="정산">
+              <Wallet size={14} /><span>정산</span>
             </button>
-            <button
-              type="button"
-              className={`w-full rounded-2xl px-3 py-2 text-left ${
-                activeMenu === "settings"
-                  ? "font-semibold text-slate-900"
-                  : "text-slate-500 hover:bg-slate-50"
-              }`}
-              style={activeMenu === "settings" ? { backgroundColor: BRAND_COLOR } : undefined}
-              onClick={() => handleOpenMenu("settings")}
-            >
-              <span className="flex items-center gap-2">
-                <Settings size={14} /> 정보관리
-              </span>
+            <button type="button" className={`fd-nav-btn ${activeMenu === "settings" ? "is-active" : ""}`} onClick={() => handleOpenMenu("settings")} title="정보관리">
+              <Settings size={14} /><span>정보관리</span>
+            </button>
+            <button type="button" className={`fd-nav-btn ${activeMenu === "notification" ? "is-active" : ""}`} onClick={() => handleOpenMenu("notification")} title="알림 내역">
+              <Bell size={14} /><span>알림 내역</span>
             </button>
           </nav>
-          <a
-            href="http://localhost:5173/"
-            className="mt-2 flex w-full rounded-2xl px-3 py-2 text-left text-sm text-slate-500 hover:bg-slate-50"
-          >
-            <span className="flex items-center gap-2 leading-tight">
-              <House size={14} className="shrink-0" />
-              <span>기부엔토큰<br />바로가기</span>
-            </span>
-          </a>
-          <button
-            type="button"
-            className="mt-1 flex w-full items-center gap-2 rounded-2xl px-3 py-2 text-left text-sm text-slate-500 hover:bg-slate-50"
-            onClick={handleLogout}
-          >
-            <LogOut size={14} className="shrink-0" />
-            <span>로그아웃</span>
-          </button>
+
+          <div className="fd-sidebar__bottom">
+            <a href="http://localhost:5173/" className="fd-sidebar__bottom-link" title="기부엔토큰 바로가기">
+              <House size={13} /><span className="fd-sidebar__bottom-text">기부엔토큰 바로가기</span>
+            </a>
+            <button type="button" className="fd-sidebar__bottom-btn" onClick={handleLogout} title="로그아웃">
+              <LogOut size={13} /><span className="fd-sidebar__bottom-text">로그아웃</span>
+            </button>
+          </div>
         </aside>
 
-        <section className="space-y-4">
-          <header className="flex items-center justify-between px-2 py-4">
-            <h1 className="text-5xl font-black leading-tight text-ink">
-              기부단체 마이페이지
-            </h1>
-            <NotificationBell userRole="foundation" />  {/* [가빈] 알림벨 추가 */}
+        {/* 토글 버튼 */}
+        <button
+          type="button"
+          className="fd-collapse-btn"
+          onClick={() => setSidebarCollapsed((p) => !p)}
+          title={sidebarCollapsed ? "사이드바 펼치기" : "사이드바 접기"}
+        >
+          {sidebarCollapsed ? <ChevronRight size={12} /> : <ChevronLeft size={12} />}
+        </button>
+      </div>
+
+        {/* ── 메인 콘텐츠 ── */}
+        <div className="fd-main">
+          <header className="fd-main-header">
+            <h1>기부단체 마이페이지</h1>
           </header>
 
-          {activeMenu === "home" ? (
-            <>
-              <div className="grid gap-5 xl:grid-cols-[360px_1fr]">
-                <article
-                  className="rounded-[2rem] bg-primary p-6 text-white shadow-xl shadow-primary/20"
-                >
-                  <p className="text-xs text-slate-700">반갑습니다</p>
-                  <h2 className="mt-2 text-2xl font-bold leading-tight">
-                    {summary.foundationName}
-                  </h2>
-
-                  <div className="mt-6 space-y-3">
-                    <div className="rounded-2xl bg-white/70 p-4">
-                      <p className="text-xs text-slate-700">진행 중인 캠페인</p>
-                      <p className="mt-1 text-3xl font-bold">
-                        {summary.activeCount}개
-                      </p>
-                    </div>
-                    <div className="rounded-2xl bg-white/70 p-4">
-                      <p className="text-xs text-slate-700">이달 모금 금액</p>
-                      <p className="mt-1 text-3xl font-bold">
-                        {formatWon(summary.monthlyAmount)}원
-                      </p>
-                    </div>
-                  </div>
-                </article>
-
-                <article className="storybook-card p-5">
-                  <div className="mb-4 flex items-center justify-between">
-                    <h3 className="text-sm font-bold text-ink">
-                      최근 신청 현황
-                    </h3>
-                    <button
-                      type="button"
-                      className="text-xs font-semibold text-slate-700"
-                      style={{ color: BRAND_COLOR }}
-                      onClick={() => handleOpenMenu("campaign")}
-                    >
-                      전체보기
-                    </button>
-                  </div>
-
-                  <div className="grid gap-4">
-                    {recentCampaigns.length === 0 ? (
-                      <div className="rounded-2xl border border-dashed border-slate-200 p-4 text-sm text-slate-500">
-                        최근 신청한 캠페인이 없습니다.
-                      </div>
+          {/* 홈 */}
+          {activeMenu === "home" && (
+            <div className="fd-home-layout">
+              {/* 왼쪽: 프로필 카드 + 스탯 + 퀵액션 */}
+              <div className="fd-home-left">
+                <div className="fd-profile-card">
+                  <div className="fd-profile-card__img-wrap">
+                    {foundation?.profilePath ? (
+                      <img src={toImageSrc(foundation.profilePath)} alt="기부단체 프로필" />
                     ) : (
-                      recentCampaigns.map((campaign) => (
-                        <button
-                          key={campaign.campaignNo}
-                          type="button"
-                          className="rounded-2xl border border-slate-200 p-4 text-left hover:bg-slate-50"
-                          onClick={() => {
-                            handleOpenMenu("campaign");
-                            handleOpenCampaignDetail(campaign);
-                          }}
-                        >
-                          <p className="text-xs text-slate-500">
-                            {campaign.createdAt?.slice?.(0, 10) || "-"}
-                          </p>
-                          <p className="mt-2 line-clamp-2 text-sm font-semibold">
-                            {campaign.title}
-                          </p>
-                          <p className="mt-2 text-xs text-slate-500">
-                            {campaign.progressPercent ?? 0}% ·{" "}
-                            {formatWon(campaign.currentAmount)} /{" "}
-                            {formatWon(campaign.targetAmount)}원
-                          </p>
-                        </button>
-                      ))
+                      <div className="fd-profile-card__img-placeholder">
+                        {(summary.foundationName || "?")[0]}
+                      </div>
+                    )}
+                    <div className="fd-profile-card__overlay">
+                      <p className="fd-profile-card__greeting">반갑습니다</p>
+                      <p className="fd-profile-card__name">{summary.foundationName}</p>
+                      <p className="fd-profile-card__type">{foundation?.foundationType || foundation?.category || "기부단체"}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="fd-stats-grid">
+                  <div className="fd-stat-card">
+                    <p className="fd-stat-card__label">진행 중인 캠페인</p>
+                    <p className="fd-stat-card__value">
+                      {summary.activeCount}<span className="fd-stat-card__unit">개</span>
+                    </p>
+                  </div>
+                  <div className="fd-stat-card">
+                    <p className="fd-stat-card__label">이달 모금 금액</p>
+                    <p className="fd-stat-card__value" style={{ fontSize: 16 }}>
+                      {formatWon(summary.monthlyAmount)}<span className="fd-stat-card__unit">원</span>
+                    </p>
+                  </div>
+                  <div className="fd-stat-card">
+                    <p className="fd-stat-card__label">지갑 잔액</p>
+                    <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 6 }}>
+                      <p className="fd-stat-card__value" style={{ fontSize: 16, margin: 0 }}>
+                        {walletInfo?.balance !== undefined && walletInfo?.balance !== null ? formatWon(walletInfo.balance) : "-"}
+                        <span className="fd-stat-card__unit">GNT</span>
+                      </p>
+                      <p className="fd-stat-card__addr">{walletInfo?.walletAddress ? `${walletInfo.walletAddress.slice(0, 8)}...${walletInfo.walletAddress.slice(-6)}` : "-"}</p>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+              {/* 오른쪽: 퀵액션 + 최근 신청 현황 */}
+              <div className="fd-panel fd-home-right">
+                <div className="fd-quick-actions" style={{ marginBottom: 16 }}>
+                  <button type="button" className="fd-quick-btn" onClick={() => navigate("/foundation/register")}>
+                    <CirclePlus size={18} color="#FF8A65" />
+                    <div>
+                      <p className="fd-quick-btn__title">새 캠페인 신청</p>
+                      <p className="fd-quick-btn__desc">새로운 캠페인을 등록하세요</p>
+                    </div>
+                  </button>
+                  <button type="button" className="fd-quick-btn" onClick={() => handleOpenMenu("campaign")}>
+                    <FileClock size={18} color="#f59e0b" />
+                    <div>
+                      <p className="fd-quick-btn__title">신청 목록 조회</p>
+                      <p className="fd-quick-btn__desc">진행 상태를 확인하세요</p>
+                    </div>
+                  </button>
+                </div>
+
+                <div className="fd-panel__header" style={{ marginBottom: 10 }}>
+                  <h3 className="fd-panel__title">최근 신청 현황</h3>
+                  <button type="button" className="fd-panel__link" onClick={() => handleOpenMenu("campaign")}>전체보기</button>
+                </div>
+
+                {recentCampaigns.length === 0 ? (
+                  <div className="fd-empty">최근 신청한 캠페인이 없습니다.</div>
+                ) : (
+                  recentCampaigns.map((campaign) => (
+                    <article
+                      key={campaign.campaignNo}
+                      className="fd-campaign-item"
+                      onClick={() => { handleOpenMenu("campaign"); handleOpenCampaignDetail(campaign); }}
+                    >
+                      <div className="fd-campaign-item__meta">
+                        <span className="fd-badge">{formatStatusLabel(campaign.approvalStatus) || "-"}</span>
+                        <span className="fd-campaign-item__date">{campaign.createdAt?.slice?.(0, 10) || "-"}</span>
+                      </div>
+                      <p className="fd-campaign-item__title">{campaign.title}</p>
+                      <div className="fd-progress-wrap">
+                        <div className="fd-progress-info">
+                          <span style={{ color: "#FF8A65", fontWeight: 800 }}>{campaign.progressPercent ?? 0}%</span>
+                          <span>{formatWon(campaign.currentAmount)} / {formatWon(campaign.targetAmount)}원</span>
+                        </div>
+                        <div className="fd-progress-bar">
+                          <div className="fd-progress-bar__fill" style={{ width: `${Math.max(0, Math.min(100, campaign.progressPercent ?? 0))}%` }} />
+                        </div>
+                      </div>
+                    </article>
+                  ))
+                )}
+
+                {/* 최근 정산 내역 */}
+                <div className="fd-panel__header" style={{ marginTop: 32, marginBottom: 10 }}>
+                  <h3 className="fd-panel__title">최근 정산 내역</h3>
+                  <button type="button" className="fd-panel__link" onClick={() => handleOpenMenu("settlement")}>전체보기</button>
+                </div>
+                {settlements.length === 0 ? (
+                  <div className="fd-empty">정산 내역이 없습니다.</div>
+                ) : (
+                  <div className="fd-mini-table">
+                    <div className="fd-mini-table__head">
+                      <span>캠페인명</span>
+                      <span style={{ textAlign: "right" }}>단체 배정금</span>
+                      <span>상태</span>
+                    </div>
+                    {settlements.slice(0, 2).map((item) => (
+                      <div key={item.settlementNo} className="fd-mini-table__row">
+                        <span className="fd-mini-table__name">{item.campaignTitle || "-"}</span>
+                        <span className="fd-mini-table__value">{formatWon(item.foundationAmount)}원</span>
+                        <span className="fd-badge">{formatStatusLabel(item.status)}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* 최근 현금화 내역 */}
+                <div className="fd-panel__header" style={{ marginTop: 32, marginBottom: 10 }}>
+                  <h3 className="fd-panel__title">최근 현금화 내역</h3>
+                  <button type="button" className="fd-panel__link" onClick={() => handleOpenMenu("settlement")}>전체보기</button>
+                </div>
+                {redemptions.length === 0 ? (
+                  <div className="fd-empty">현금화 내역이 없습니다.</div>
+                ) : (
+                  <div className="fd-mini-table">
+                    <div className="fd-mini-table__head">
+                      <span>신청일</span>
+                      <span style={{ textAlign: "right" }}>금액</span>
+                      <span>상태</span>
+                    </div>
+                    {redemptions.slice(0, 2).map((item) => (
+                      <div key={item.redemptionNo} className="fd-mini-table__row">
+                        <span className="fd-mini-table__name">{item.requestedAt ? new Date(item.requestedAt).toLocaleDateString("ko-KR") : "-"}</span>
+                        <span className="fd-mini-table__value">{formatWon(item.amount)}원</span>
+                        <span className="fd-badge">{formatStatusLabel(item.status)}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* 캠페인 */}
+          {activeMenu === "campaign" && (
+            <div className="fd-panel">
+              {selectedCampaignNo ? (
+                <>
+                  <div className="fd-campaign-detail__toolbar">
+                    <button type="button" className="fd-back-btn" onClick={handleBackToCampaignList}>
+                      <ArrowLeft size={14} /> 목록으로
+                    </button>
+                    {canEditPendingCampaign && (
+                      <button type="button" className="fd-panel-action-btn" onClick={() => navigate(`/foundation/register?editCampaignNo=${selectedCampaignNo}`)}>
+                        <Pencil size={13} /> 심사중 수정
+                      </button>
                     )}
                   </div>
-                </article>
-              </div>
 
-              <div className="grid gap-4 md:grid-cols-2 xl:max-w-[360px]">
-                <button
-                  type="button"
-                  className="rounded-3xl bg-white px-5 py-4 text-left shadow-sm"
-                  onClick={() => navigate("/foundation/register")}
-                >
-                  <div className="flex items-center gap-3">
-                    <CirclePlus size={18} className="text-slate-900" />
-                    <div>
-                      <p className="text-sm font-bold">새 캠페인 신청</p>
-                      <p className="text-xs text-slate-500">
-                        새로운 캠페인을 등록하세요
-                      </p>
-                    </div>
-                  </div>
-                </button>
-                <button
-                  type="button"
-                  className="rounded-3xl bg-white px-5 py-4 text-left shadow-sm"
-                  onClick={() => handleOpenMenu("campaign")}
-                >
-                  <div className="flex items-center gap-3">
-                    <FileClock size={18} className="text-amber-500" />
-                    <div>
-                      <p className="text-sm font-bold">신청 목록 조회</p>
-                      <p className="text-xs text-slate-500">
-                        진행 상태를 확인하세요
-                      </p>
-                    </div>
-                  </div>
-                </button>
-              </div>
-            </>
-          ) : null}
+                  {campaignDetailLoading && <p style={{ fontSize: 13, color: "#94a3b8" }}>상세 불러오는 중...</p>}
+                  {campaignDetailError && !campaignDetailForView && <p className="fd-error-text">{campaignDetailError}</p>}
 
-          {activeMenu === "campaign" ? (
-            <section className="storybook-card p-6">
-              {selectedCampaignNo ? (
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <button
-                      type="button"
-                      className="inline-flex items-center gap-2 rounded-xl bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-700"
-                      onClick={handleBackToCampaignList}
-                    >
-                      <ArrowLeft size={16} />
-                      목록으로
-                    </button>
-                    {canEditPendingCampaign ? (
-                      <button
-                        type="button"
-                        className="inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold text-slate-900"
-                        style={{ backgroundColor: BRAND_COLOR }}
-                        onClick={() =>
-                          navigate(
-                            `/foundation/register?editCampaignNo=${selectedCampaignNo}`,
-                          )
-                        }
-                      >
-                        <Pencil size={14} />
-                        심사중 수정
-                      </button>
-                    ) : null}
-                  </div>
-
-                  {campaignDetailLoading ? (
-                    <p className="text-sm text-slate-500">
-                      상세 불러오는 중...
-                    </p>
-                  ) : null}
-                  {campaignDetailError && !campaignDetailForView ? (
-                    <p className="text-sm text-rose-600">
-                      {campaignDetailError}
-                    </p>
-                  ) : null}
-
-                  {campaignDetailForView ? (
-                    <article className="space-y-6 rounded-2xl border border-slate-200 p-5">
-                      {isRejectedCampaignDetail ? (
-                        <p className="text-sm font-semibold text-rose-600">
-                          반려 사유: {campaignRejectReason || "반려 사유가 등록되지 않았습니다."}
-                        </p>
-                      ) : null}
-
-                      <header className="space-y-3">
-                        <div className="flex flex-wrap items-center justify-between gap-2">
-                          <h3 className="text-2xl font-bold">{campaignDetailForView.title}</h3>
-                          <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
-                            {formatStatusLabel(campaignDetailForView.campaignStatus || campaignDetailForView.approvalStatus)}
-                          </span>
-                        </div>
-                      </header>
-
-                      {campaignDetailForView.representativeImagePath ? (
-                        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
-                          <img
-                            src={toImageSrc(
-                              campaignDetailForView.representativeImagePath,
-                            )}
-                            alt={campaignDetailForView.title}
-                            className="h-72 w-full object-cover"
-                          />
-                        </div>
-                      ) : null}
-
-                      <section className="space-y-2">
-                        <h4 className="text-base font-bold">상세 설명</h4>
-                        <p className="text-sm leading-6 text-slate-600">{campaignDetailForView.description || "-"}</p>
-                      </section>
-
-                      {campaignDetailForView.detailImagePaths?.length > 0 ? (
-                        <section className="space-y-2">
-                          <h4 className="text-base font-bold">상세 이미지</h4>
-                          <div className="grid gap-3 md:grid-cols-3">
-                          {campaignDetailForView.detailImagePaths.map(
-                            (imagePath, index) => (
-                              <div
-                                key={`${imagePath}-${index}`}
-                                className="overflow-hidden rounded-xl border border-slate-200 bg-slate-50"
-                              >
-                                <img
-                                  src={toImageSrc(imagePath)}
-                                  alt={`상세 이미지 ${index + 1}`}
-                                  className="h-36 w-full object-cover"
-                                />
-                              </div>
-                            ),
-                          )}
-                          </div>
-                        </section>
-                      ) : null}
-
-                      <div className="grid gap-3 md:grid-cols-2">
-                        <div className="rounded-xl bg-slate-50 p-3 text-sm">
-                          카테고리: {campaignDetailForView.category || "-"}
-                        </div>
-                        <div className="rounded-xl bg-slate-50 p-3 text-sm">
-                          수혜자 코드: {campaignDetailForView.entryCode || "-"}
-                        </div>
-                        <div className="rounded-xl bg-slate-50 p-3 text-sm">
-                          목표 금액: {formatWon(campaignDetailForView.targetAmount)}원
-                        </div>
-                        <div className="rounded-xl bg-slate-50 p-3 text-sm">
-                          현재 금액: {formatWon(campaignDetailForView.currentAmount)}원
-                        </div>
-                        <div className="rounded-xl bg-slate-50 p-3 text-sm">
-                          모집 시작일:{" "}
-                          {campaignDetailForView.startAt?.slice?.(0, 10) || "-"}
-                        </div>
-                        <div className="rounded-xl bg-slate-50 p-3 text-sm">
-                          모집 종료일:{" "}
-                          {campaignDetailForView.endAt?.slice?.(0, 10) || "-"}
-                        </div>
-                        <div className="rounded-xl bg-slate-50 p-3 text-sm">
-                          사업 시작일:{" "}
-                          {campaignDetailForView.usageStartAt?.slice?.(0, 10) || "-"}
-                        </div>
-                        <div className="rounded-xl bg-slate-50 p-3 text-sm">
-                          사업 종료일:{" "}
-                          {campaignDetailForView.usageEndAt?.slice?.(0, 10) || "-"}
-                        </div>
-                        <div className="rounded-xl bg-slate-50 p-3 text-sm">
-                          진행률: {campaignDetailForView.progressPercent ?? 0}%
-                        </div>
-                        <div className="rounded-xl bg-slate-50 p-3 text-sm">
-                          남은 기간: D-{campaignDetailForView.daysLeft ?? 0}
-                        </div>
-                        <div className="rounded-xl bg-slate-50 p-3 text-sm">
-                          지갑 주소: {campaignDetailForView.walletAddress || "-"}
-                        </div>
-                        <div className="rounded-xl bg-slate-50 p-3 text-sm">
-                          상태: {formatStatusLabel(campaignDetailForView.campaignStatus || campaignDetailForView.approvalStatus)}
-                        </div>
+                  {campaignDetailForView && (
+                    <div className="fd-campaign-detail">
+                      {isRejectedCampaignDetail && (
+                        <p className="fd-error-text" style={{ marginBottom: 12 }}>반려 사유: {campaignRejectReason || "반려 사유가 등록되지 않았습니다."}</p>
+                      )}
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+                        <h3 style={{ fontSize: 22, fontWeight: 800, margin: 0, color: "#1a202c" }}>{campaignDetailForView.title}</h3>
+                        <span className="fd-badge">{formatStatusLabel(campaignDetailForView.campaignStatus || campaignDetailForView.approvalStatus)}</span>
                       </div>
 
-                      <section className="space-y-2">
-                        <h4 className="text-base font-bold">지출 계획</h4>
-                        {campaignDetailForView.usePlans?.length > 0 ? (
-                          <div className="space-y-2">
-                            {campaignDetailForView.usePlans.map((plan) => (
-                              <div
-                                key={plan.usePlanNo || plan.planContent}
-                                className="rounded-xl border border-slate-200 p-3 text-sm"
-                              >
-                                <div className="font-medium text-slate-800">
-                                  {plan.planContent}
-                                </div>
-                                <div className="mt-1 text-slate-500">
-                                  {formatWon(plan.planAmount)}원
-                                </div>
+                      {campaignDetailForView.representativeImagePath && (
+                        <div style={{ borderRadius: 10, overflow: "hidden", marginBottom: 16, border: "1px solid #e2e8f0" }}>
+                          <img src={toImageSrc(campaignDetailForView.representativeImagePath)} alt={campaignDetailForView.title} style={{ width: "100%", height: 240, objectFit: "cover", display: "block" }} />
+                        </div>
+                      )}
+
+                      <p className="fd-section-header">상세 설명</p>
+                      <p style={{ fontSize: 13, color: "#475569", lineHeight: 1.7, marginBottom: 16 }}>{campaignDetailForView.description || "-"}</p>
+
+                      {campaignDetailForView.detailImagePaths?.length > 0 && (
+                        <>
+                          <p className="fd-section-header">상세 이미지</p>
+                          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, marginBottom: 16 }}>
+                            {campaignDetailForView.detailImagePaths.map((imagePath, index) => (
+                              <div key={`${imagePath}-${index}`} style={{ borderRadius: 8, overflow: "hidden", border: "1px solid #e2e8f0" }}>
+                                <img src={toImageSrc(imagePath)} alt={`상세 이미지 ${index + 1}`} style={{ width: "100%", height: 120, objectFit: "cover", display: "block" }} />
                               </div>
                             ))}
                           </div>
-                        ) : (
-                          <p className="text-sm text-slate-500">
-                            지출 계획 정보가 없습니다.
-                          </p>
-                        )}
-                      </section>
-                    </article>
-                  ) : null}
+                        </>
+                      )}
 
-                  {!campaignDetailLoading && !campaignDetailError && !campaignDetailForView ? (
-                    <div className="rounded-2xl border border-dashed border-slate-200 p-6 text-sm text-slate-500">
-                      상세 정보를 준비 중입니다. 잠시 후 다시 시도해주세요.
+                      <div className="fd-detail-info-grid">
+                        {[
+                          ["카테고리", campaignDetailForView.category || "-"],
+                          ["수혜자 코드", campaignDetailForView.entryCode || "-"],
+                          ["목표 금액", `${formatWon(campaignDetailForView.targetAmount)}원`],
+                          ["현재 금액", `${formatWon(campaignDetailForView.currentAmount)}원`],
+                          ["모집 시작일", campaignDetailForView.startAt?.slice?.(0, 10) || "-"],
+                          ["모집 종료일", campaignDetailForView.endAt?.slice?.(0, 10) || "-"],
+                          ["사업 시작일", campaignDetailForView.usageStartAt?.slice?.(0, 10) || "-"],
+                          ["사업 종료일", campaignDetailForView.usageEndAt?.slice?.(0, 10) || "-"],
+                          ["진행률", `${campaignDetailForView.progressPercent ?? 0}%`],
+                          ["남은 기간", `D-${campaignDetailForView.daysLeft ?? 0}`],
+                          ["지갑 주소", campaignDetailForView.walletAddress || "-"],
+                          ["상태", formatStatusLabel(campaignDetailForView.campaignStatus || campaignDetailForView.approvalStatus)],
+                        ].map(([label, value]) => (
+                          <div key={label} className="fd-detail-info-cell">
+                            <span style={{ fontSize: 11, color: "#94a3b8", display: "block", marginBottom: 2 }}>{label}</span>
+                            {value}
+                          </div>
+                        ))}
+                      </div>
+
+                      <p className="fd-section-header" style={{ marginTop: 16 }}>지출 계획</p>
+                      {campaignDetailForView.usePlans?.length > 0 ? (
+                        campaignDetailForView.usePlans.map((plan) => (
+                          <div key={plan.usePlanNo || plan.planContent} className="fd-use-plan-item">
+                            <p className="fd-use-plan-item__content">{plan.planContent}</p>
+                            <p className="fd-use-plan-item__amount">{formatWon(plan.planAmount)}원</p>
+                          </div>
+                        ))
+                      ) : (
+                        <p style={{ fontSize: 13, color: "#94a3b8" }}>지출 계획 정보가 없습니다.</p>
+                      )}
                     </div>
-                  ) : null}
-                </div>
+                  )}
+
+                  {!campaignDetailLoading && !campaignDetailError && !campaignDetailForView && (
+                    <div className="fd-empty">상세 정보를 준비 중입니다. 잠시 후 다시 시도해주세요.</div>
+                  )}
+                </>
               ) : (
                 <>
-                  <div className="mb-4 flex items-center justify-between">
+                  <div className="fd-panel__header">
                     <div>
-                      <h2 className="text-xl font-bold">캠페인 관리</h2>
-                      <p className="text-xs text-slate-500">
-                        단체에서 신청한 캠페인 진행 상태를 확인합니다.
-                      </p>
+                      <h2 style={{ fontSize: 20, fontWeight: 800, margin: "0 0 2px", color: "#1a202c" }}>캠페인 관리</h2>
+                      <p style={{ fontSize: 12, color: "#374151", margin: 0 }}>단체에서 신청한 캠페인 진행 상태를 확인합니다.</p>
                     </div>
-                    <button
-                      type="button"
-                      className="inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold text-slate-900"
-                      style={{ backgroundColor: BRAND_COLOR }}
-                      onClick={() => navigate("/foundation/register")}
-                    >
-                      <CirclePlus size={16} /> 캠페인 등록
+                    <button type="button" className="fd-panel-action-btn" onClick={() => navigate("/foundation/register")}>
+                      <CirclePlus size={14} /> 캠페인 등록
                     </button>
                   </div>
 
-                  <div className="mb-5 flex flex-wrap gap-2">
+                  <div className="fd-filter-tabs">
                     {CAMPAIGN_FILTERS.map((item) => (
                       <button
                         key={item.key}
                         type="button"
-                        className={`rounded-full px-4 py-1.5 text-xs font-semibold ${
-                          campaignFilter === item.key
-                            ? "text-slate-900"
-                            : "bg-slate-100 text-slate-500"
-                        }`}
-                        style={campaignFilter === item.key ? { backgroundColor: BRAND_COLOR } : undefined}
+                        className={`fd-filter-btn ${campaignFilter === item.key ? "is-active" : ""}`}
                         onClick={() => setCampaignFilter(item.key)}
                       >
                         {item.label}
@@ -1174,427 +1211,252 @@ function FoundationDashboardPage() {
                     ))}
                   </div>
 
-                  <div className="space-y-4">
-                    {filteredCampaigns.length === 0 ? (
-                      <div className="rounded-2xl border border-dashed border-slate-200 p-6 text-sm text-slate-500">
-                        조건에 맞는 캠페인이 없습니다.
-                      </div>
-                    ) : (
-                      filteredCampaigns.map((campaign) => (
-                        <article
-                          key={campaign.campaignNo}
-                          className="cursor-pointer rounded-2xl border border-slate-200 p-4 hover:bg-slate-50"
-                          onClick={() => handleOpenCampaignDetail(campaign)}
-                        >
-                          <div className="mb-2 flex items-center justify-between">
-                            <span className="rounded-full px-2.5 py-1 text-[11px] font-semibold text-slate-800" style={{ backgroundColor: "#f3f8c1" }}>
-                              {formatStatusLabel(campaign.approvalStatus) || "-"}
-                            </span>
-                            <span className="text-[11px] text-slate-400">
-                              {campaign.createdAt?.slice?.(0, 10) || "-"}
-                            </span>
+                  {filteredCampaigns.length === 0 ? (
+                    <div className="fd-empty">조건에 맞는 캠페인이 없습니다.</div>
+                  ) : (
+                    filteredCampaigns.map((campaign) => (
+                      <article
+                        key={campaign.campaignNo}
+                        className="fd-campaign-item"
+                        onClick={() => handleOpenCampaignDetail(campaign)}
+                      >
+                        <div className="fd-campaign-item__meta">
+                          <span className="fd-badge">{formatStatusLabel(campaign.approvalStatus) || "-"}</span>
+                          <span className="fd-campaign-item__date">{campaign.createdAt?.slice?.(0, 10) || "-"}</span>
+                        </div>
+                        <p className="fd-campaign-item__title">{campaign.title}</p>
+                        {campaign.rejectReason && (
+                          <p className="fd-campaign-item__reject">반려 사유: {campaign.rejectReason}</p>
+                        )}
+                        <div className="fd-progress-wrap">
+                          <div className="fd-progress-info">
+                            <span>{campaign.progressPercent ?? 0}%</span>
+                            <span>{formatWon(campaign.currentAmount)} / {formatWon(campaign.targetAmount)}원</span>
                           </div>
-
-                          <h3 className="text-base font-semibold">
-                            {campaign.title}
-                          </h3>
-
-                          {campaign.rejectReason ? (
-                            <p className="mt-2 rounded-xl bg-rose-50 px-3 py-2 text-xs text-rose-600">
-                              반려 사유: {campaign.rejectReason}
-                            </p>
-                          ) : null}
-
-                          <div className="mt-3">
-                            <div className="mb-1 flex items-center justify-between text-xs text-slate-500">
-                              <span>{campaign.progressPercent ?? 0}%</span>
-                              <span>
-                                {formatWon(campaign.currentAmount)} /{" "}
-                                {formatWon(campaign.targetAmount)}원
-                              </span>
-                            </div>
-                            <div className="h-1.5 rounded-full bg-slate-100">
-                              <div
-                                className="h-full rounded-full"
-                                style={{
-                                  width: `${Math.max(0, Math.min(100, campaign.progressPercent ?? 0))}%`,
-                                  backgroundColor: BRAND_COLOR,
-                                }}
-                              />
-                            </div>
+                          <div className="fd-progress-bar">
+                            <div className="fd-progress-bar__fill" style={{ width: `${Math.max(0, Math.min(100, campaign.progressPercent ?? 0))}%` }} />
                           </div>
-
-                        </article>
-                      ))
-                    )}
-                  </div>
+                        </div>
+                      </article>
+                    ))
+                  )}
                 </>
               )}
-            </section>
-          ) : null}
+            </div>
+          )}
 
-          {activeMenu === "settlement" ? (
-            <section className="storybook-card p-6">
-              <div className="mb-5 flex items-center justify-between">
+          {/* 알림 내역 */}
+          {activeMenu === "notification" && (
+            <NotificationPanel token={localStorage.getItem("foundationAccessToken") || ""} />
+          )}
+
+          {/* 정산 */}
+          {activeMenu === "settlement" && (
+            <div className="fd-panel">
+              <div className="fd-panel__header">
                 <div>
-                  <h2 className="text-xl font-bold">정산 관리</h2>
-                  <p className="mt-1 text-sm text-slate-500">
-                    지갑 정보, 정산 내역, 환급 내역을 확인할 수 있습니다.
-                  </p>
+                  <h2 style={{ fontSize: 20, fontWeight: 800, margin: "0 0 2px", color: "#1a202c" }}>정산 관리</h2>
+                  <p style={{ fontSize: 12, color: "#374151", margin: 0 }}>지갑 정보, 정산 내역, 환급 내역을 확인할 수 있습니다.</p>
                 </div>
-                <button
-                  type="button"
-                  className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-                  onClick={loadSettlementData}
-                >
-                  새로고침
-                </button>
+                <button type="button" className="fd-panel-action-btn fd-panel-action-btn--outline" onClick={loadSettlementData}>새로고침</button>
               </div>
 
-              {settlementLoading ? (
-                <p className="mb-4 text-sm text-slate-500">정산 정보를 불러오는 중...</p>
-              ) : null}
-              {settlementError ? (
-                <p className="mb-4 text-sm text-rose-600">{settlementError}</p>
-              ) : null}
+              {settlementLoading && <p style={{ fontSize: 13, color: "#94a3b8", marginBottom: 12 }}>정산 정보를 불러오는 중...</p>}
+              {settlementError && <p className="fd-error-text" style={{ marginBottom: 12 }}>{settlementError}</p>}
 
-              <div className="mb-6 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                <div className="mb-3 flex items-center justify-between">
-                  <h3 className="text-base font-bold text-slate-800">기부단체 지갑 정보</h3>
-                  <button
-                    type="button"
-                    className="rounded-lg px-4 py-2 text-sm font-semibold text-slate-900 disabled:cursor-not-allowed disabled:opacity-50"
-                    style={{ backgroundColor: BRAND_COLOR }}
-                    onClick={handleRedemptionSubmit}
-                    disabled={redeeming}
-                  >
+              <div className="fd-wallet-card">
+                <div className="fd-wallet-card__header">
+                  <h3 className="fd-wallet-card__title">기부단체 지갑 정보</h3>
+                  <button type="button" className="fd-panel-action-btn" onClick={handleRedemptionSubmit} disabled={redeeming}>
                     {redeeming ? "신청 중..." : "현금화 신청"}
                   </button>
                 </div>
-                <div className="grid gap-3 md:grid-cols-[1fr_180px]">
+                <div className="fd-wallet-grid">
                   <div>
-                    <p className="text-xs text-slate-500">지갑 주소</p>
-                    <p className="break-all text-sm font-semibold text-slate-800">
-                      {walletInfo?.walletAddress || "-"}
-                    </p>
-                    <p className="mt-2 text-xs text-slate-500">잔액</p>
-                    <p className="text-lg font-bold text-slate-900">
-                      {walletInfo?.balance !== undefined && walletInfo?.balance !== null
-                        ? formatWon(walletInfo.balance)
-                        : "-"}
+                    <p className="fd-info-label">지갑 주소</p>
+                    <p className="fd-info-value">{walletInfo?.walletAddress || "-"}</p>
+                    <p className="fd-info-label">잔액</p>
+                    <p className="fd-info-value fd-info-value--lg">
+                      {walletInfo?.balance !== undefined && walletInfo?.balance !== null ? formatWon(walletInfo.balance) : "-"}
                     </p>
                   </div>
-                  <label className="flex flex-col gap-2">
-                    <span className="text-xs font-medium text-slate-600">현금화 금액</span>
+                  <label>
+                    <span className="fd-input-label">현금화 금액</span>
                     <input
                       type="number"
                       min="1"
                       value={redemptionAmount}
-                      onChange={(event) => {
-                        setRedemptionAmount(event.target.value);
-                        setRedemptionError("");
-                        setRedemptionMessage("");
-                      }}
+                      onChange={(e) => { setRedemptionAmount(e.target.value); setRedemptionError(""); setRedemptionMessage(""); }}
                       placeholder="금액 입력"
-                      className="rounded-xl border border-slate-200 px-3 py-2 text-sm"
+                      className="fd-input"
                     />
                   </label>
                 </div>
-                {redemptionError ? (
-                  <p className="mt-2 text-sm text-rose-600">{redemptionError}</p>
-                ) : null}
-                {redemptionMessage ? (
-                  <p className="mt-2 text-sm text-emerald-600">{redemptionMessage}</p>
-                ) : null}
+                {redemptionError && <p className="fd-error-text">{redemptionError}</p>}
+                {redemptionMessage && <p className="fd-success-text">{redemptionMessage}</p>}
               </div>
 
-              <div className="mb-6">
-                <h3 className="mb-3 text-base font-bold text-slate-800">정산 내역</h3>
-                {settlements.length === 0 ? (
-                  <div className="rounded-2xl border border-dashed border-slate-200 p-4 text-sm text-slate-500">
-                    정산 내역이 없습니다.
+              <p className="fd-section-title">정산 내역</p>
+              {settlements.length === 0 ? (
+                <div className="fd-empty" style={{ marginBottom: 20 }}>정산 내역이 없습니다.</div>
+              ) : (
+                settlements.map((item) => (
+                  <div key={item.settlementNo} className="fd-settlement-item">
+                    <div className="fd-settlement-item__header">
+                      <p className="fd-settlement-item__name">{item.campaignTitle || "-"}</p>
+                      <span className="fd-badge">{formatStatusLabel(item.status) || "-"}</span>
+                    </div>
+                    <div className="fd-settlement-item__meta">
+                      <span>총 정산금: {formatWon(item.totalAmount)}원</span>
+                      <span>단체 배정금: {formatWon(item.foundationAmount)}원</span>
+                      <span>정산일: {formatDateTime(item.settledAt)}</span>
+                    </div>
                   </div>
-                ) : (
-                  <div className="space-y-3">
-                    {settlements.map((item) => (
-                      <article
-                        key={item.settlementNo}
-                        className="rounded-xl border border-slate-200 p-4"
-                      >
-                        <div className="flex flex-wrap items-center justify-between gap-2">
-                          <p className="text-sm font-semibold text-slate-800">
-                            {item.campaignTitle || "-"}
-                          </p>
-                          <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">
-                            {formatStatusLabel(item.status) || "-"}
-                          </span>
-                        </div>
-                        <div className="mt-2 grid gap-2 text-xs text-slate-600 md:grid-cols-3">
-                          <p>총 정산금: {formatWon(item.totalAmount)}원</p>
-                          <p>단체 배정금: {formatWon(item.foundationAmount)}원</p>
-                          <p>정산일: {formatDateTime(item.settledAt)}</p>
-                        </div>
-                      </article>
-                    ))}
-                  </div>
-                )}
-              </div>
+                ))
+              )}
 
-              <div>
-                <h3 className="mb-3 text-base font-bold text-slate-800">환급 내역</h3>
-                {redemptions.length === 0 ? (
-                  <div className="rounded-2xl border border-dashed border-slate-200 p-4 text-sm text-slate-500">
-                    환급 내역이 없습니다.
+              <p className="fd-section-title" style={{ marginTop: 20 }}>환급 내역</p>
+              {redemptions.length === 0 ? (
+                <div className="fd-empty">환급 내역이 없습니다.</div>
+              ) : (
+                redemptions.map((item) => (
+                  <div key={item.redemptionNo} className="fd-settlement-item">
+                    <div className="fd-settlement-item__header">
+                      <p className="fd-settlement-item__name">환급 #{item.redemptionNo}</p>
+                      <span className="fd-badge">{formatStatusLabel(item.status) || "-"}</span>
+                    </div>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 4, fontSize: 12, color: "#64748b" }}>
+                      <span>금액: {formatWon(item.amount)}원</span>
+                      <span>요청일: {formatDateTime(item.requestedAt)}</span>
+                      <span>처리일: {formatDateTime(item.processedAt)}</span>
+                      <span>입금일: {formatDateTime(item.cashPaidAt)}</span>
+                    </div>
+                    {item.failureReason && (
+                      <p className="fd-error-text" style={{ marginTop: 6, background: "#fff1f2", borderRadius: 6, padding: "4px 10px" }}>실패 사유: {item.failureReason}</p>
+                    )}
                   </div>
-                ) : (
-                  <div className="space-y-3">
-                    {redemptions.map((item) => (
-                      <article
-                        key={item.redemptionNo}
-                        className="rounded-xl border border-slate-200 p-4"
-                      >
-                        <div className="flex flex-wrap items-center justify-between gap-2">
-                          <p className="text-sm font-semibold text-slate-800">
-                            환급 #{item.redemptionNo}
-                          </p>
-                          <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">
-                            {formatStatusLabel(item.status) || "-"}
-                          </span>
-                        </div>
-                        <div className="mt-2 grid gap-2 text-xs text-slate-600 md:grid-cols-2">
-                          <p>금액: {formatWon(item.amount)}원</p>
-                          <p>요청일: {formatDateTime(item.requestedAt)}</p>
-                          <p>처리일: {formatDateTime(item.processedAt)}</p>
-                          <p>입금일: {formatDateTime(item.cashPaidAt)}</p>
-                        </div>
-                        {item.failureReason ? (
-                          <p className="mt-2 rounded-lg bg-rose-50 px-3 py-2 text-xs text-rose-600">
-                            실패 사유: {item.failureReason}
-                          </p>
-                        ) : null}
-                      </article>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </section>
-          ) : null}
+                ))
+              )}
+            </div>
+          )}
 
-          {activeMenu === "settings" ? (
-            <section className="space-y-5">
-              <article className="overflow-hidden rounded-[28px] border border-slate-200 bg-white">
-                <div className="flex flex-col items-center px-6 py-8 text-center">
-                  <div className="relative mb-4">
-                    <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-[24px] bg-slate-100 text-slate-400">
+          {/* 설정 */}
+          {activeMenu === "settings" && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              <div className="fd-panel">
+                <div className="fd-settings-profile">
+                  <div style={{ position: "relative", flexShrink: 0 }}>
+                    <div className="fd-avatar">
                       {foundation?.profilePath ? (
-                        <img
-                          src={toImageSrc(foundation.profilePath)}
-                          alt="기부단체 프로필"
-                          className="h-full w-full object-cover"
-                        />
+                        <img src={toImageSrc(foundation.profilePath)} alt="기부단체 프로필" />
                       ) : (
-                        <Building2 size={32} />
+                        <Building2 size={28} />
                       )}
                     </div>
                     <label
-                      className={`absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full border-2 border-white ${
-                        settingsEditMode ? "cursor-pointer text-slate-900" : "bg-slate-200 text-slate-500"
-                      }`}
-                      style={settingsEditMode ? { backgroundColor: BRAND_COLOR } : undefined}
+                      className="fd-avatar-edit-label"
+                      style={{ backgroundColor: settingsEditMode ? BRAND_COLOR : "#e2e8f0", cursor: settingsEditMode ? "pointer" : "default" }}
                       title={settingsEditMode ? "프로필 이미지 변경" : "정보 수정 모드에서 변경 가능"}
                     >
-                      <Camera size={13} />
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleSettingsImageChange}
-                        className="hidden"
-                        disabled={!settingsEditMode}
-                      />
+                      <Camera size={11} color={settingsEditMode ? "#fff" : "#94a3b8"} />
+                      <input type="file" accept="image/*" onChange={handleSettingsImageChange} style={{ display: "none" }} disabled={!settingsEditMode} />
                     </label>
                   </div>
-                  <h2 className="text-2xl font-bold text-slate-900">{foundation?.foundationName || "-"}</h2>
-                  <span className="mt-2 rounded-full bg-emerald-100 px-3 py-1 text-[11px] font-semibold text-emerald-700">
-                    인증된 단체
-                  </span>
-                  {settingsForm.profileImageFile ? (
-                    <p className="mt-2 text-xs text-slate-700">{settingsForm.profileImageFile.name}</p>
-                  ) : null}
-                </div>
-              </article>
-
-              <article className="overflow-hidden rounded-[28px] border border-slate-200 bg-white">
-                <form className="space-y-6 px-6 py-7" onSubmit={handleSettingsSubmit}>
-                  <div className="grid gap-5 md:grid-cols-2">
-                    <div>
-                      <p className="text-xs font-medium text-slate-400">사업자 등록번호</p>
-                      <p className="mt-1 text-sm font-semibold text-slate-800">{foundation?.businessRegistrationNumber || "-"}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-medium text-slate-400">대표자</p>
-                      <p className="mt-1 text-sm font-semibold text-slate-800">{foundation?.representativeName || "-"}</p>
-                    </div>
-                    <label className="block">
-                      <span className="text-xs font-medium text-slate-400">연락처</span>
-                      {settingsEditMode ? (
-                        <input
-                          name="contactPhone"
-                          value={settingsForm.contactPhone}
-                          onChange={handleSettingsChange}
-                          className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
-                        />
-                      ) : (
-                        <p className="mt-1 text-sm font-semibold text-slate-800">{settingsForm.contactPhone || "-"}</p>
-                      )}
-                    </label>
-                    <div>
-                      <p className="text-xs font-medium text-slate-400">이메일</p>
-                      <p className="mt-1 text-sm font-semibold text-slate-800">{foundation?.foundationEmail || "-"}</p>
-                    </div>
-                    <label className="block">
-                      <span className="text-xs font-medium text-slate-400">계좌번호</span>
-                      {settingsEditMode ? (
-                        <input
-                          name="account"
-                          value={settingsForm.account}
-                          onChange={handleSettingsChange}
-                          className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
-                        />
-                      ) : (
-                        <p className="mt-1 text-sm font-semibold text-slate-800">{settingsForm.account || "-"}</p>
-                      )}
-                    </label>
-                    <label className="block">
-                      <span className="text-xs font-medium text-slate-400">은행명</span>
-                      {settingsEditMode ? (
-                        <input
-                          name="bankName"
-                          value={settingsForm.bankName}
-                          onChange={handleSettingsChange}
-                          className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
-                        />
-                      ) : (
-                        <p className="mt-1 text-sm font-semibold text-slate-800">{settingsForm.bankName || "-"}</p>
-                      )}
-                    </label>
-                    <label className="block">
-                      <span className="text-xs font-medium text-slate-400">수수료율</span>
-                      {settingsEditMode ? (
-                        <input
-                          name="feeRate"
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          max="1"
-                          value={settingsForm.feeRate}
-                          onChange={handleSettingsChange}
-                          className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
-                        />
-                      ) : (
-                        <p className="mt-1 text-sm font-semibold text-slate-800">{settingsForm.feeRate || "-"}</p>
-                      )}
-                    </label>
-                  </div>
-
-                  <label className="block">
-                    <span className="text-xs font-medium text-slate-400">단체 소개</span>
-                    {settingsEditMode ? (
-                      <textarea
-                        name="description"
-                        rows="4"
-                        value={settingsForm.description}
-                        onChange={handleSettingsChange}
-                        className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
-                      />
-                    ) : (
-                      <p className="mt-1 whitespace-pre-wrap text-sm font-medium text-slate-700">
-                        {settingsForm.description || "-"}
-                      </p>
+                  <div className="fd-profile-info">
+                    <p className="fd-profile-info__name">{foundation?.foundationName || "-"}</p>
+                    <p className="fd-profile-info__sub">{foundation?.foundationEmail || ""}</p>
+                    <span className="fd-verified-badge">인증된 단체</span>
+                    {settingsForm.profileImageFile && (
+                      <p style={{ fontSize: 11, color: "#64748b", marginTop: 4 }}>{settingsForm.profileImageFile.name}</p>
                     )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="fd-panel">
+                <form onSubmit={handleSettingsSubmit}>
+                  <div className="fd-form-grid" style={{ marginBottom: 16 }}>
+                    <div className="fd-form-field">
+                      <span className="fd-form-label">사업자 등록번호</span>
+                      <span className="fd-form-value">{foundation?.businessRegistrationNumber || "-"}</span>
+                    </div>
+                    <div className="fd-form-field">
+                      <span className="fd-form-label">대표자</span>
+                      <span className="fd-form-value">{foundation?.representativeName || "-"}</span>
+                    </div>
+                    <label className="fd-form-field">
+                      <span className="fd-form-label">연락처</span>
+                      {settingsEditMode
+                        ? <input name="contactPhone" value={settingsForm.contactPhone} onChange={handleSettingsChange} className="fd-form-input" />
+                        : <span className="fd-form-value">{settingsForm.contactPhone || "-"}</span>}
+                    </label>
+                    <div className="fd-form-field">
+                      <span className="fd-form-label">이메일</span>
+                      <span className="fd-form-value">{foundation?.foundationEmail || "-"}</span>
+                    </div>
+                    <label className="fd-form-field">
+                      <span className="fd-form-label">계좌번호</span>
+                      {settingsEditMode
+                        ? <input name="account" value={settingsForm.account} onChange={handleSettingsChange} className="fd-form-input" />
+                        : <span className="fd-form-value">{settingsForm.account || "-"}</span>}
+                    </label>
+                    <label className="fd-form-field">
+                      <span className="fd-form-label">은행명</span>
+                      {settingsEditMode
+                        ? <input name="bankName" value={settingsForm.bankName} onChange={handleSettingsChange} className="fd-form-input" />
+                        : <span className="fd-form-value">{settingsForm.bankName || "-"}</span>}
+                    </label>
+                    <label className="fd-form-field">
+                      <span className="fd-form-label">수수료율</span>
+                      {settingsEditMode
+                        ? <input name="feeRate" type="number" step="0.01" min="0" max="1" value={settingsForm.feeRate} onChange={handleSettingsChange} className="fd-form-input" />
+                        : <span className="fd-form-value">{settingsForm.feeRate || "-"}</span>}
+                    </label>
+                  </div>
+
+                  <label className="fd-form-field" style={{ marginBottom: 16 }}>
+                    <span className="fd-form-label">단체 소개</span>
+                    {settingsEditMode
+                      ? <textarea name="description" rows={4} value={settingsForm.description} onChange={handleSettingsChange} className="fd-form-textarea" />
+                      : <span className="fd-form-value" style={{ whiteSpace: "pre-wrap" }}>{settingsForm.description || "-"}</span>}
                   </label>
 
-                  {settingsEditMode ? (
-                    <div className="grid gap-5 border-t border-slate-100 pt-5 md:grid-cols-3">
-                      <label className="block">
-                        <span className="text-xs font-medium text-slate-400">현재 비밀번호</span>
-                        <input
-                          type="password"
-                          name="currentPassword"
-                          value={passwordForm.currentPassword}
-                          onChange={handlePasswordChange}
-                          autoComplete="current-password"
-                          className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
-                          placeholder="변경 시 입력"
-                        />
+                  {settingsEditMode && (
+                    <div className="fd-password-grid">
+                      <label className="fd-form-field">
+                        <span className="fd-form-label">현재 비밀번호</span>
+                        <input type="password" name="currentPassword" value={passwordForm.currentPassword} onChange={handlePasswordChange} autoComplete="current-password" className="fd-form-input" placeholder="변경 시 입력" />
                       </label>
-                      <label className="block">
-                        <span className="text-xs font-medium text-slate-400">새 비밀번호</span>
-                        <input
-                          type="password"
-                          name="newPassword"
-                          value={passwordForm.newPassword}
-                          onChange={handlePasswordChange}
-                          autoComplete="new-password"
-                          className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
-                          placeholder="변경 시 입력"
-                        />
+                      <label className="fd-form-field">
+                        <span className="fd-form-label">새 비밀번호</span>
+                        <input type="password" name="newPassword" value={passwordForm.newPassword} onChange={handlePasswordChange} autoComplete="new-password" className="fd-form-input" placeholder="변경 시 입력" />
                       </label>
-                      <label className="block">
-                        <span className="text-xs font-medium text-slate-400">새 비밀번호 확인</span>
-                        <input
-                          type="password"
-                          name="confirmPassword"
-                          value={passwordForm.confirmPassword}
-                          onChange={handlePasswordChange}
-                          autoComplete="new-password"
-                          className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
-                          placeholder="변경 시 입력"
-                        />
+                      <label className="fd-form-field">
+                        <span className="fd-form-label">새 비밀번호 확인</span>
+                        <input type="password" name="confirmPassword" value={passwordForm.confirmPassword} onChange={handlePasswordChange} autoComplete="new-password" className="fd-form-input" placeholder="변경 시 입력" />
                       </label>
                     </div>
-                  ) : null}
+                  )}
 
-                  {settingsError ? <p className="text-sm text-rose-600">{settingsError}</p> : null}
-                  {settingsMessage ? <p className="text-sm text-emerald-600">{settingsMessage}</p> : null}
+                  {settingsError && <p className="fd-error-text">{settingsError}</p>}
+                  {settingsMessage && <p className="fd-success-text">{settingsMessage}</p>}
 
-                  <div className="border-t border-slate-100 pt-4">
-                    <div className="flex justify-center gap-2">
-                      {settingsEditMode ? (
-                        <>
-                          <button
-                            type="button"
-                            onClick={handleCancelSettingsEdit}
-                            className="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-                          >
-                            취소
-                          </button>
-                          <button
-                            type="submit"
-                            disabled={settingsSaving}
-                            className="rounded-xl px-5 py-2.5 text-sm font-semibold text-slate-900 disabled:cursor-not-allowed disabled:opacity-50"
-                            style={{ backgroundColor: BRAND_COLOR }}
-                          >
-                            {settingsSaving ? "저장 중..." : "정보 저장하기"}
-                          </button>
-                        </>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={handleStartSettingsEdit}
-                          className="rounded-xl bg-slate-100 px-6 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-200"
-                        >
-                          정보 수정하기
-                        </button>
-                      )}
-                    </div>
+                  <div className="fd-form-actions">
+                    {settingsEditMode ? (
+                      <>
+                        <button type="button" className="fd-btn-secondary" onClick={handleCancelSettingsEdit}>취소</button>
+                        <button type="submit" className="fd-btn-primary" disabled={settingsSaving}>{settingsSaving ? "저장 중..." : "정보 저장하기"}</button>
+                      </>
+                    ) : (
+                      <button type="button" className="fd-btn-secondary" onClick={handleStartSettingsEdit}>정보 수정하기</button>
+                    )}
                   </div>
                 </form>
-              </article>
-            </section>
-          ) : null}
-        </section>
-      </div>
-    </main>
+              </div>
+            </div>
+          )}
+        </div>
+    </div>
   );
 }
 
