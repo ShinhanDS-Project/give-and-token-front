@@ -21,6 +21,8 @@ import AdminDashboardPage from "./pages/AdminDashboardPage";
 import AdminCampaignDetailPage from "./pages/AdminCampaignDetailPage";
 import AdminEventDetailPage from "./pages/AdminEventDetailPage";
 import AdminFoundationDetailPage from "./pages/AdminFoundationDetailPage";
+import AdminReportDetailPage from "./pages/AdminReportDetailPage";
+import AdminMemberDetailPage from "./pages/AdminMemberDetailPage";
 import AdminLoginPage from "./pages/AdminLoginPage";
 import { logoutAdmin } from "./util";
 import "./css/AdminDashboardPage.css";
@@ -30,9 +32,10 @@ const NAV_GROUPS = [
     key: "foundations",
     label: "기부 단체",
     icon: BriefcaseBusiness,
+    link: "foundations-list",
     items: [
-      { key: "foundations-approval", label: "승인·반려 관리" },
       { key: "foundations-list", label: "단체 조회" },
+      { key: "foundations-approval", label: "승인·반려 관리" },
       { key: "inactive", label: "비활성화 단체" },
     ],
   },
@@ -40,52 +43,58 @@ const NAV_GROUPS = [
     key: "campaigns",
     label: "캠페인",
     icon: Megaphone,
+    link: "campaigns-list",
     items: [
-      { key: "campaigns-approval", label: "승인·반려 관리" },
       { key: "campaigns-list", label: "캠페인 조회" },
+      { key: "campaigns-approval", label: "승인·반려 관리" },
     ],
   },
   {
     key: "reports",
     label: "활동 보고서",
     icon: FileText,
+    link: "reports-list",
     items: [
-      { key: "reports-approval", label: "승인·반려 관리" },
       { key: "reports-list", label: "보고서 조회" },
+      { key: "reports-approval", label: "승인·반려 관리" },
     ],
   },
   {
     key: "ops",
     label: "운영",
     icon: Settings,
+    link: "members",
     items: [
       { key: "members", label: "회원 관리" },
       { key: "requests", label: "새 요청" },
       { key: "logs", label: "관리자 로그" },
       { key: "send-history", label: "발송 내역" },
+      { key: "wallet", label: "지갑 정보" },
     ],
   },
 ];
 
 const KEY_TO_URL = {
   dashboard:              "/admin/dashboard",
-  "foundations-approval": "/admin/dashboard?tab=foundations&view=approval",
-  "foundations-list":     "/admin/dashboard?tab=foundations&view=list",
+  "foundations-approval": "/admin/dashboard?tab=foundations",
+  "foundations-list":     "/admin/dashboard?tab=foundations-list",
   inactive:               "/admin/dashboard?tab=inactive",
-  "campaigns-approval":   "/admin/dashboard?tab=campaigns&view=approval",
-  "campaigns-list":       "/admin/dashboard?tab=campaigns&view=list",
-  "reports-approval":     "/admin/dashboard?tab=reports&view=approval",
-  "reports-list":         "/admin/dashboard?tab=reports&view=list",
+  "campaigns-approval":   "/admin/dashboard?tab=campaigns",
+  "campaigns-list":       "/admin/dashboard?tab=campaigns-list",
+  "reports-approval":     "/admin/dashboard?tab=reports",
+  "reports-list":         "/admin/dashboard?tab=reports-list",
   members:                "/admin/dashboard?tab=members",
   requests:               "/admin/dashboard?tab=requests",
   logs:                   "/admin/dashboard?tab=logs",
   "send-history":         "/admin/dashboard?tab=send-history",
+  wallet:                 "/admin/dashboard?tab=wallet",
 };
 
 function SidebarGroup({ group, activeKey, onSelect, sidebarCollapsed, onOpenFlyout, isActiveFlyout }) {
   const [open, setOpen] = useState(true);
   const hasActive = group.items.some((item) => item.key === activeKey);
   const GroupIcon = group.icon;
+  const hasGroupLink = !!group.link;
 
   const handleIconClick = (e) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -109,17 +118,37 @@ function SidebarGroup({ group, activeKey, onSelect, sidebarCollapsed, onOpenFlyo
 
   return (
     <div className="admin-sidebar-group">
-      <button
-        type="button"
-        className={`admin-sidebar-group__header ${hasActive ? "has-active" : ""}`}
-        onClick={() => setOpen((p) => !p)}
-      >
-        <div className="admin-sidebar-group__header-left">
-          <GroupIcon size={16} />
-          <span>{group.label}</span>
+      {hasGroupLink ? (
+        <div className={`admin-sidebar-group__header-wrap ${hasActive ? "has-active" : ""}`}>
+          <button
+            type="button"
+            className="admin-sidebar-group__label-btn"
+            onClick={() => onSelect(group.link)}
+          >
+            <GroupIcon size={16} />
+            <span>{group.label}</span>
+          </button>
+          <button
+            type="button"
+            className="admin-sidebar-group__toggle-btn"
+            onClick={() => setOpen((p) => !p)}
+          >
+            {open ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+          </button>
         </div>
-        {open ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
-      </button>
+      ) : (
+        <button
+          type="button"
+          className={`admin-sidebar-group__header ${hasActive ? "has-active" : ""}`}
+          onClick={() => setOpen((p) => !p)}
+        >
+          <div className="admin-sidebar-group__header-left">
+            <GroupIcon size={16} />
+            <span>{group.label}</span>
+          </div>
+          {open ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+        </button>
+      )}
       {open && (
         <div className="admin-sidebar-group__items">
           {group.items.map(({ key, label }) => (
@@ -159,10 +188,14 @@ function AdminShell() {
     if (location.pathname.startsWith("/admin/report/")) return "reports-approval";
     if (location.pathname.startsWith("/admin/request/")) return "requests";
     if (location.pathname.startsWith("/admin/log/")) return "logs";
+    if (location.pathname.startsWith("/admin/member/")) return "members";
 
-    if (tab === "foundations") return view === "list" ? "foundations-list" : "foundations-approval";
-    if (tab === "campaigns") return view === "list" ? "campaigns-list" : "campaigns-approval";
-    if (tab === "reports") return view === "list" ? "reports-list" : "reports-approval";
+    if (tab === "foundations-list") return "foundations-list";
+    if (tab === "foundations") return "foundations-approval";
+    if (tab === "campaigns-list") return "campaigns-list";
+    if (tab === "campaigns") return "campaigns-approval";
+    if (tab === "reports-list") return "reports-list";
+    if (tab === "reports") return "reports-approval";
     return tab ?? "dashboard";
   }, [location]);
 
@@ -310,7 +343,8 @@ export default function AdminApp() {
         <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
         <Route path="/admin/foundation/:foundationNo" element={<AdminFoundationDetailPage />} />
         <Route path="/admin/campaign/:campaignNo" element={<AdminCampaignDetailPage />} />
-        <Route path="/admin/report/:reportNo" element={<AdminEventDetailPage kind="report" />} />
+        <Route path="/admin/report/:reportNo" element={<AdminReportDetailPage />} />
+        <Route path="/admin/member/:userNo" element={<AdminMemberDetailPage />} />
         <Route path="/admin/request/:requestNo" element={<AdminEventDetailPage kind="request" />} />
         <Route path="/admin/log/:logNo" element={<AdminEventDetailPage kind="log" />} />
       </Route>

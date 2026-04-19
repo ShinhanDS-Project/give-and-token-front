@@ -1,245 +1,231 @@
-import { useEffect, useMemo, useState } from "react";
-import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { getAdminApiUrl, getAdminAuthHeaders } from "../util";
+import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
+import { fetchAdminJson, getAdminApiUrl, getAdminAuthHeaders } from "../util";
+import "../css/AdminDashboardPage.css";
 
-function formatNumber(value) {
-  const num = Number(value ?? 0);
-  if (!Number.isFinite(num)) return "0";
-  return new Intl.NumberFormat("ko-KR").format(num);
+function formatCurrency(v) {
+  const n = Number(v ?? 0);
+  if (!Number.isFinite(n)) return "-";
+  return new Intl.NumberFormat("ko-KR", { style: "currency", currency: "KRW", maximumFractionDigits: 0 }).format(n);
 }
 
-function formatCurrency(value) {
-  const num = Number(value ?? 0);
-  if (!Number.isFinite(num)) return "-";
-  return new Intl.NumberFormat("ko-KR", {
-    style: "currency",
-    currency: "KRW",
-    maximumFractionDigits: 0,
-  }).format(num);
+function formatDate(v) {
+  if (!v) return "-";
+  const d = new Date(v);
+  return Number.isNaN(d.getTime()) ? String(v) : d.toLocaleDateString("ko-KR");
 }
 
-function formatDateTime(value) {
-  if (!value) return "-";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return String(value);
-  return date.toLocaleString("ko-KR");
+function formatPhone(v) {
+  if (!v) return "-";
+  const d = String(v).replace(/\D/g, "");
+  if (d.length === 11) return `${d.slice(0,3)}-${d.slice(3,7)}-${d.slice(7)}`;
+  if (d.length === 10) return d.startsWith("02") ? `${d.slice(0,2)}-${d.slice(2,6)}-${d.slice(6)}` : `${d.slice(0,3)}-${d.slice(3,6)}-${d.slice(6)}`;
+  return v;
+}
+
+const APPROVAL_LABEL = { APPROVED: "승인됨", PENDING: "대기", REJECTED: "반려됨" };
+const APPROVAL_COLOR = { APPROVED: "#2563eb", PENDING: "#d97706", REJECTED: "#dc2626" };
+const CAMPAIGN_STATUS_LABEL = {
+  PENDING: "대기", RECRUITING: "모집중", ACTIVE: "진행중",
+  ENDED: "마감", SETTLED: "정산중", COMPLETED: "완료", CANCELLED: "취소",
+};
+const CAMPAIGN_STATUS_COLOR = {
+  PENDING: "#94a3b8", RECRUITING: "#2563eb", ACTIVE: "#16a34a",
+  ENDED: "#64748b", SETTLED: "#d97706", COMPLETED: "#7c3aed", CANCELLED: "#dc2626",
+};
+
+function DetailRow({ label, children }) {
+  return (
+    <div className="acd-detail__row">
+      <span className="acd-detail__label">{label}</span>
+      <span className="acd-detail__value">{children ?? "-"}</span>
+    </div>
+  );
 }
 
 export default function AdminCampaignDetailPage() {
   const navigate = useNavigate();
-  const location = useLocation();
   const { campaignNo } = useParams();
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [detail, setDetail] = useState(null);
+
+  const [loading, setLoading]         = useState(true);
+  const [error, setError]             = useState("");
+  const [detail, setDetail]           = useState(null);
+  const [foundation, setFoundation]   = useState(null);
+  const [beneficiary, setBeneficiary] = useState(null);
+  const [activeTab, setActiveTab]     = useState("foundation");
 
   useEffect(() => {
     let cancelled = false;
+    setLoading(true);
+    setError("");
 
-    async function loadDetail() {
-      try {
-        setLoading(true);
-        setError("");
-
-        const response = await fetch(getAdminApiUrl(`/campaigns/${campaignNo}/detail`), {
-          method: "GET",
-          headers: getAdminAuthHeaders({ Accept: "application/json" }),
-        });
-
-        if (!response.ok) {
-          const text = await response.text().catch(() => "");
-          throw new Error(text || `Campaign detail load failed (${response.status})`);
+    fetch(getAdminApiUrl(`/campaigns/${campaignNo}/detail`), {
+      headers: getAdminAuthHeaders({ Accept: "application/json" }),
+    })
+      .then((res) => { if (!res.ok) throw new Error(`로드 실패 (${res.status})`); return res.json(); })
+      .then((data) => {
+        if (cancelled) return;
+        setDetail(data);
+        if (data.foundationNo) {
+          fetchAdminJson(`/foundation/${data.foundationNo}`)
+            .then((f) => { if (!cancelled) setFoundation(f); })
+            .catch(() => {});
         }
+        if (data.beneficiaryNo) {
+          fetchAdminJson(`/beneficiary/${data.beneficiaryNo}`)
+            .then((b) => { if (!cancelled) setBeneficiary(b); })
+            .catch(() => {});
+        }
+      })
+      .catch((err) => { if (!cancelled) setError(err.message); })
+      .finally(() => { if (!cancelled) setLoading(false); });
 
-        const payload = await response.json();
-        if (!cancelled) setDetail(payload);
-      } catch (err) {
-        if (!cancelled) setError(err.message || "캠페인 상세 정보를 불러오지 못했습니다.");
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-
-    loadDetail();
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [campaignNo]);
 
-  const stateRecord = location.state?.record ?? {};
-  const imageList = useMemo(() => {
-    if (!detail) return [];
-    const representative = detail.imagePath ? [detail.imagePath] : [];
-    const detailImages = Array.isArray(detail.detailImagePaths) ? detail.detailImagePaths : [];
-    const topImages = Array.isArray(detail.images) ? detail.images.map((img) => img?.imgPath).filter(Boolean) : [];
-    return [...representative, ...detailImages, ...topImages].filter(Boolean);
-  }, [detail]);
+  const categoryLabel = detail?.category?.label ?? detail?.category ?? null;
 
   return (
     <>
       <header className="admin-dashboard-topbar">
         <div className="admin-dashboard-topbar__title">
-          <button type="button" className="admin-dashboard-topbar__menu" onClick={() => navigate(-1)}>
-            <span />
-            <span />
-            <span />
+          <button type="button" className="admin-back-btn" onClick={() => navigate(-1)}>
+            <ArrowLeft size={16} />
           </button>
           <h1>캠페인 상세</h1>
         </div>
       </header>
 
       <main className="admin-dashboard-content">
-        {loading ? <p className="admin-dashboard-empty-text">캠페인 상세 정보를 불러오는 중...</p> : null}
-        {error ? <p className="admin-dashboard-empty-text">{error}</p> : null}
+        {loading && <p className="admin-dashboard-empty-text">불러오는 중...</p>}
+        {error   && <p className="admin-dashboard-empty-text">{error}</p>}
 
-        {!loading && !error && detail ? (
-          <section className="admin-campaign-detail-grid">
-            <article className="admin-dashboard-panel admin-campaign-detail-main">
-              <div className="admin-campaign-detail-header">
-                {imageList[0] ? (
-                  <img src={imageList[0]} alt="" className="admin-campaign-detail-thumbnail" />
-                ) : (
-                  <div className="admin-campaign-detail-thumbnail admin-campaign-detail-thumbnail--fallback">
-                    {(detail.title || "C").slice(0, 1)}
-                  </div>
+        {!loading && !error && detail && (
+          <div className="acd-layout">
+
+            {/* ── 좌(3): 이미지 + 오버레이 ── */}
+            <section className="admin-dashboard-panel acd-profile">
+              {detail.imagePath ? (
+                <img src={detail.imagePath} alt="" className="acd-profile__img" />
+              ) : (
+                <div className="acd-profile__fallback">
+                  {(detail.title || "C").slice(0, 1)}
+                </div>
+              )}
+              <div className="acd-profile__overlay">
+                <h2 className="acd-profile__title">{detail.title || "-"}</h2>
+                {categoryLabel && (
+                  <span className="acd-profile__category">{categoryLabel}</span>
                 )}
-                <div>
-                  <h2>{detail.title || stateRecord.title || "-"}</h2>
-                  <p>{detail.category || stateRecord.category || "-"}</p>
-                </div>
+                <p className="acd-profile__period">
+                  {formatDate(detail.startAt)} ~ {formatDate(detail.endAt)}
+                </p>
               </div>
+            </section>
 
-              <div className="admin-campaign-detail-fields">
-                <div className="admin-campaign-detail-field">
-                  <span>승인 상태</span>
-                  <strong>{detail.approvalStatus || stateRecord.approvalStatus || "-"}</strong>
-                </div>
-                <div className="admin-campaign-detail-field">
-                  <span>캠페인 상태</span>
-                  <strong>{detail.campaignStatusLabel || detail.campaignStatus || "-"}</strong>
-                </div>
-                <div className="admin-campaign-detail-field">
-                  <span>카테고리 코드</span>
-                  <strong>{detail.categoryCode || "-"}</strong>
-                </div>
-                <div className="admin-campaign-detail-field">
-                  <span>참여 코드</span>
-                  <strong>{detail.entryCode || "-"}</strong>
-                </div>
-                <div className="admin-campaign-detail-field">
-                  <span>목표금액</span>
-                  <strong>{formatCurrency(detail.targetAmount)}</strong>
-                </div>
-                <div className="admin-campaign-detail-field">
-                  <span>현재 모금액</span>
-                  <strong>{formatCurrency(detail.currentAmount)}</strong>
-                </div>
-                <div className="admin-campaign-detail-field">
-                  <span>달성률</span>
-                  <strong>{formatNumber(detail.progressPercent)}%</strong>
-                </div>
-                <div className="admin-campaign-detail-field">
-                  <span>기부자 수</span>
-                  <strong>{formatNumber(detail.donors)}</strong>
-                </div>
-                <div className="admin-campaign-detail-field">
-                  <span>시작일</span>
-                  <strong>{formatDateTime(detail.startAt)}</strong>
-                </div>
-                <div className="admin-campaign-detail-field">
-                  <span>종료일</span>
-                  <strong>{formatDateTime(detail.endAt)}</strong>
-                </div>
-                <div className="admin-campaign-detail-field">
-                  <span>사용 시작일</span>
-                  <strong>{formatDateTime(detail.usageStartAt)}</strong>
-                </div>
-                <div className="admin-campaign-detail-field">
-                  <span>사용 종료일</span>
-                  <strong>{formatDateTime(detail.usageEndAt)}</strong>
-                </div>
-                <div className="admin-campaign-detail-field admin-campaign-detail-field--wide">
-                  <span>소개</span>
-                  <strong>{detail.description || "-"}</strong>
-                </div>
-                <div className="admin-campaign-detail-field admin-campaign-detail-field--wide">
-                  <span>단체</span>
-                  <strong>{detail.foundation?.foundationName || stateRecord.foundationName || `No.${detail.foundationNo}` || "-"}</strong>
-                </div>
-                <div className="admin-campaign-detail-field">
-                  <span>수혜자 번호</span>
-                  <strong>{detail.beneficiaryNo ?? "-"}</strong>
-                </div>
-                <div className="admin-campaign-detail-field">
-                  <span>반려 사유</span>
-                  <strong>{detail.rejectReason || "-"}</strong>
-                </div>
-                <div className="admin-campaign-detail-field admin-campaign-detail-field--wide">
-                  <span>지갑 주소</span>
-                  <strong>{detail.walletAddress || "-"}</strong>
-                </div>
+            {/* ── 중앙(4): 상세정보 카드 ── */}
+            <section className="admin-dashboard-panel acd-detail">
+              <DetailRow label="승인 상태">
+                <strong style={{ color: APPROVAL_COLOR[detail.approvalStatus] }}>
+                  {APPROVAL_LABEL[detail.approvalStatus] ?? detail.approvalStatus ?? "-"}
+                </strong>
+              </DetailRow>
+              <DetailRow label="캠페인 상태">
+                <strong style={{ color: CAMPAIGN_STATUS_COLOR[detail.campaignStatus] }}>
+                  {CAMPAIGN_STATUS_LABEL[detail.campaignStatus] ?? detail.campaignStatus ?? "-"}
+                </strong>
+              </DetailRow>
+              <DetailRow label="목표 금액">{formatCurrency(detail.targetAmount)}</DetailRow>
+              <DetailRow label="현재 기부금">{formatCurrency(detail.currentAmount)}</DetailRow>
+              <DetailRow label="모금 기간">{formatDate(detail.startAt)} ~ {formatDate(detail.endAt)}</DetailRow>
+              <DetailRow label="집행 기간">
+                {(detail.usageStartAt || detail.usageEndAt)
+                  ? `${formatDate(detail.usageStartAt)} ~ ${formatDate(detail.usageEndAt)}`
+                  : "-"}
+              </DetailRow>
+              <DetailRow label="작성일">{formatDate(detail.createdAt)}</DetailRow>
+              <DetailRow label="수정일">{formatDate(detail.updatedAt)}</DetailRow>
+              <DetailRow label="승인일">{formatDate(detail.approvedAt)}</DetailRow>
+              <DetailRow label="캠페인 지갑">{detail.walletNo ? `No.${detail.walletNo}` : "-"}</DetailRow>
+              <DetailRow label="기부단체">
+                {foundation?.foundationName ?? (detail.foundationNo ? `No.${detail.foundationNo}` : "-")}
+              </DetailRow>
+              <DetailRow label="수혜자">
+                {beneficiary?.name ?? (detail.beneficiaryNo ? `No.${detail.beneficiaryNo}` : "-")}
+              </DetailRow>
+            </section>
+
+            {/* ── 우(3): 기부단체·수혜자 탭 카드 ── */}
+            <section className="admin-dashboard-panel acd-side">
+              <div className="afd-tabs">
+                <button type="button" className={`afd-tab ${activeTab === "foundation" ? "is-active" : ""}`} onClick={() => setActiveTab("foundation")}>기부단체</button>
+                <button type="button" className={`afd-tab ${activeTab === "beneficiary" ? "is-active" : ""}`} onClick={() => setActiveTab("beneficiary")}>수혜자</button>
               </div>
+              <div className="afd-tab-content">
+                {activeTab === "foundation" && (
+                  foundation ? (
+                    <div className="afd-activity-rows">
+                      {[
+                        { label: "단체명",     value: foundation.foundationName },
+                        { label: "이메일",     value: foundation.foundationEmail },
+                        { label: "대표자",     value: foundation.representativeName },
+                        { label: "사업자번호", value: foundation.businessRegistrationNumber },
+                        { label: "단체 유형",  value: foundation.foundationType },
+                        { label: "계정 상태",  value: foundation.accountStatus },
+                      ].map(({ label, value }) => (
+                        <div key={label} className="afd-activity-row">
+                          <span>{label}</span>
+                          <strong>{value || "-"}</strong>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="admin-empty-text">불러오는 중...</p>
+                  )
+                )}
+                {activeTab === "beneficiary" && (
+                  beneficiary ? (
+                    <div className="afd-activity-rows">
+                      {[
+                        { label: "이름",       value: beneficiary.name },
+                        { label: "연락처",     value: formatPhone(beneficiary.phone) },
+                        { label: "계좌번호",   value: beneficiary.account },
+                        { label: "수혜자 유형", value: beneficiary.beneficiaryType },
+                        { label: "지갑 주소",  value: beneficiary.walletAddress },
+                        { label: "잔액",       value: beneficiary.balance != null ? formatCurrency(beneficiary.balance) : null },
+                        { label: "입장 코드",  value: beneficiary.entryCode },
+                      ].map(({ label, value }) => (
+                        <div key={label} className="afd-activity-row">
+                          <span>{label}</span>
+                          <strong>{value || "-"}</strong>
+                        </div>
+                      ))}
+                    </div>
+                  ) : detail.beneficiaryNo ? (
+                    <p className="admin-empty-text">불러오는 중...</p>
+                  ) : (
+                    <p className="admin-empty-text">연결된 수혜자가 없습니다.</p>
+                  )
+                )}
+              </div>
+            </section>
 
-              {imageList.length > 1 ? (
-                <div className="admin-campaign-detail-image-strip">
-                  {imageList.slice(1).map((path, index) => (
-                    <img key={`${path}-${index}`} src={path} alt="" />
+            {/* ── 하단 7fr (좌+중 너비): 소개 + 상세 이미지 ── */}
+            <section className="admin-dashboard-panel acd-full">
+              <h3 className="acd-full__heading">소개</h3>
+              <p className="acd-full__desc">{detail.description || "소개 내용이 없습니다."}</p>
+              {detail.detailImagePaths?.length > 0 && (
+                <div className="acd-full__images">
+                  {detail.detailImagePaths.map((src, idx) => (
+                    <img key={idx} src={src} alt={`상세 이미지 ${idx + 1}`} className="acd-full__img" />
                   ))}
                 </div>
-              ) : null}
-            </article>
+              )}
+            </section>
 
-            <aside className="admin-campaign-detail-side">
-              <article className="admin-dashboard-panel admin-campaign-detail-card">
-                <h3>사용 계획</h3>
-                <div className="admin-campaign-detail-list">
-                  {Array.isArray(detail.usePlans) && detail.usePlans.length ? (
-                    detail.usePlans.map((plan) => (
-                      <div key={plan.usePlanNo ?? `${plan.planContent}-${plan.planAmount}`}>
-                        <strong>{plan.planContent || "-"}</strong>
-                        <span>{formatCurrency(plan.planAmount)}</span>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="admin-dashboard-empty-text">사용 계획이 없습니다.</p>
-                  )}
-                </div>
-              </article>
-
-              <article className="admin-dashboard-panel admin-campaign-detail-card">
-                <h3>최근 기부자</h3>
-                <div className="admin-campaign-detail-list">
-                  {Array.isArray(detail.recentDonors) && detail.recentDonors.length ? (
-                    detail.recentDonors.map((donor, index) => (
-                      <div key={`${donor.name}-${index}`}>
-                        <strong>{donor.name || "-"}</strong>
-                        <span>{formatCurrency(donor.amount)} / {donor.time || "-"}</span>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="admin-dashboard-empty-text">최근 기부자가 없습니다.</p>
-                  )}
-                </div>
-              </article>
-
-              <article className="admin-dashboard-panel admin-campaign-detail-card">
-                <h3>첨부 서류</h3>
-                <div className="admin-campaign-detail-list">
-                  {Array.isArray(detail.documents) && detail.documents.length ? (
-                    detail.documents.map((doc, index) => (
-                      <div key={`${doc.name}-${index}`}>
-                        <strong>{doc.name || "-"}</strong>
-                        <span>{doc.size || "-"}</span>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="admin-dashboard-empty-text">첨부 서류가 없습니다.</p>
-                  )}
-                </div>
-              </article>
-            </aside>
-          </section>
-        ) : null}
+          </div>
+        )}
       </main>
     </>
   );
