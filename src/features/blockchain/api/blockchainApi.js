@@ -53,7 +53,7 @@ function getWalletDisplayInfo(wallet) {
 
   if (wallet.ownerType === "CAMPAIGN") {
     return {
-      nameLabel: "罹좏럹?몃챸",
+      nameLabel: "캠페인명",
       nameValue: wallet.campaignName || "-"
     };
   }
