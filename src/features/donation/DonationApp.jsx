@@ -40,6 +40,7 @@ import FoundationNotificationsPage from "../foundation/pages/FoundationNotificat
 import BeneficiaryNotificationsPage from "../beneficiary/pages/BeneficiaryNotificationsPage"; // [가빈]
 import BeneficiaryMainPage from "../beneficiary/pages/BeneficiaryMainPage";
 import MyPageLayout from '../myPageUser/pages/MyPageLayout';
+import RecommendationPage from "../ai/pages/RecommendationPage";
 
 function HomePage() {
   useEffect(() => {
@@ -183,6 +184,7 @@ export default function DonationApp() {
           <Route path="/mission" element={<MissionPage />} />
           <Route path="/guide" element={<DonationGuidePage />} />
           <Route path="/ledger" element={<LedgerPage />} />
+          <Route path="/recommendation" element={<RecommendationPage />} />
 
           {/* 단체 가입 관련 */}
           <Route

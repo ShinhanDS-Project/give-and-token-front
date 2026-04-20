@@ -87,6 +87,9 @@ export default function Navbar() {
               <Link to="/campaigns" className="text-sm font-bold text-stone-500 hover:text-primary transition-colors">
                 캠페인 목록
               </Link>
+              <Link to="/recommendation" className="text-sm font-bold text-stone-500 hover:text-primary transition-colors">
+                AI 추천
+              </Link>
               <Link to="/transparency" className="text-sm font-bold text-stone-500 hover:text-primary transition-colors">
                 투명성 센터
               </Link>
