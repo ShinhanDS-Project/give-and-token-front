@@ -24,8 +24,8 @@ const MyPageLayout = () => {
 
     return (
         <div className="mypage-main-page scrollbar-hide">
-            <div className="flex flex-col lg:flex-row gap-16 scrollbar-hide">
-                <aside className="w-full lg:w-80 shrink-0 scrollbar-hide">
+            <div className="mypage-layout-shell scrollbar-hide">
+                <aside className="mypage-layout-nav scrollbar-hide">
                     <div className="lg:sticky lg:top-48 h-full scrollbar-hide">
                         <ProfileCard
                             myInfo={myInfo}
@@ -35,7 +35,7 @@ const MyPageLayout = () => {
                         />
                     </div>
                 </aside>
-                <main className="flex-1 min-w-0">
+                <main className="mypage-layout-content">
                     <Outlet context={{ myInfo }} />
                 </main>
             </div>

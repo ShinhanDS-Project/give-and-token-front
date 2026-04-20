@@ -37,6 +37,35 @@
     @apply flex flex-col lg:flex-row gap-12 lg:gap-20;
 }
 
+.mypage-layout-shell {
+    @apply flex flex-col gap-8 lg:flex-row lg:gap-16 lg:items-start lg:justify-center;
+}
+
+.mypage-layout-nav {
+    @apply w-full shrink-0;
+}
+
+.mypage-layout-content {
+    @apply w-full min-w-0;
+}
+
+@media (min-width: 1024px) {
+    .mypage-layout-nav {
+        width: 340px;
+        flex: 0 0 340px;
+    }
+
+    .mypage-layout-content {
+        width: 740px;
+        max-width: 740px;
+        flex: 0 0 740px;
+    }
+
+    .mypage-layout-nav .mypage-card {
+        min-height: 780px;
+    }
+}
+
 /* 색상 및 폰트 디테일: 잉크색의 연한 브라운 톤 */
 .card-label-clean {
     @apply text-[10px] font-black text-ink/40 uppercase tracking-widest mb-1.5;
