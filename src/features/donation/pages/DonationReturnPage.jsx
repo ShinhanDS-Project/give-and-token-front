@@ -316,13 +316,13 @@ export default function DonationReturnPage() {
         <div className="mt-10 grid grid-cols-2 gap-3">
           <Link
             to="/"
-            className="inline-flex w-full items-center justify-center rounded border border-stone-200 bg-white py-3 text-sm font-bold text-ink transition-colors hover:border-primary hover:bg-primary hover:text-white"
+            className="inline-flex w-full items-center justify-center rounded border border-stone-200 bg-white py-3 text-[15px] font-bold text-ink transition-colors hover:border-primary hover:bg-primary hover:text-white"
           >
             메인으로 돌아가기
           </Link>
           <Link
             to="/mypage/history"
-            className="inline-flex w-full items-center justify-center rounded border border-stone-200 bg-white py-3 text-sm font-bold text-ink transition-colors hover:border-primary hover:bg-primary hover:text-white"
+            className="inline-flex w-full items-center justify-center rounded border border-stone-200 bg-white py-3 text-[15px] font-bold text-ink transition-colors hover:border-primary hover:bg-primary hover:text-white"
           >
             기부내역 보러가기
           </Link>

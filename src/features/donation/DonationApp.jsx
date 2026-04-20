@@ -161,10 +161,12 @@ export default function DonationApp() {
     !location.pathname.startsWith("/foundation/notifications");
   const isBeneficiaryRoute = location.pathname.startsWith("/beneficiary");
   const isLoginRoute = location.pathname === "/login";
+  const isMyPageRoute = location.pathname.startsWith("/mypage");
 
   // 2. 하나라도 해당하면 true가 되도록 변수 생성
   const shouldHideLayout = isFoundationRoute;
-  const shouldHideFooter = isFoundationRoute || isBeneficiaryRoute || isLoginRoute;
+  const shouldHideFooter =
+    isFoundationRoute || isBeneficiaryRoute || isLoginRoute || isMyPageRoute;
   return (
     <div className="min-h-screen bg-surface selection:bg-primary selection:text-white">
       <ScrollToTop />

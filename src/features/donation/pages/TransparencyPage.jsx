@@ -181,7 +181,7 @@ export default function TransparencyPage() {
                   </h2>
                   <p className="text-sm md:text-[15px] text-stone-500 leading-relaxed">
                     캠페인 등록 전후의 기본 검토, 예산 확인, 종료 후 집행 보고까지 기본 원칙으로
-                    운영합니다. 고정된 형식으로 관리해 비교와 추적이 가능하도록 구성했습니다.
+                    운영합니다. <br/> 고정된 형식으로 관리해 비교와 추적이 가능하도록 구성했습니다.
                   </p>
                 </div>
 
@@ -211,9 +211,10 @@ export default function TransparencyPage() {
                 <span className="text-primary italic">기부 경험</span>을 만듭니다
               </h2>
               <p className="text-lg text-stone-500 leading-relaxed">
-                기부엔토큰은 아름다운 문구만 있는 기부 플랫폼이 아니라, 기부 전의 이해와
-                기부 후의 확인까지 포함된 경험을 목표로 합니다. 사용자는 왜 후원하는지 알 수
-                있어야 하고, 후원 이후 어떤 변화가 만들어졌는지도 확인할 수 있어야 합니다.
+                기부엔토큰은 아름다운 문구만 있는 기부 플랫폼이 아니라, <br/>
+                기부 전의 이해와 기부 후의 확인까지 포함된 경험을 목표로 합니다. <br/>
+                사용자는 왜 후원하는지 알 수 있어야 하고, <br/>
+                후원 이후 어떤 변화가 만들어졌는지도 확인할 수 있어야 합니다.
               </p>
             </div>
 

@@ -147,6 +147,14 @@ function toFeedItem(item, index) {
   };
 }
 
+function toArrayPayload(data) {
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data?.data)) return data.data;
+  if (Array.isArray(data?.result)) return data.result;
+  if (Array.isArray(data?.items)) return data.items;
+  return [];
+}
+
 function toHomeState(data) {
   const soonList = Array.isArray(data?.endingSoon)
     ? data.endingSoon.map(toCampaignCard)
@@ -390,6 +398,7 @@ export default function HomeCampaignHub() {
       setSummary(homeState.summary);
       setEndingSoon(homeState.endingSoon);
       setTopProgress(homeState.topProgress);
+      setLatestCampaigns(homeState.latestOngoing);
       setCampaigns(homeState.campaigns);
     }
 
@@ -532,11 +541,8 @@ export default function HomeCampaignHub() {
           Array.isArray(data) ? data.map(toCampaignCard) : [],
         );
 
-        if (!ignore) {
-          setLatestCampaigns(
-            Array.isArray(data) ? data.map(toCampaignCard) : [],
-          );
-        }
+        const latestList = toArrayPayload(data).map(toCampaignCard);
+        if (!ignore) setLatestCampaigns(latestList);
       } catch (error) {
         console.error("현재 진행중인 캠페인 조회 실패:", error);
       }
@@ -696,12 +702,18 @@ export default function HomeCampaignHub() {
             </div>
 
             <div className="grid gap-5">
-              {latestCampaigns.map((item) => (
-                <HorizontalCampaignCard
-                  key={`latest-${item.id}`}
-                  campaign={item}
-                />
-              ))}
+              {latestCampaigns.length > 0 ? (
+                latestCampaigns.map((item) => (
+                  <HorizontalCampaignCard
+                    key={`latest-${item.id}`}
+                    campaign={item}
+                  />
+                ))
+              ) : (
+                <div className="rounded-2xl border border-line bg-white p-6 text-sm font-bold text-stone-500">
+                  현재 진행중인 캠페인이 없습니다.
+                </div>
+              )}
             </div>
           </div>
 

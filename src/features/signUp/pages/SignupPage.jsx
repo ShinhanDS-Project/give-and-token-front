@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+﻿import React, { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import SignupRoleSelector from "../components/SignupRoleSelector";
@@ -11,20 +11,16 @@ import {
   submitSignup,
 } from "../api/signupApi";
 
-// 모든 필드를 포함하는 초기 상태
 const initialFormData = {
   role: "user",
   profileImage: null,
-  // User & Beneficiary 공통
   email: "",
   password: "",
   password2: "",
   name: "",
   phone: "",
-  // User 전용
   nameHash: "",
   birth: "",
-  // Beneficiary 전용
   account: "",
   beneficiaryType: "",
 };
@@ -39,7 +35,6 @@ const SignupPage = () => {
   const [isEmailVerified, setIsEmailVerified] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  // 역할 변경 시 상태 초기화
   const handleRoleChange = (newRole) => {
     setFormData({
       ...initialFormData,
@@ -97,7 +92,7 @@ const SignupPage = () => {
         const errorData = await response.json();
         alert(errorData.message || "이미 사용 중인 닉네임입니다.");
       }
-    } catch (error) {
+    } catch {
       alert("닉네임 체크 중 오류가 발생했습니다.");
     }
   }, [formData.nameHash]);
@@ -112,13 +107,13 @@ const SignupPage = () => {
     try {
       const response = await sendEmailVerification(email);
       if (response.ok) {
-        alert("인증 메일이 발송되었습니다.");
+        alert("인증 메일을 발송했습니다.");
         setShowVerificationInput(true);
       } else {
         const errorData = await response.json();
         alert(errorData.message || "인증 요청 중 오류가 발생했습니다.");
       }
-    } catch (error) {
+    } catch {
       alert("인증 요청 중 오류가 발생했습니다.");
     }
   }, [formData.email]);
@@ -144,7 +139,7 @@ const SignupPage = () => {
         const errorData = await response.json();
         alert(errorData.message || "인증 확인 중 오류가 발생했습니다.");
       }
-    } catch (error) {
+    } catch {
       alert("인증코드 확인 중 오류가 발생했습니다.");
     }
   }, [verificationCode, formData.email]);
@@ -212,57 +207,60 @@ const SignupPage = () => {
 
   return (
     <div className="signup-container">
-      <motion.div 
+      <motion.div
         className="signup-card"
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
       >
         <div className="signup-header">
-          <h1 className="signup-title">Create Account</h1>
-          <p className="signup-subtitle">하나뿐인 소중한 나눔을 시작해보세요</p>
+          <p className="signup-title">회원가입</p>
+          <p className="signup-subtitle">하나뿐인 여정의 나눔을 시작해보세요</p>
         </div>
-        
-        <form onSubmit={handleSubmit} className="signup-form">
-          <SignupRoleSelector
-              role={formData.role}
-              onChange={handleChange}
-          />
-          
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={formData.role}
-              initial={{ opacity: 0, x: 10 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -10 }}
-              transition={{ duration: 0.3 }}
-            >
-              <SignupFormFields
-                  role={formData.role}
-                  formData={formData}
-                  onChange={handleChange}
-                  onFileChange={handleFileChange}
-                  onNicknameCheck={handleNicknameCheck}
-                  onSendVerification={handleSendVerification}
-                  verificationCode={verificationCode}
-                  onVerificationCodeChange={(e) => setVerificationCode(e.target.value)}
-                  onVerifyCode={handleVerifyCode}
-                  showVerificationInput={showVerificationInput}
-                  isEmailVerified={isEmailVerified}
-                  isGoogleSignup={false}
-              />
-            </motion.div>
-          </AnimatePresence>
 
-          <motion.button 
-            type="submit" 
-            disabled={submitting} 
-            className="submit-button"
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-          >
-            {submitting ? "Processing..." : "가입하기"}
-          </motion.button>
+        <form onSubmit={handleSubmit} className="signup-form">
+          <div className="signup-form-layout">
+            <aside className="signup-form-layout__left">
+              <SignupRoleSelector role={formData.role} onChange={handleChange} />
+            </aside>
+
+            <div className="signup-form-layout__right">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={formData.role}
+                  initial={{ opacity: 0, x: 10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -10 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <SignupFormFields
+                    role={formData.role}
+                    formData={formData}
+                    onChange={handleChange}
+                    onFileChange={handleFileChange}
+                    onNicknameCheck={handleNicknameCheck}
+                    onSendVerification={handleSendVerification}
+                    verificationCode={verificationCode}
+                    onVerificationCodeChange={(e) => setVerificationCode(e.target.value)}
+                    onVerifyCode={handleVerifyCode}
+                    showVerificationInput={showVerificationInput}
+                    isEmailVerified={isEmailVerified}
+                    isGoogleSignup={false}
+                  />
+                </motion.div>
+              </AnimatePresence>
+
+              <motion.button
+                type="submit"
+                disabled={submitting}
+                className="submit-button"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                {submitting ? "Processing..." : "가입하기"}
+              </motion.button>
+            </div>
+          </div>
         </form>
       </motion.div>
     </div>

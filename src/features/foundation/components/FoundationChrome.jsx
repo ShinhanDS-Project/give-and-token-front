@@ -41,7 +41,7 @@ export default function FoundationChrome() {
         <a href="/foundation/me?menu=settings" className="foundation-chrome-link">
           <Settings size={14} /> 정보관리
         </a>
-        <a href="http://localhost:5173/" className="foundation-chrome-link">
+        <a href="/" className="foundation-chrome-link">
           <House size={14} /> <span>기부엔토큰<br />바로가기</span>
         </a>
       </nav>

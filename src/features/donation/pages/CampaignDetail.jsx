@@ -156,7 +156,7 @@ export default function CampaignDetail() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-white pb-32 pt-52">
+      <div className="min-h-screen bg-surface pb-32 pt-52">
         <div className="mx-auto max-w-4xl px-4 text-center sm:px-6 lg:px-8">
           <p className="text-lg font-bold text-stone-500">Loading campaign...</p>
         </div>
@@ -166,7 +166,7 @@ export default function CampaignDetail() {
 
   if (!campaign) {
     return (
-      <div className="min-h-screen bg-white pb-32 pt-52">
+      <div className="min-h-screen bg-surface pb-32 pt-52">
         <div className="mx-auto max-w-4xl px-4 text-center sm:px-6 lg:px-8">
           <h1 className="mb-6 text-4xl font-display font-bold text-ink">캠페인을 찾을 수 없습니다.</h1>
           <Link to="/campaigns" className="btn-fairytale inline-flex">
@@ -193,7 +193,7 @@ export default function CampaignDetail() {
   const safeDocs = Array.isArray(campaign.documents) ? campaign.documents : [];
 
   return (
-    <div className="min-h-screen bg-[#FFFFFF] pb-32 pt-36">
+    <div className="min-h-screen bg-surface pb-32 pt-36">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <Link
           to="/campaigns"

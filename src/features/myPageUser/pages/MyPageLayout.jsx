@@ -29,6 +29,7 @@ const MyPageLayout = () => {
                     <div className="lg:sticky lg:top-48 h-full scrollbar-hide">
                         <ProfileCard
                             myInfo={myInfo}
+                            onGoHome={() => navigate("/mypage")}
                             onEditProfile={() => navigate("/mypage/profile-edit")}
                             onChangePassword={() => navigate("/mypage/password-change")}
                             onViewDonations={() => navigate("/mypage/donation-history")}
