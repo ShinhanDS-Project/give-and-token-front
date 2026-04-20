@@ -7,7 +7,7 @@ const presets = [5000, 10000, 50000, 100000];
 const MIN_DONATION_AMOUNT = 100;
 const MAX_DONATION_AMOUNT = 100000000;
 const TOSS_PAYMENTS_SDK_URL = "https://js.tosspayments.com/v2/standard";
-const TOSS_CLIENT_KEY = import.meta.env.VITE_TOSS_CLIENT_KEY;
+const TOSS_CLIENT_KEY = "test_ck_AQ92ymxN34Nq0j94xYgyrajRKXvd";
 const PAYMENT_METHOD_STORAGE_KEY = "donation_payment_method";
 const PAYMENT_SUMMARY_STORAGE_KEY = "donation_payment_summary";
 const TOSS_REQUEST_METHOD = "CARD";
@@ -243,7 +243,7 @@ export default function DonatePage() {
     if (selectedAmount < MIN_DONATION_AMOUNT || requestingPayment) return;
 
     if (!TOSS_CLIENT_KEY) {
-      setPaymentError(".env에 VITE_TOSS_CLIENT_KEY를 설정해 주세요.");
+      setPaymentError(".env에 TOSS_CLIENT_KEY를 설정해 주세요.");
       return;
     }
 
