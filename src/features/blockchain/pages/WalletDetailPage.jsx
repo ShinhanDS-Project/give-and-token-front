@@ -112,7 +112,7 @@ function WalletDetailPage() {
         </div>
         <div className="panel info-card">
           <span>잔액</span>
-          <strong> {data.wallet.balance.toLocaleString()} GT</strong>
+          <strong> {data.wallet.balance.toLocaleString()} GNT</strong>
         </div>
         <div className="panel info-card">
           <span>연결된 트랜잭션 수</span>
