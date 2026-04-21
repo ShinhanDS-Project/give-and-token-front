@@ -1,4 +1,4 @@
-const DASHBOARD_PAGE_SIZE = 10;
+﻿const DASHBOARD_PAGE_SIZE = 10;
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 const TRANSACTIONS_CACHE_TTL_MS = 60 * 1000;
 const TRANSACTIONS_CACHE_PREFIX = "dashboard-transactions:api:v1";
@@ -10,13 +10,20 @@ const OWNER_TYPE_LABELS = {
   SERVER: "서버",
   DONOR: "기부자"
 };
+const OWNER_TYPE_BY_LABEL = Object.entries(OWNER_TYPE_LABELS).reduce((acc, [type, label]) => {
+  acc[label] = type;
+  return acc;
+}, {});
 
 const EVENT_TYPE_LABELS = {
   DONATION: "기부",
   SETTLEMENT: "정산",
   TOKENIZATION: "토큰화",
-  CASHOUT: "현금화",
-  WITHDRAWAL: "현금화"
+  GAS_CHARGE: "가스 충전",
+  GAS_TOPUP: "가스 충전",
+  GAS_RECHARGE: "가스 충전",
+  CASHOUT: "출금",
+  WITHDRAWAL: "출금"
 };
 
 async function request(path) {
@@ -53,7 +60,7 @@ function getWalletDisplayInfo(wallet) {
 
   if (wallet.ownerType === "BENEFICIARY") {
     return {
-      nameLabel: "수혜처명",
+      nameLabel: "수혜자명",
       nameValue: wallet.foundationName || "-"
     };
   }
@@ -77,6 +84,96 @@ function getEventTypeLabel(eventType) {
 
 function getOwnerTypeLabel(ownerType) {
   return OWNER_TYPE_LABELS[ownerType] || "미확인";
+}
+
+function getOwnerTypeByLabel(ownerTypeLabel) {
+  return OWNER_TYPE_BY_LABEL[String(ownerTypeLabel || "").trim()] || "";
+}
+
+function isPolSymbol(value) {
+  return String(value || "").trim().toUpperCase() === "POL";
+}
+
+function isGasChargeByEventType(eventType, eventTypeLabel) {
+  const normalizedType = String(eventType || "").toUpperCase();
+  const normalizedLabel = String(eventTypeLabel || "").trim();
+
+  return (
+    normalizedType === "GAS_CHARGE" ||
+    normalizedType === "GAS_TOPUP" ||
+    normalizedType === "GAS_RECHARGE" ||
+    normalizedLabel === "가스 충전"
+  );
+}
+
+function getTransactionAmountUnit(transaction) {
+  const explicitUnitCandidates = [
+    transaction?.amountUnit,
+    transaction?.unit,
+    transaction?.currency,
+    transaction?.symbol,
+    transaction?.tokenSymbol,
+    transaction?.assetSymbol,
+    transaction?.coinSymbol
+  ];
+
+  if (explicitUnitCandidates.some(isPolSymbol)) {
+    return "POL";
+  }
+
+  return isGasChargeByEventType(transaction?.eventType, transaction?.eventTypeLabel) ? "POL" : "GNT";
+}
+
+function resolveFromOwnerType(transaction) {
+  return (
+    String(transaction?.fromOwnerType || "").toUpperCase() ||
+    String(transaction?.fromWallet?.ownerType || "").toUpperCase() ||
+    getOwnerTypeByLabel(transaction?.fromOwnerTypeLabel)
+  );
+}
+
+function resolveToOwnerType(transaction) {
+  return (
+    String(transaction?.toOwnerType || "").toUpperCase() ||
+    String(transaction?.toWallet?.ownerType || "").toUpperCase() ||
+    getOwnerTypeByLabel(transaction?.toOwnerTypeLabel)
+  );
+}
+
+function getDashboardEventTypeLabel(transaction) {
+  const eventType = String(transaction?.eventType || "").toUpperCase();
+  const amountUnit = getTransactionAmountUnit(transaction);
+  const fromOwnerType = resolveFromOwnerType(transaction);
+  const toOwnerType = resolveToOwnerType(transaction);
+
+  if (amountUnit === "POL") {
+    return "가스 충전";
+  }
+
+  if (fromOwnerType === "SERVER" && toOwnerType === "DONOR") {
+    return "토큰화";
+  }
+
+  if (fromOwnerType === "DONOR" && toOwnerType === "CAMPAIGN") {
+    return "기부";
+  }
+
+  if (fromOwnerType === "CAMPAIGN" && toOwnerType === "FOUNDATION") {
+    return "수수료 지급";
+  }
+
+  if (fromOwnerType === "CAMPAIGN" && toOwnerType === "BENEFICIARY") {
+    return "기부금 정산";
+  }
+
+  if (
+    (fromOwnerType === "BENEFICIARY" || fromOwnerType === "FOUNDATION") &&
+    (eventType === "CASHOUT" || eventType === "WITHDRAWAL")
+  ) {
+    return "현금화(출금)";
+  }
+
+  return transaction?.eventTypeLabel || getEventTypeLabel(transaction?.eventType);
 }
 
 function normalizeWallet(wallet) {
@@ -105,8 +202,8 @@ function normalizeTransaction(transaction) {
 
   return {
     ...transaction,
-    txHash: normalizedTxHash,
-    eventTypeLabel: transaction.eventTypeLabel || getEventTypeLabel(transaction.eventType),
+    amountUnit: getTransactionAmountUnit(transaction),
+    eventTypeLabel: getDashboardEventTypeLabel(transaction),
     fromOwnerTypeLabel:
       transaction.fromOwnerTypeLabel ||
       transaction.fromWallet?.ownerTypeLabel ||
@@ -149,6 +246,59 @@ async function requestTransactionsPage({ page, keyword, pageSize }) {
   return normalizeTransactionsResponse(
     await request(`/api/blockchain/transactions?${query.toString()}`)
   );
+}
+
+async function requestDonationTransactionsPage({ page, pageSize = 200 }) {
+  const query = new URLSearchParams({
+    page: String(page),
+    size: String(pageSize),
+    status: "SUCCESS",
+    eventType: "DONATION"
+  });
+
+  return normalizeTransactionsResponse(
+    await request(`/api/blockchain/transactions?${query.toString()}`)
+  );
+}
+
+function toBigIntAmount(value) {
+  if (typeof value === "bigint") {
+    return value;
+  }
+
+  if (typeof value === "string" && /^\d+$/.test(value)) {
+    return BigInt(value);
+  }
+
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return BigInt(Math.trunc(value));
+  }
+
+  return 0n;
+}
+
+async function getDonationTokenAmount() {
+  const firstPage = await requestDonationTransactionsPage({ page: 1 });
+  const totalPages = Number(firstPage?.pageInfo?.totalPages || 1);
+  const safeTotalPages = Math.max(1, Math.min(totalPages, 200));
+  let sum = 0n;
+
+  const addDonationAmounts = (items = []) => {
+    items.forEach((item) => {
+      if (String(item?.eventType || "").toUpperCase() === "DONATION") {
+        sum += toBigIntAmount(item?.amount);
+      }
+    });
+  };
+
+  addDonationAmounts(firstPage?.items || []);
+
+  for (let page = 2; page <= safeTotalPages; page += 1) {
+    const response = await requestDonationTransactionsPage({ page });
+    addDonationAmounts(response?.items || []);
+  }
+
+  return sum.toString();
 }
 
 async function getServerPaginatedDashboardTransactions({ page, keyword, pageSize }) {
@@ -299,12 +449,25 @@ export async function getTransactions({
 
 export async function getDashboardOverview() {
   const summary = await request("/api/blockchain/summary?status=SUCCESS");
+  let donationTokenAmount = "0";
+
+  try {
+    donationTokenAmount = await getDonationTokenAmount();
+  } catch {
+    donationTokenAmount = String(
+      summary.donationTokenAmount ??
+      summary.totalDonationAmount ??
+      summary.donationAmount ??
+      0
+    );
+  }
 
   return {
     latestBlock: summary.latestBlock || 0,
     avgBlockTimeSec: Number(summary.avgBlockTimeSec || 0),
     totalTransactions: summary.totalTx || 0,
-    tokenAmount: summary.tokenAmount || 0
+    tokenAmount: donationTokenAmount,
+    tokenDecimals: Number(summary.tokenDecimals ?? summary.decimals ?? 18)
   };
 }
 
@@ -326,3 +489,4 @@ export async function resolveSearchTarget(keyword) {
   const query = new URLSearchParams({ keyword });
   return request(`/api/blockchain/search/resolve?${query.toString()}`);
 }
+

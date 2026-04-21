@@ -53,10 +53,15 @@ const SignupPage = () => {
       handleRoleChange(value);
       return;
     }
+    let nextValue = value;
 
+    // 전화번호는 숫자만 허용
+    if (name === "phone") {
+      nextValue = value.replace(/\D/g, "");
+    }
     setFormData((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: nextValue,
     }));
 
     if (name === "nameHash") {

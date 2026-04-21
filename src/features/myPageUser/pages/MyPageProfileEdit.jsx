@@ -29,7 +29,7 @@ export default function MyPageProfileEdit() {
   const [nicknameMessage, setNicknameMessage] = useState("");
   const [error, setError] = useState("");
 
-  const IMAGE_BASE_URL = "http://localhost:8090/uploads/";
+  const IMAGE_BASE_URL = "/uploads/";
 
   const formatPhoneNumber = (value) => {
     const digits = String(value ?? "").replace(/\D/g, "");

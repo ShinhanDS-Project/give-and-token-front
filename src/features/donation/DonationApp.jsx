@@ -40,6 +40,7 @@ import FoundationNotificationsPage from "../foundation/pages/FoundationNotificat
 import BeneficiaryNotificationsPage from "../beneficiary/pages/BeneficiaryNotificationsPage"; // [가빈]
 import BeneficiaryMainPage from "../beneficiary/pages/BeneficiaryMainPage";
 import MyPageLayout from '../myPageUser/pages/MyPageLayout';
+import RecommendationPage from "../ai/pages/RecommendationPage";
 
 function HomePage() {
   useEffect(() => {
@@ -155,13 +156,10 @@ function HomePage() {
 
 export default function DonationApp() {
   const location = useLocation();
-  // [가빈] 기부단체 경로 감지 (알림 페이지는 제외)
-  const isFoundationRoute =
-    location.pathname.startsWith("/foundation") &&
-    !location.pathname.startsWith("/foundation/notifications");
-  const isBeneficiaryRoute = location.pathname.startsWith("/beneficiary");
-  const isLoginRoute = location.pathname === "/login";
-  const isMyPageRoute = location.pathname.startsWith("/mypage");
+  // [가빈] 기부단체 관리자 경로만 감지 (공개 상세 페이지는 공통 레이아웃 유지)
+  const isFoundationRoute = /^\/foundation\/(me|register|dashboard)(\/|$)/.test(
+    location.pathname
+  );
 
   // 2. 하나라도 해당하면 true가 되도록 변수 생성
   const shouldHideLayout = isFoundationRoute;
@@ -182,6 +180,7 @@ export default function DonationApp() {
           <Route path="/mission" element={<MissionPage />} />
           <Route path="/guide" element={<DonationGuidePage />} />
           <Route path="/ledger" element={<LedgerPage />} />
+          <Route path="/recommendation" element={<RecommendationPage />} />
 
           {/* 단체 가입 관련 */}
           <Route

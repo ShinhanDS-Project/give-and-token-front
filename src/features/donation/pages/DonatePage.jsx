@@ -7,7 +7,7 @@ const presets = [5000, 10000, 50000, 100000];
 const MIN_DONATION_AMOUNT = 100;
 const MAX_DONATION_AMOUNT = 100000000;
 const TOSS_PAYMENTS_SDK_URL = "https://js.tosspayments.com/v2/standard";
-const TOSS_CLIENT_KEY = import.meta.env.VITE_TOSS_CLIENT_KEY;
+const TOSS_CLIENT_KEY = "test_ck_AQ92ymxN34Nq0j94xYgyrajRKXvd";
 const PAYMENT_METHOD_STORAGE_KEY = "donation_payment_method";
 const PAYMENT_SUMMARY_STORAGE_KEY = "donation_payment_summary";
 const TOSS_REQUEST_METHOD = "CARD";
@@ -45,12 +45,31 @@ function createOrderId() {
   return `donation_${Date.now()}_${randomValue}`;
 }
 
+function generateUUID() {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  if (typeof crypto !== "undefined" && typeof crypto.getRandomValues === "function") {
+    const bytes = new Uint8Array(16);
+    crypto.getRandomValues(bytes);
+    bytes[6] = (bytes[6] & 0x0f) | 0x40;
+    bytes[8] = (bytes[8] & 0x3f) | 0x80;
+    const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+    return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+  }
+  return `xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx`.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === "x" ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
 function getCustomerKey() {
   const storageKey = "donation_customer_key";
   const savedKey = window.localStorage.getItem(storageKey);
   if (savedKey) return savedKey;
 
-  const customerKey = `donor_${crypto.randomUUID()}`;
+  const customerKey = `donor_${generateUUID()}`;
   window.localStorage.setItem(storageKey, customerKey);
   return customerKey;
 }
@@ -243,7 +262,7 @@ export default function DonatePage() {
     if (selectedAmount < MIN_DONATION_AMOUNT || requestingPayment) return;
 
     if (!TOSS_CLIENT_KEY) {
-      setPaymentError(".env에 VITE_TOSS_CLIENT_KEY를 설정해 주세요.");
+      setPaymentError(".env에 TOSS_CLIENT_KEY를 설정해 주세요.");
       return;
     }
 
