@@ -628,6 +628,45 @@ input {
   padding: 18px 20px;
 }
 
+.refresh-icon-button {
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--panel-border);
+  border-radius: 999px;
+  background: var(--ghost-bg);
+  color: var(--hero-title);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.18s ease, background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.refresh-icon-button svg {
+  width: 16px;
+  height: 16px;
+}
+
+.refresh-icon-button:hover:not(:disabled) {
+  transform: rotate(18deg);
+  border-color: color-mix(in srgb, var(--hero-title) 35%, var(--panel-border));
+}
+
+.refresh-icon-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.75;
+}
+
+.refresh-icon-button.is-spinning svg {
+  animation: refresh-spin 0.9s linear infinite;
+}
+
+@keyframes refresh-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .accent-orange {
   background: var(--accent-orange);
 }
@@ -990,6 +1029,10 @@ input {
 
   .search-form {
     border-radius: 24px;
+  }
+
+  .refresh-icon-button {
+    align-self: flex-end;
   }
 
   .stats-grid,

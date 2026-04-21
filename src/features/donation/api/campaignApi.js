@@ -137,21 +137,85 @@ function normalizeCampaignListItem(campaign) {
     targetAmount: Number(campaign.targetAmount || 0),
     currentAmount: Number(campaign.currentAmount || 0),
     category: campaign.category || "기타",
-    endAt: campaign.endAt || null
+    startAt: campaign.startAt || campaign.recruitStartDate || campaign.startDate || null,
+    endAt:
+      campaign.endAt ||
+      campaign.recruitEndDate ||
+      campaign.endDate ||
+      campaign.deadline ||
+      null,
+    status: campaign.campaignStatus || campaign.status || ""
   };
 }
 
+function normalizeCampaignPageInfo(pageInfo, itemCount) {
+  if (!pageInfo || typeof pageInfo !== "object") {
+    return {
+      page: 1,
+      size: itemCount,
+      totalElements: itemCount,
+      totalPages: 1,
+      hasNext: false,
+      last: true
+    };
+  }
+
+  const page = Number(pageInfo.page || 1);
+  const size = Number(pageInfo.size || itemCount || 0);
+  const totalElements = Number(pageInfo.totalElements ?? itemCount ?? 0);
+  const totalPages = Number(pageInfo.totalPages || 1);
+  const hasNext = Boolean(pageInfo.hasNext);
+  const last = typeof pageInfo.last === "boolean" ? pageInfo.last : !hasNext;
+
+  return {
+    page: Number.isFinite(page) ? page : 1,
+    size: Number.isFinite(size) ? size : itemCount,
+    totalElements: Number.isFinite(totalElements) ? totalElements : itemCount,
+    totalPages: Number.isFinite(totalPages) ? Math.max(1, totalPages) : 1,
+    hasNext,
+    last
+  };
+}
+
+function extractCampaignItems(data) {
+  if (Array.isArray(data)) {
+    return data;
+  }
+
+  if (Array.isArray(data?.content)) {
+    return data.content;
+  }
+
+  return [];
+}
+
 export async function getCampaignList({
+  page = 1,
+  size = 6,
   sort = "deadline",
   keyword = "",
   searchType = "",
-  category = ""
+  category = "",
+  includeClosed = false
 } = {}) {
-  const query = buildQuery({ sort, keyword, searchType, category });
+  const query = buildQuery({
+    page,
+    size,
+    sort,
+    keyword,
+    searchType,
+    category,
+    includeClosed
+  });
   const path = query ? `/api/foundation/campaigns?${query}` : "/api/foundation/campaigns";
 
   const data = await request(path);
-  return Array.isArray(data) ? data.map(normalizeCampaignListItem) : [];
+  const items = extractCampaignItems(data).map(normalizeCampaignListItem);
+
+  return {
+    items,
+    pageInfo: normalizeCampaignPageInfo(data?.pageInfo, items.length)
+  };
 }
 
 export async function getCampaignCards({
@@ -175,8 +239,9 @@ export async function getCampaignCards({
     ? `/api/foundation/campaigns?${query.toString()}`
     : "/api/foundation/campaigns";
   const response = await request(path);
+  const items = extractCampaignItems(response);
 
-  return Array.isArray(response) ? response.map(toCampaignCard) : [];
+  return items.map(toCampaignCard);
 }
 
 export function buildCampaignCategories(campaigns) {

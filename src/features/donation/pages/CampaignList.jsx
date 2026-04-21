@@ -4,6 +4,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import {
   Search,
   ArrowRight,
+  ChevronDown,
   Sparkles,
   CircleHelp,
   BookOpen,
@@ -140,6 +141,8 @@ function toCampaignCard(item) {
     summary: item?.foundationName ? `${item.foundationName} 캠페인` : "따뜻한 나눔에 함께해주세요.",
     category: normalizedCategory,
     image: normalizeImagePath(item?.imagePath),
+    status: item?.status || "",
+    startAt: item?.startAt || null,
     endAt: item?.endAt || null,
     progress: toProgress(raised, goal),
     goal,
@@ -151,14 +154,18 @@ function toCampaignCard(item) {
 }
 
 export default function CampaignList() {
+  const LOAD_MORE_STEP = 6;
   const [searchParams, setSearchParams] = useSearchParams();
   const [campaigns, setCampaigns] = useState([]);
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasNextPage, setHasNextPage] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState(() =>
     normalizeQueryCategory(searchParams.get("category"))
   );
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState("");
   const [excludeClosed, setExcludeClosed] = useState(false);
   const [showCategoryTip, setShowCategoryTip] = useState(false);
@@ -185,20 +192,27 @@ export default function CampaignList() {
         setIsLoading(true);
         setError("");
 
-        const list = await getCampaignList({
+        const response = await getCampaignList({
+          page: 1,
+          size: LOAD_MORE_STEP,
           sort: "deadline",
           keyword: debouncedQuery,
           searchType: "",
-          category: toApiCategory(selectedCategory)
+          category: toApiCategory(selectedCategory),
+          includeClosed: !excludeClosed
         });
 
         if (isMounted) {
-          setCampaigns(list.map(toCampaignCard));
+          setCampaigns((response.items || []).map(toCampaignCard));
+          setCurrentPage(response.pageInfo?.page || 1);
+          setHasNextPage(Boolean(response.pageInfo?.hasNext));
         }
       } catch {
         if (isMounted) {
           setError("캠페인 목록을 불러오지 못했습니다.");
           setCampaigns([]);
+          setCurrentPage(1);
+          setHasNextPage(false);
         }
       } finally {
         if (isMounted) {
@@ -210,7 +224,7 @@ export default function CampaignList() {
     return () => {
       isMounted = false;
     };
-  }, [debouncedQuery, selectedCategory]);
+  }, [debouncedQuery, selectedCategory, excludeClosed]);
 
   const handleSelectCategory = (category) => {
     const nextCategory = selectedCategory === category ? ALL_CATEGORY : category;
@@ -227,16 +241,28 @@ export default function CampaignList() {
   };
 
   const isClosedCampaign = (campaign) => {
-    if (!campaign?.endAt) {
+    const status = String(campaign?.status || "").trim().toUpperCase();
+
+    if (status === "ACTIVE" || status === "ONGOING" || status === "IN_PROGRESS") {
       return false;
     }
 
-    const endTime = new Date(campaign.endAt).getTime();
-    if (Number.isNaN(endTime)) {
-      return false;
+    if (
+      status === "ENDED" ||
+      status === "CLOSED" ||
+      status === "COMPLETED" ||
+      status === "SETTLED" ||
+      status === "CANCELLED"
+    ) {
+      return true;
     }
 
-    return endTime < Date.now();
+    const endTime = new Date(campaign?.endAt || "").getTime();
+    if (Number.isFinite(endTime) && endTime < Date.now()) {
+      return true;
+    }
+
+    return false;
   };
 
   const getDeadlineLabel = (campaign) => {
@@ -258,9 +284,40 @@ export default function CampaignList() {
     return days === 0 ? "D-Day" : `D-${days}`;
   };
 
-  const visibleCampaigns = excludeClosed
-    ? campaigns.filter((campaign) => !isClosedCampaign(campaign))
-    : campaigns;
+  const visibleCampaigns = campaigns;
+  const hasMoreCampaigns = hasNextPage;
+
+  const handleLoadMore = async () => {
+    if (isLoadingMore || isLoading || !hasNextPage) {
+      return;
+    }
+
+    const nextPage = currentPage + 1;
+
+    try {
+      setIsLoadingMore(true);
+      setError("");
+
+      const response = await getCampaignList({
+        page: nextPage,
+        size: LOAD_MORE_STEP,
+        sort: "deadline",
+        keyword: debouncedQuery,
+        searchType: "",
+        category: toApiCategory(selectedCategory),
+        includeClosed: !excludeClosed
+      });
+
+      const nextItems = (response.items || []).map(toCampaignCard);
+      setCampaigns((previous) => [...previous, ...nextItems]);
+      setCurrentPage(response.pageInfo?.page || nextPage);
+      setHasNextPage(Boolean(response.pageInfo?.hasNext));
+    } catch {
+      setError("캠페인 목록을 더 불러오지 못했습니다.");
+    } finally {
+      setIsLoadingMore(false);
+    }
+  };
 
   return (
     <div className="pt-52 pb-32 watercolor-bg min-h-screen">
@@ -449,6 +506,20 @@ export default function CampaignList() {
               className="btn-fairytale inline-flex"
             >
               필터 초기화
+            </button>
+          </div>
+        )}
+
+        {!isLoading && !error && visibleCampaigns.length > 0 && hasMoreCampaigns && (
+          <div className="mt-10 flex items-center justify-center">
+            <button
+              type="button"
+              onClick={handleLoadMore}
+              className="rounded-full border-2 border-line bg-white p-3 text-stone-500 transition hover:border-primary/40 hover:text-primary"
+              aria-label="캠페인 더보기"
+              disabled={isLoadingMore}
+            >
+              <ChevronDown size={20} />
             </button>
           </div>
         )}

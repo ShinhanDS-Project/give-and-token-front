@@ -53,6 +53,29 @@ function TokenIcon() {
   );
 }
 
+function RefreshIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        d="M20 6v5h-5M4 18v-5h5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M18.2 11A7 7 0 0 0 6.4 6.8L4 9m16 6-2.4 2.2A7 7 0 0 1 5.8 13"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 function formatLocaleNumber(value, options) {
   const numericValue = Number(value || 0);
 
@@ -102,9 +125,11 @@ function TransactionDashboardPage() {
     tokenDecimals: 18
   });
   const [loading, setLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState("");
   const [overviewError, setOverviewError] = useState("");
   const [noResultsKeyword, setNoResultsKeyword] = useState("");
+  const [refreshNonce, setRefreshNonce] = useState(0);
 
   useEffect(() => {
     let ignore = false;
@@ -134,6 +159,7 @@ function TransactionDashboardPage() {
       } finally {
         if (!ignore) {
           setLoading(false);
+          setIsRefreshing(false);
         }
       }
     }
@@ -143,7 +169,7 @@ function TransactionDashboardPage() {
     return () => {
       ignore = true;
     };
-  }, [page]);
+  }, [page, refreshNonce]);
 
   useEffect(() => {
     let ignore = false;
@@ -203,6 +229,15 @@ function TransactionDashboardPage() {
     } catch {
       setError("검색 결과를 확인하지 못했습니다.");
     }
+  };
+
+  const handleRefreshTransactions = () => {
+    if (isRefreshing) {
+      return;
+    }
+
+    setIsRefreshing(true);
+    setRefreshNonce((prev) => prev + 1);
   };
 
   return (
@@ -272,6 +307,16 @@ function TransactionDashboardPage() {
           <p className="hero__eyebrow">Transactions</p>
           <h3>최근 트랜잭션</h3>
         </div>
+        <button
+          type="button"
+          className={`refresh-icon-button ${isRefreshing ? "is-spinning" : ""}`}
+          onClick={handleRefreshTransactions}
+          disabled={isRefreshing}
+          aria-label="최근 트랜잭션 새로고침"
+          title="최근 트랜잭션 새로고침"
+        >
+          <RefreshIcon />
+        </button>
       </div>
 
       {loading && <div className="panel empty-state">트랜잭션 데이터를 불러오는 중입니다.</div>}
