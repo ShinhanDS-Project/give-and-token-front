@@ -32,16 +32,28 @@ function TransactionTable({ transactions }) {
             </tr>
           </thead>
           <tbody>
-            {transactions.map((transaction) => (
-              <tr key={transaction.txHash}>
+            {transactions.map((transaction, index) => {
+              const txHash =
+                transaction.txHash ||
+                transaction.transactionHash ||
+                transaction.hash ||
+                transaction.tx_hash ||
+                "";
+
+              return (
+              <tr key={txHash || `${transaction.sentAt || "tx"}-${index}`}>
                 <td className="data-table__col data-table__col--hash">
-                  <Link
-                    to={`/blockchain/transactions/${transaction.txHash}`}
-                    className="text-link table-ellipsis"
-                    title={transaction.txHash}
-                  >
-                    {transaction.txHash}
-                  </Link>
+                  {txHash ? (
+                    <Link
+                      to={`/blockchain/transactions/${txHash}`}
+                      className="text-link table-ellipsis"
+                      title={txHash}
+                    >
+                      {txHash}
+                    </Link>
+                  ) : (
+                    <span className="table-ellipsis">-</span>
+                  )}
                 </td>
                 <td className="data-table__col data-table__col--party">
                   <strong className="table-ellipsis" title={transaction.fromOwnerTypeLabel}>
@@ -90,7 +102,8 @@ function TransactionTable({ transactions }) {
                   </span>
                 </td>
               </tr>
-            ))}
+              );
+            })}
           </tbody>
         </table>
       </div>

@@ -156,7 +156,7 @@ export default function CampaignDetail() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-white pb-32 pt-52">
+      <div className="min-h-screen bg-surface pb-32 pt-52">
         <div className="mx-auto max-w-4xl px-4 text-center sm:px-6 lg:px-8">
           <p className="text-lg font-bold text-stone-500">Loading campaign...</p>
         </div>
@@ -166,7 +166,7 @@ export default function CampaignDetail() {
 
   if (!campaign) {
     return (
-      <div className="min-h-screen bg-white pb-32 pt-52">
+      <div className="min-h-screen bg-surface pb-32 pt-52">
         <div className="mx-auto max-w-4xl px-4 text-center sm:px-6 lg:px-8">
           <h1 className="mb-6 text-4xl font-display font-bold text-ink">캠페인을 찾을 수 없습니다.</h1>
           <Link to="/campaigns" className="btn-fairytale inline-flex">
@@ -193,7 +193,7 @@ export default function CampaignDetail() {
   const safeDocs = Array.isArray(campaign.documents) ? campaign.documents : [];
 
   return (
-    <div className="mb-20 min-h-screen bg-surface pb-24 pt-36">
+    <div className="min-h-screen bg-surface pb-32 pt-36">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <Link
           to="/campaigns"
@@ -223,12 +223,12 @@ export default function CampaignDetail() {
             </div>
 
             <div className="mb-12 grid grid-cols-4 gap-4">
-              <div className="col-span-4 aspect-[16/10] overflow-hidden rounded-[32px] shadow-xl md:col-span-3">
+              <div className="col-span-4 aspect-[16/10] overflow-hidden rounded-[1rem] shadow-md md:col-span-3">
                 <img src={safeImages[0]} alt={campaign.title} className="h-full w-full object-cover" referrerPolicy="no-referrer" />
               </div>
               <div className="hidden flex-col gap-4 md:flex">
                 {safeImages.slice(1, 4).map((img, idx) => (
-                  <div key={idx} className="flex-1 overflow-hidden rounded-2xl shadow-md">
+                  <div key={idx} className="flex-1 overflow-hidden rounded-[1rem] shadow-md">
                     <img src={img} alt={`${campaign.shortTitle} 이미지 ${idx + 2}`} className="h-full w-full object-cover" referrerPolicy="no-referrer" />
                   </div>
                 ))}
@@ -241,12 +241,12 @@ export default function CampaignDetail() {
                   key={tab}
                   type="button"
                   onClick={() => setActiveTab(tab)}
-                  className={`relative pb-4 text-sm font-bold uppercase tracking-widest transition-all ${activeTab === tab ? "text-primary" : "text-stone-400 hover:text-ink"
+                  className={`relative pb-4 text-[1rem] font-bold uppercase tracking-widest transition-all ${activeTab === tab ? "text-primary" : "text-stone-400 hover:text-ink"
                     }`}
                 >
                   {tab === "about" && "소개"}
                   {tab === "contributors" && "기부자 명단"}
-                  {tab === "beneficiary" && "수혜자 정보"}
+                  {tab === "beneficiary" && "수혜자"}
                   {tab === "proof" && "활동 증빙"}
                   {activeTab === tab && <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />}
                 </button>
@@ -257,15 +257,15 @@ export default function CampaignDetail() {
               {activeTab === "about" && (
                 <div className="space-y-8">
                   <div className="pt-1">
-                    <h3 className="mb-4 text-2xl font-display font-bold text-ink">상세 설명</h3>
+                    <h3 className="mb-4 text-[1.7rem] font-bold text-ink">상세 설명</h3>
                     <p className="text-lg leading-relaxed text-stone-600">{campaign.description}</p>
                   </div>
 
                   <div>
-                    <h3 className="mb-4 text-2xl font-display font-bold text-ink">캠페인 일정 및 예산</h3>
+                    <h3 className="mb-4 text-[1.7rem] font-display font-bold text-ink">캠페인 일정 및 예산</h3>
                     <div className="grid gap-5 lg:grid-cols-2">
-                      <div className="overflow-hidden rounded-[2rem] border border-line bg-white">
-                        <div className="border-b border-line bg-stone-50/80 px-6 py-4 text-xs font-bold uppercase tracking-widest text-stone-400">모집 및 사업 기간</div>
+                      <div className="overflow-hidden rounded-[1.5rem] border border-line bg-white">
+                        <div className="border-b border-line bg-stone-50/80 px-6 py-4 text-sm font-bold uppercase tracking-widest text-stone-400">모집 및 사업 기간</div>
                         <div className="px-6">
                           {[
                             ["모집 시작일", formatDate(campaign.recruitStartDate)],
@@ -274,17 +274,17 @@ export default function CampaignDetail() {
                             ["사업 종료일", formatDate(campaign.projectEndDate)],
                           ].map(([label, value], index) => (
                             <div key={label} className={`flex items-center justify-between py-5 ${index === 1 ? "border-b border-line" : ""}`}>
-                              <span className="text-sm font-medium text-stone-500">{label}</span>
-                              <span className="text-sm font-bold text-ink">{value}</span>
+                              <span className="text-[1rem] font-medium text-stone-500">{label}</span>
+                              <span className="text-[1rem] font-bold text-ink">{value}</span>
                             </div>
                           ))}
                         </div>
                       </div>
 
-                      <div className="rounded-[2rem] border border-line bg-white p-6">
-                        <div className="mb-3 text-xs font-bold uppercase tracking-widest text-stone-400">목표 금액</div>
+                      <div className="rounded-[1.5rem] border border-line bg-white p-6">
+                        <div className="mb-3 text-sm font-bold uppercase tracking-widest text-stone-400">목표 금액</div>
                         <div className="mb-2 text-3xl font-display font-bold text-primary">{formatWon(campaign.goal)}</div>
-                        <p className="text-sm leading-relaxed text-stone-400">현재 캠페인에 설정된 목표 예산 기준 금액입니다.</p>
+                        <p className="text-s leading-relaxed text-stone-400">현재 캠페인에 설정된 목표 예산 기준 금액입니다.</p>
                       </div>
                     </div>
                   </div>
@@ -316,7 +316,7 @@ export default function CampaignDetail() {
               )}
 
               {activeTab === "beneficiary" && (
-                <div className="grid gap-8 md:grid-cols-2">
+                <div className="grid gap-8 md:grid-cols-2 md:items-start">
                   <div className="space-y-6 rounded-[40px] border border-line bg-white p-8">
                     <h4 className="mb-4 text-2xl font-display font-bold text-ink">수혜자 정보</h4>
                     <div>
@@ -403,7 +403,7 @@ export default function CampaignDetail() {
 
           <div className="lg:col-span-4">
             <div className="sticky top-32 space-y-8">
-              <div className="rounded-[40px] border border-line bg-white p-10 shadow-2xl shadow-stone-200/50">
+              <div className="rounded-[1.5rem] border-2 border-line bg-white p-10 shadow-m shadow-stone-200/50">
                 <div className="mb-8">
                   <div className="mb-2 text-4xl font-display font-bold text-ink">{formatWon(campaign.raised)}</div>
                   <div className="text-sm font-medium text-stone-400">목표 {formatWon(campaign.goal)} 중 모금액</div>
@@ -431,7 +431,7 @@ export default function CampaignDetail() {
                   </div>
                 </div>
 
-                <Link to={`/campaign/${campaign.id}/donate`} className="mb-4 flex w-full items-center justify-center rounded-full bg-primary py-4 text-base font-bold text-white shadow-xl shadow-primary/20 transition-all hover:bg-primary/90">
+                <Link to={`/campaign/${campaign.id}/donate`} className="mb-4 flex w-full items-center justify-center rounded-full bg-primary py-4 text-base font-bold text-white shadow-m shadow-primary/20 transition-all hover:bg-primary/90">
                   지금 기부하기
                 </Link>
                 <button type="button" onClick={handleShare} className="flex w-full items-center justify-center gap-2 rounded-full border border-line py-4 text-base font-bold text-stone-500 transition-all hover:bg-stone-50">
@@ -441,7 +441,7 @@ export default function CampaignDetail() {
                 {shareMessage && <p className="mt-3 text-center text-sm font-bold text-primary">{shareMessage}</p>}
               </div>
 
-              <div className="rounded-[40px] border border-line bg-white p-10">
+              <div className="rounded-[1.5rem] border-2 border-line bg-white p-10">
                 <h4 className="mb-8 text-2xl font-display font-bold text-ink">최근 기부자</h4>
                 <div className="space-y-6">
                   {safeRecentDonors.length > 0 ? (
@@ -469,7 +469,7 @@ export default function CampaignDetail() {
               </div>
 
               {/* [가빈] 기부단체 프로필 카드 컴포넌트로 변경함.*/}
-              <div className="rounded-[40px] border border-line bg-white p-10">
+              <div className="rounded-[1.5rem] border-2 border-line bg-white p-10">
                 <h4 className="mb-6 text-2xl font-display font-bold text-ink">기부단체 정보</h4>
                 <FoundationProfileCard
                   foundation={{

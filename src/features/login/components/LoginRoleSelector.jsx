@@ -4,7 +4,7 @@ export default function LoginRoleSelector({ role, onChange }) {
       <legend className="sr-only">권한 선택</legend>
       <div className="flex justify-center space-x-4">
         <label className={`flex items-center space-x-2 p-3 rounded-lg cursor-pointer transition-all duration-200 ${
-            role === "user" ? "bg-primary text-white shadow-md" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+            role === "user" ? "bg-primary text-white shadow-md" : "text-gray-700 hover:bg-gray-200"
           }`}>
           <input
             type="radio"
@@ -18,7 +18,7 @@ export default function LoginRoleSelector({ role, onChange }) {
         </label>
 
         <label className={`flex items-center space-x-2 p-3 rounded-lg cursor-pointer transition-all duration-200 ${
-            role === "foundation" ? "bg-primary text-white shadow-md" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+            role === "foundation" ? "bg-primary text-white shadow-md" : "text-gray-700 hover:bg-gray-200"
           }`}>
           <input
             type="radio"
@@ -32,7 +32,7 @@ export default function LoginRoleSelector({ role, onChange }) {
         </label>
 
         <label className={`flex items-center space-x-2 p-3 rounded-lg cursor-pointer transition-all duration-200 ${
-            role === "beneficiary" ? "bg-primary text-white shadow-md" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+            role === "beneficiary" ? "bg-primary text-white shadow-md" : "text-gray-700 hover:bg-gray-200"
           }`}>
           <input
             type="radio"

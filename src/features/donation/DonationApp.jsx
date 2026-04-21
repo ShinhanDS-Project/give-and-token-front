@@ -1,4 +1,4 @@
-import { Link, Navigate, Route, Routes, useLocation } from "react-router-dom";
+﻿import { Link, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { useEffect } from "react";
 import { Heart } from "lucide-react";
 import Navbar from "./components/Navbar";
@@ -119,37 +119,31 @@ function HomePage() {
       <Hero />
       <HomeCampaignHub />
 
-      <section className="pt-20 pb-44 relative overflow-hidden">
+      <section className="pt-20 pb-44 relative overflow-hidden bg-white">
         <div className="absolute top-0 left-0 w-full h-full" />
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="bg-primary px-5 py-7 md:px-8 md:py-8 rounded-[2rem] text-center text-white relative overflow-hidden shadow-2xl shadow-primary/20 border-[5px] border-white">
             <div className="absolute top-0 right-0 w-full h-full bg-[radial-gradient(circle_at_70%_30%,rgba(255,255,255,0.2),transparent)]" />
             <div className="relative z-10">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-white text-[11px] font-bold mb-4">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-white text-[12px] font-bold mb-4">
                 <Heart size={14} fill="currentColor" />
                 따뜻한 변화의 시작
               </div>
-              <h2 className="text-[1.65rem] md:text-[2rem] font-display font-bold mb-4 leading-tight">
+              <h2 className="text-[1.65rem] md:text-[2.5rem] font-display font-bold mb-4 leading-tight">
                 여러분의 <span className="text-accent italic">마음</span>이
                 <br />
                 아이들을 웃게 합니다
               </h2>
-              <p className="text-white/80 text-sm mb-6 max-w-md mx-auto leading-relaxed font-medium">
+              <p className="text-white/80 text-base mb-6 max-w-md mx-auto leading-relaxed font-medium">
                 지금 바로 기부엔토큰의 따뜻한 여정을 만나보세요. <br />
                 작은 실천이 모여 누군가의 일상에 커다란 빛이 됩니다.
               </p>
               <div className="flex flex-wrap justify-center gap-2.5">
                 <Link
                   to="/campaigns"
-                  className="bg-white text-primary px-6 py-2.5 rounded-full text-sm font-bold hover:scale-105 transition-all shadow-2xl shadow-black/10"
+                  className="bg-white text-primary px-8 py-3.5 rounded-full text-base font-bold hover:scale-105 transition-all shadow-2xl shadow-black/10"
                 >
                   캠페인 둘러보기
-                </Link>
-                <Link
-                  to="/campaigns"
-                  className="bg-white/10 backdrop-blur-md border-2 border-white/30 px-8 py-3.5 rounded-full text-base font-bold hover:bg-white/20 transition-all"
-                >
-                  지금 참여하기
                 </Link>
               </div>
             </div>
@@ -162,13 +156,19 @@ function HomePage() {
 
 export default function DonationApp() {
   const location = useLocation();
+  const { pathname } = location;
   // [가빈] 기부단체 관리자 경로만 감지 (공개 상세 페이지는 공통 레이아웃 유지)
   const isFoundationRoute = /^\/foundation\/(me|register|dashboard)(\/|$)/.test(
-    location.pathname
+    pathname
   );
+  const isBeneficiaryRoute = /^\/beneficiary(\/|$)/.test(pathname);
+  const isLoginRoute = /^\/(login|signup)(\/|$)/.test(pathname);
+  const isMyPageRoute = /^\/mypage(\/|$)/.test(pathname);
 
-  // 2. 하나라도 해당하면 true가 되도록 변수 생성     
+  // 2. 하나라도 해당하면 true가 되도록 변수 생성
   const shouldHideLayout = isFoundationRoute;
+  const shouldHideFooter =
+    isFoundationRoute || isBeneficiaryRoute || isLoginRoute || isMyPageRoute;
   return (
     <div className="min-h-screen bg-surface selection:bg-primary selection:text-white">
       <ScrollToTop />
@@ -237,7 +237,7 @@ export default function DonationApp() {
         </Routes>
       </main>
 
-      {!shouldHideLayout && <Footer />}
+      {!shouldHideFooter && <Footer />}
     </div>
   );
 }

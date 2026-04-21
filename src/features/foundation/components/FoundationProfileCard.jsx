@@ -30,7 +30,7 @@ export default function FoundationProfileCard({ foundation }) {
             to={`/foundation/${foundation.foundationNo}`}
             className="text-xs font-bold text-stone-400 transition-colors hover:text-primary"
           >
-            자세히 보기
+            더보기
           </Link>
         )}
       </div>

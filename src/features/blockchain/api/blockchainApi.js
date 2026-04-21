@@ -193,6 +193,13 @@ function normalizeTransaction(transaction) {
     return null;
   }
 
+  const normalizedTxHash =
+    transaction.txHash ||
+    transaction.transactionHash ||
+    transaction.hash ||
+    transaction.tx_hash ||
+    "";
+
   return {
     ...transaction,
     amountUnit: getTransactionAmountUnit(transaction),

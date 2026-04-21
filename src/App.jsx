@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { NavLink, Route, Routes, useLocation } from "react-router-dom";
 import DonationApp from "./features/donation/DonationApp";
 import TransactionDashboardPage from "./features/blockchain/pages/TransactionDashboardPage";
@@ -38,7 +38,7 @@ function ThemeToggleIcon({ theme }) {
 
 function DashboardLayout({ theme, onToggleTheme }) {
   return (
-    <div className="app-shell">
+    <div className="app-shell blockchain-default-font">
       <aside className="sidebar sidebar--thin">
         <nav className="sidebar__icon-nav" aria-label="주요 이동">
           <NavLink to="/blockchain" end className="sidebar__icon-link" aria-label="블록체인 대시보드">

@@ -27,8 +27,11 @@ export default function MicroTrackingModal({ isOpen, onClose, trackingData, isLo
                         <FileText size={20} className="text-primary" />
                         <h2 className="text-xl font-black text-ink">마이크로 트래킹</h2>
                     </div>
-                    <button onClick={onClose} className="p-2 rounded-full hover:bg-surface transition-colors">
-                        <X size={20} />
+                    <button
+                        onClick={onClose}
+                        className="p-2 rounded-full text-ink/80 hover:text-ink hover:bg-surface transition-colors"
+                    >
+                        <X size={20} strokeWidth={2.5} />
                     </button>
                 </div>
 
@@ -45,7 +48,7 @@ export default function MicroTrackingModal({ isOpen, onClose, trackingData, isLo
                         <>
                             {/* 최종 보고서 섹션 */}
                             <section>
-                                <h3 className="text-sm font-black text-ink/40 uppercase tracking-widest mb-3">최종 보고서</h3>
+                                
 
                                 {!report?.isPassed ? (
                                     /* 캠페인 진행 중 */
@@ -59,6 +62,7 @@ export default function MicroTrackingModal({ isOpen, onClose, trackingData, isLo
                                 ) : report?.isExist ? (
                                     /* 보고서 있음 */
                                     <div className="space-y-3">
+                                        <h3 className="text-sm font-black text-ink/40 uppercase tracking-widest mb-3">최종 보고서</h3>
                                         <div className="flex items-center gap-2 text-emerald-600">
                                             <CheckCircle size={18} />
                                             <span className="text-sm font-bold">종료 후 {report.dayPassed}일 경과 · 보고서 제출 완료</span>

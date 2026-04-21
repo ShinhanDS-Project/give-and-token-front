@@ -3,7 +3,6 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import FoundationApplicationForm from "../components/FoundationApplicationForm";
 import FoundationApplicationResult from "../components/FoundationApplicationResult";
-import FoundationChrome from "../components/FoundationChrome";
 import {
   checkBeneficiary,
   checkFoundationWalletAvailability,
@@ -87,9 +86,7 @@ export default function FoundationRegisterPage() {
   const [existingDetailImages, setExistingDetailImages] = useState([]);
   const [beneficiaryInfo, setBeneficiaryInfo] = useState(null);
   const [beneficiaryChecked, setBeneficiaryChecked] = useState(false);
-  const [beneficiaryStatusMessage, setBeneficiaryStatusMessage] = useState(
-    "엔트리 코드를 입력하고 수혜자 확인을 진행해주세요.",
-  );
+  const [beneficiaryStatusMessage, setBeneficiaryStatusMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [submitResult, setSubmitResult] = useState(null);
@@ -203,9 +200,7 @@ export default function FoundationRegisterPage() {
         setExistingDetailImages(detailImages);
 
         setBeneficiaryChecked(Boolean(detail.entryCode));
-        setBeneficiaryStatusMessage(
-          "수정 모드입니다. 필요 시 수혜자 확인을 다시 진행하세요.",
-        );
+        setBeneficiaryStatusMessage("");
       } catch (error) {
         if (!mounted) {
           return;
@@ -252,9 +247,7 @@ export default function FoundationRegisterPage() {
     if (name === "entryCode") {
       setBeneficiaryChecked(false);
       setBeneficiaryInfo(null);
-      setBeneficiaryStatusMessage(
-        "엔트리 코드가 변경되어 다시 확인이 필요합니다.",
-      );
+      setBeneficiaryStatusMessage("");
     }
 
     setErrorMessage("");
@@ -348,7 +341,11 @@ export default function FoundationRegisterPage() {
 
   const handleBeneficiaryCheck = async () => {
     if (isEmpty(formValues.entryCode)) {
-      setErrorMessage("엔트리 코드를 입력한 뒤 수혜자 확인을 진행해주세요.");
+      setBeneficiaryChecked(false);
+      setBeneficiaryInfo(null);
+      setBeneficiaryStatusMessage(
+        "엔트리 코드를 입력한 뒤 수혜자 확인을 진행해주세요.",
+      );
       return;
     }
 
@@ -375,8 +372,9 @@ export default function FoundationRegisterPage() {
     } catch (error) {
       setBeneficiaryChecked(false);
       setBeneficiaryInfo(null);
-      setBeneficiaryStatusMessage("수혜자 확인 요청에 실패했습니다.");
-      setErrorMessage(error.message);
+      setBeneficiaryStatusMessage(
+        error.message || "수혜자 확인 요청에 실패했습니다.",
+      );
     }
   };
 
@@ -483,48 +481,45 @@ export default function FoundationRegisterPage() {
   }
 
   return (
-    <>
-      <FoundationChrome />
-      <main className="min-h-screen bg-surface px-4 py-4 pt-28 text-ink watercolor-bg">
-        <div className="mx-auto max-w-[1320px] space-y-4">
-          <header className="storybook-card px-6 py-4">
-            <button
-              type="button"
-              className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100"
-              onClick={() => navigate("/foundation/me")}
-            >
-              <ArrowLeft size={16} />
-              뒤로가기
-            </button>
-          </header>
+    <main className="min-h-screen bg-[#f8fafc] px-4 pb-12 pt-32 text-ink">
+      <div className="mx-auto max-w-6xl space-y-4 md:[zoom:1.06]">
+        <header className="rounded-2xl border border-[#e8ecf2] bg-white px-6 py-4 shadow-sm">
+          <button
+            type="button"
+            className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100"
+            onClick={() => navigate("/foundation/me")}
+          >
+            <ArrowLeft size={16} />
+            뒤로가기
+          </button>
+        </header>
 
-          <section className="storybook-card p-2 md:p-4">
-            <FoundationApplicationForm
-              formValues={formValues}
-              beneficiaryInfo={beneficiaryInfo}
-              beneficiaryChecked={beneficiaryChecked}
-              beneficiaryStatusMessage={beneficiaryStatusMessage}
-              submitting={submitting}
-              errorMessage={errorMessage}
-              onChange={handleChange}
-              onFileChange={handleFileChange}
-              onDetailImageChange={handleDetailImageChange}
-              onAddUsePlan={handleAddUsePlan}
-              onRemoveUsePlan={handleRemoveUsePlan}
-              onUsePlanChange={handleUsePlanChange}
-              onAddDetailImage={handleAddDetailImage}
-              onRemoveDetailImage={handleRemoveDetailImage}
-              onBeneficiaryCheck={handleBeneficiaryCheck}
-              onCancel={handleCancel}
-              isEditMode={isEditMode}
-              existingRepresentativeImagePath={existingRepresentativeImagePath}
-              existingDetailImages={existingDetailImages}
-              onRemoveExistingDetailImage={handleRemoveExistingDetailImage}
-              onSubmit={handleSubmit}
-            />
-          </section>
-        </div>
-      </main>
-    </>
+        <section className="rounded-2xl border border-[#e8ecf2] bg-white p-2 shadow-sm md:p-4">
+          <FoundationApplicationForm
+            formValues={formValues}
+            beneficiaryInfo={beneficiaryInfo}
+            beneficiaryChecked={beneficiaryChecked}
+            beneficiaryStatusMessage={beneficiaryStatusMessage}
+            submitting={submitting}
+            errorMessage={errorMessage}
+            onChange={handleChange}
+            onFileChange={handleFileChange}
+            onDetailImageChange={handleDetailImageChange}
+            onAddUsePlan={handleAddUsePlan}
+            onRemoveUsePlan={handleRemoveUsePlan}
+            onUsePlanChange={handleUsePlanChange}
+            onAddDetailImage={handleAddDetailImage}
+            onRemoveDetailImage={handleRemoveDetailImage}
+            onBeneficiaryCheck={handleBeneficiaryCheck}
+            onCancel={handleCancel}
+            isEditMode={isEditMode}
+            existingRepresentativeImagePath={existingRepresentativeImagePath}
+            existingDetailImages={existingDetailImages}
+            onRemoveExistingDetailImage={handleRemoveExistingDetailImage}
+            onSubmit={handleSubmit}
+          />
+        </section>
+      </div>
+    </main>
   );
 }

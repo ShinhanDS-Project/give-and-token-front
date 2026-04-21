@@ -334,7 +334,7 @@ export default function DonatePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white pb-24 pt-36">
+      <div className="min-h-screen bg-white pb-24 pt-44">
         <div className="mx-auto w-[90%] max-w-5xl">
           <p className="text-sm font-bold text-stone-400">불러오는 중...</p>
         </div>
@@ -344,7 +344,7 @@ export default function DonatePage() {
 
   if (error || !campaign) {
     return (
-      <div className="min-h-screen bg-white pb-32 pt-52">
+      <div className="min-h-screen bg-white pb-32 pt-56">
         <div className="mx-auto max-w-4xl px-4 text-center sm:px-6 lg:px-8">
           <h1 className="mb-6 text-4xl font-display font-bold text-ink">
             캠페인을 찾을 수 없습니다.
@@ -359,10 +359,10 @@ export default function DonatePage() {
   }
 
   return (
-    <div className="min-h-screen bg-white pb-32 pt-28">
+    <div className="min-h-screen bg-white pb-32 pt-36">
       <div className="mx-auto w-[90%] max-w-5xl">
         <section className="mb-16 flex items-center gap-6">
-          <div className="h-20 w-20 flex-shrink-0 overflow-hidden rounded-md bg-stone-100">
+          <div className="h-24 w-24 flex-shrink-0 overflow-hidden rounded-md bg-stone-100">
             {campaign.image && (
               <img
                 src={campaign.image}
@@ -376,7 +376,7 @@ export default function DonatePage() {
             <p className="mb-2 text-base font-bold text-stone-400">
               {campaign.foundationName}
             </p>
-            <h1 className="break-keep text-2xl font-bold leading-snug text-ink">
+            <h1 className="break-keep text-[1.5rem] font-bold leading-snug text-ink">
               {campaign.title}
             </h1>
             <p className="mb-2 text-base font-bold text-stone-400">
@@ -386,16 +386,16 @@ export default function DonatePage() {
         </section>
 
         <section className="mb-20">
-          <h2 className="mb-5 text-2xl font-bold text-stone-300">금액 직접 입력</h2>
+          <p className="mb-5 text-xl font-bold text-stone-300">※ 100원부터 입력 가능합니다.</p>
           <div className="mb-14 flex items-center gap-3 border-b-2 border-stone-400 pb-5">
             <input
               value={amount}
               onChange={handleAmountChange}
               inputMode="numeric"
               maxLength={9}
-              placeholder="100원부터 입력 가능합니다."
+              placeholder="금액 직접 입력"
               aria-label="기부 금액"
-              className="min-w-0 flex-1 border-none bg-transparent text-right text-2xl font-bold text-ink outline-none placeholder:text-base placeholder:text-stone-300 sm:text-3xl sm:placeholder:text-lg"
+              className="min-w-0 flex-1 border-none bg-transparent text-right text-3xl font-bold text-ink outline-none placeholder:text-base placeholder:text-stone-300 sm:text-3xl sm:placeholder:text-lg"
             />
             <span className="text-lg font-bold text-stone-400">원</span>
             {amount && (
@@ -415,7 +415,7 @@ export default function DonatePage() {
                 key={preset}
                 type="button"
                 onClick={() => addAmount(preset)}
-                className="h-12 rounded-md border border-stone-300 bg-white text-[11px] font-bold text-stone-400 transition-colors hover:border-ink hover:text-ink sm:text-sm"
+                className="h-12 rounded-md border border-stone-300 bg-white text-[14px] font-bold text-stone-400 transition-colors hover:border-ink hover:text-ink m:text-m"
               >
                 {preset}원
               </button>
@@ -424,7 +424,7 @@ export default function DonatePage() {
         </section>
 
         <section className="mb-20">
-          <h2 className="mb-3 text-2xl font-bold text-ink">기부자 정보</h2>
+          <h2 className="mb-3 text-3xl font-bold text-ink">기부자 정보</h2>
           <p className="mb-5 break-keep text-base font-bold leading-relaxed text-stone-400">
             [공개] 상세페이지에 닉네임과 프로필 사진이 노출됩니다.
             <br />

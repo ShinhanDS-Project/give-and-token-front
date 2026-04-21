@@ -114,12 +114,17 @@ const LoginPage = () => {
   };
 
   const goToSignUp = () => {
+    if (loginData.role === "foundation") {
+      navigate("/organization/apply/form");
+      return;
+    }
+
     navigate("/signup");
   };
 
   return (
     <div className="min-h-screen bg-surface flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 font-sans">
-      <div className="max-w-md w-full space-y-8 p-10 bg-white rounded-2xl shadow-lg text-ink">
+      <div className="max-w-md w-full min-h-[620px] space-y-6 p-10 bg-white rounded-2xl shadow-lg text-ink">
         <h1 className="text-center text-3xl font-display font-bold tracking-tight text-ink">
           로그인
         </h1>
@@ -140,23 +145,21 @@ const LoginPage = () => {
           />
         )}
 
-        {loginData.role !== "foundation" && (
-          <>
-            <div className="relative flex py-5 items-center">
-              <div className="flex-grow border-t border-gray-300"></div>
-              <span className="flex-shrink mx-4 text-gray-400 text-xs">
-                또는
-              </span>
-              <div className="flex-grow border-t border-gray-300"></div>
-            </div>
+        <>
+          <div className="relative flex py-3 items-center">
+            <div className="flex-grow border-t border-gray-300"></div>
+            <span className="flex-shrink mx-4 text-gray-400 text-xs">
+              또는
+            </span>
+            <div className="flex-grow border-t border-gray-300"></div>
+          </div>
 
-            <SocialLoginSection
-              role={loginData.role}
-              onGoToSignUp={goToSignUp}
-              onGoogleLogin={handleGoogleLogin}
-            />
-          </>
-        )}
+          <SocialLoginSection
+            role={loginData.role}
+            onGoToSignUp={goToSignUp}
+            onGoogleLogin={handleGoogleLogin}
+          />
+        </>
 
         <AnimatePresence>
           {isEmailFindOpen && (

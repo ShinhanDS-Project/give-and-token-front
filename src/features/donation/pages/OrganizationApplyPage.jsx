@@ -21,7 +21,7 @@ const steps = [
 
 export default function OrganizationApplyPage() {
   return (
-    <section className="relative overflow-hidden bg-[#FFFDFB] py-24">
+    <section className="relative overflow-hidden bg-[#FFFDFB] pb-24 pt-32">
       <div className="absolute inset-0 watercolor-bg opacity-30" />
       <div className="relative z-10 mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <div className="rounded-[3rem] border-4 border-line bg-white p-8 shadow-sm md:p-12">
@@ -62,16 +62,10 @@ export default function OrganizationApplyPage() {
           <div className="mt-10 flex flex-wrap gap-4">
             <Link
               to="/organization/apply/form"
-              className="btn-fairytale inline-flex items-center gap-3 px-8 py-4 text-sm"
+              className="btn-fairytale inline-flex items-center gap-3 px-8 py-4 text-lg"
             >
               가입신청서 작성하기
               <ArrowRight size={18} />
-            </Link>
-            <Link
-              to="/guide"
-              className="btn-fairytale-outline inline-flex items-center gap-3 px-8 py-4 text-sm"
-            >
-              기부 가이드 보기
             </Link>
           </div>
         </div>

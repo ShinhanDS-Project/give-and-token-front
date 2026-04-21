@@ -11,18 +11,28 @@ const CAMPAIGN_CATEGORY_OPTIONS = [
 ];
 
 function SectionTitle({ children }) {
-  return <h2 className="text-lg font-bold text-ink">{children}</h2>;
+  return (
+    <h2 className="text-[1.02rem] font-bold text-ink [font-family:'Nanum_Gothic',sans-serif]">
+      {children}
+    </h2>
+  );
 }
+
+const FIELD_INPUT_CLASS =
+  "w-full rounded-xl border border-[#e8ecf2] bg-white px-3 py-2.5 text-sm font-medium text-[#1f2937] outline-none transition-colors focus:border-primary";
+
+const SECTION_CARD_CLASS =
+  "space-y-5 rounded-[1.25rem] border border-[#e8ecf2] bg-white p-6 shadow-sm";
 
 function Field({ label, required, children, hint }) {
   return (
-    <label className="flex flex-col gap-2">
-      <span className="text-sm font-semibold text-ink">
+    <label className="flex flex-col gap-2.5">
+      <span className="text-sm font-semibold leading-relaxed text-ink">
         {label}
         {required ? " *" : ""}
       </span>
       {children}
-      {hint ? <span className="text-xs text-slate-500">{hint}</span> : null}
+      {hint ? <span className="text-xs leading-relaxed text-slate-500">{hint}</span> : null}
     </label>
   );
 }
@@ -90,49 +100,60 @@ export default function FoundationApplicationForm({
   onCancel,
   onSubmit,
 }) {
+  const hasBeneficiaryStatusMessage = Boolean(beneficiaryStatusMessage?.trim());
+  const beneficiaryStatusClass = beneficiaryChecked
+    ? "text-emerald-600"
+    : /실패|유효하지|입력/.test(beneficiaryStatusMessage || "")
+      ? "text-rose-600"
+      : "text-slate-600";
+
   return (
-    <form className="mx-auto flex max-w-5xl flex-col gap-6 px-4 py-6" onSubmit={onSubmit}>
-      <header className="space-y-2 text-center">
+    <form className="mx-auto flex max-w-5xl flex-col gap-7 px-4 py-7" onSubmit={onSubmit}>
+      <header className="space-y-3 text-center">
         <p className="text-sm font-bold text-primary">{isEditMode ? "캠페인 정보 수정" : "새 캠페인 신청"}</p>
-        <h1 className="text-3xl font-bold text-ink">
+        <p className="text-[1.7rem] font-bold leading-snug text-ink">
           {isEditMode ? "기부단체 캠페인 수정" : "기부단체 캠페인 등록"}
-        </h1>
-        <p className="text-sm text-ink/60">
+        </p>
+        <p className="text-sm leading-relaxed text-ink/60">
           {isEditMode
             ? "PENDING 상태 캠페인 정보를 수정하고 다시 제출하세요."
             : "필수 정보를 입력하고 등록 요청을 진행하세요."}
         </p>
       </header>
 
-      <section className="space-y-4 rounded-[2rem] border-4 border-line bg-white p-5">
-        <Field label="캠페인명" required>
-          <input
-            name="title"
-            value={formValues.title}
-            onChange={onChange}
-            placeholder="캠페인 제목을 입력하세요"
-          />
-        </Field>
-
-        <div className="grid gap-4 md:grid-cols-3">
-          <Field label="모집 시작일" required>
-            <input name="startAt" type="date" value={formValues.startAt} onChange={onChange} />
-          </Field>
-          <Field label="모집 종료일" required>
-            <input name="endAt" type="date" value={formValues.endAt} onChange={onChange} />
-          </Field>
-          <Field label="기간 (일)">
-            <input value={formValues.recruitDurationDays} readOnly />
+      <section className={SECTION_CARD_CLASS}>
+        <div className="mb-7">
+          <Field label="캠페인명" required>
+            <input
+              name="title"
+              value={formValues.title}
+              onChange={onChange}
+              placeholder="캠페인 제목을 입력하세요"
+              className={FIELD_INPUT_CLASS}
+            />
           </Field>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-5 md:grid-cols-3">
+          <Field label="모집 시작일" required>
+            <input name="startAt" type="date" value={formValues.startAt} onChange={onChange} className={FIELD_INPUT_CLASS} />
+          </Field>
+          <Field label="모집 종료일" required>
+            <input name="endAt" type="date" value={formValues.endAt} onChange={onChange} className={FIELD_INPUT_CLASS} />
+          </Field>
+          <Field label="기간 (일)">
+            <input value={formValues.recruitDurationDays} readOnly className={FIELD_INPUT_CLASS} />
+          </Field>
+        </div>
+
+        <div className="grid gap-5 md:grid-cols-3">
           <Field label="사업 시작일" required>
             <input
               name="usageStartAt"
               type="date"
               value={formValues.usageStartAt}
               onChange={onChange}
+              className={FIELD_INPUT_CLASS}
             />
           </Field>
           <Field label="사업 종료일" required>
@@ -141,14 +162,15 @@ export default function FoundationApplicationForm({
               type="date"
               value={formValues.usageEndAt}
               onChange={onChange}
+              className={FIELD_INPUT_CLASS}
             />
           </Field>
           <Field label="기간 (일)">
-            <input value={formValues.usageDurationDays} readOnly />
+            <input value={formValues.usageDurationDays} readOnly className={FIELD_INPUT_CLASS} />
           </Field>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-5 md:grid-cols-2">
           <Field label="목표 금액" required>
             <input
               name="targetAmount"
@@ -157,10 +179,11 @@ export default function FoundationApplicationForm({
               value={formValues.targetAmount}
               onChange={onChange}
               placeholder="0"
+              className={FIELD_INPUT_CLASS}
             />
           </Field>
           <Field label="카테고리" required>
-            <select name="category" value={formValues.category} onChange={onChange}>
+            <select name="category" value={formValues.category} onChange={onChange} className={FIELD_INPUT_CLASS}>
               {CAMPAIGN_CATEGORY_OPTIONS.map((option) => (
                 <option key={option.value || "empty"} value={option.value}>
                   {option.label}
@@ -177,6 +200,7 @@ export default function FoundationApplicationForm({
             value={formValues.description}
             onChange={onChange}
             placeholder="캠페인 설명과 목적을 작성해주세요."
+            className={FIELD_INPUT_CLASS}
           />
         </Field>
 
@@ -209,16 +233,16 @@ export default function FoundationApplicationForm({
         </Field>
       </section>
 
-      <section className="space-y-4 rounded-[2rem] border-4 border-line bg-white p-5">
+      <section className={SECTION_CARD_CLASS}>
         <div className="flex items-center justify-between">
           <SectionTitle>상세 이미지</SectionTitle>
-          <button
+          {/* <button
             type="button"
             className="rounded-full bg-line px-3 py-1.5 text-xs font-bold text-primary hover:bg-primary hover:text-white"
             onClick={onAddDetailImage}
           >
             + 항목 추가
-          </button>
+          </button> */}
         </div>
 
         {isEditMode && existingDetailImages?.length > 0 ? (
@@ -247,7 +271,7 @@ export default function FoundationApplicationForm({
           </div>
         ) : null}
 
-        <div className="space-y-3">
+        <div className="space-y-4">
           {formValues.detailImageFiles.map((imageItem, index) => (
             <div
               key={imageItem.id}
@@ -286,7 +310,7 @@ export default function FoundationApplicationForm({
         </div>
       </section>
 
-      <section className="space-y-4 rounded-[2rem] border-4 border-line bg-white p-5">
+      <section className={SECTION_CARD_CLASS}>
         <div className="flex items-center justify-between">
           <SectionTitle>지출 계획</SectionTitle>
           <button
@@ -298,7 +322,7 @@ export default function FoundationApplicationForm({
           </button>
         </div>
 
-        <div className="space-y-3">
+        <div className="space-y-4">
           {formValues.usePlans.map((plan, index) => (
             <div
               key={plan.id}
@@ -309,6 +333,7 @@ export default function FoundationApplicationForm({
                   value={plan.planContent}
                   onChange={(event) => onUsePlanChange(plan.id, "planContent", event.target.value)}
                   placeholder="지출 내용 입력"
+                  className={FIELD_INPUT_CLASS}
                 />
               </Field>
               <Field label="금액" required>
@@ -318,6 +343,7 @@ export default function FoundationApplicationForm({
                   value={plan.planAmount}
                   onChange={(event) => onUsePlanChange(plan.id, "planAmount", event.target.value)}
                   placeholder="0"
+                  className={FIELD_INPUT_CLASS}
                 />
               </Field>
               <div className="flex items-end">
@@ -334,16 +360,9 @@ export default function FoundationApplicationForm({
         </div>
       </section>
 
-      <section className="space-y-4 rounded-[2rem] border-4 border-line bg-white p-5">
+      <section className={SECTION_CARD_CLASS}>
         <div className="flex items-center justify-between">
           <SectionTitle>수혜자 확인</SectionTitle>
-          <button
-            type="button"
-            className="rounded-full bg-primary px-4 py-2 text-xs font-bold text-white hover:bg-primary/90"
-            onClick={onBeneficiaryCheck}
-          >
-            수혜자 확인
-          </button>
         </div>
 
         <Field
@@ -351,16 +370,30 @@ export default function FoundationApplicationForm({
           required
           hint="등록 전에 수혜자 코드가 유효한지 먼저 확인합니다."
         >
-          <input
-            name="entryCode"
-            value={formValues.entryCode}
-            onChange={onChange}
-            placeholder="entry code를 입력하세요"
-          />
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <input
+              name="entryCode"
+              value={formValues.entryCode}
+              onChange={onChange}
+              placeholder="entry code를 입력하세요"
+              className={FIELD_INPUT_CLASS}
+            />
+            <button
+              type="button"
+              className="shrink-0 rounded-xl bg-primary px-4 py-2 text-sm font-bold text-white hover:bg-primary/90"
+              onClick={onBeneficiaryCheck}
+            >
+              수혜자 확인
+            </button>
+          </div>
         </Field>
 
-        <div className="rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-100">
-          <p className="text-sm text-slate-600">{beneficiaryStatusMessage}</p>
+        <div className="rounded-2xl p-5">
+          {hasBeneficiaryStatusMessage ? (
+            <p className={`text-sm font-medium ${beneficiaryStatusClass}`}>
+              {beneficiaryStatusMessage}
+            </p>
+          ) : null}
           {beneficiaryInfo ? (
             <dl className="mt-4 grid gap-3 md:grid-cols-2">
               <div>
@@ -394,18 +427,18 @@ export default function FoundationApplicationForm({
 
       <div className="flex justify-end gap-3">
         <button
-          type="button"
-          className="rounded-full border-2 border-primary bg-white px-5 py-2.5 text-sm font-bold text-primary hover:bg-primary/5"
-          onClick={onCancel}
-        >
-          취소
-        </button>
-        <button
           type="submit"
           className="rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-primary/20 hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
           disabled={submitting}
         >
           {submitting ? (isEditMode ? "수정 중..." : "신청 중...") : isEditMode ? "수정 완료" : "신청 완료"}
+        </button>
+        <button
+          type="button"
+          className="rounded-full border-2 border-primary bg-white px-5 py-2.5 text-sm font-bold text-primary hover:bg-primary/5"
+          onClick={onCancel}
+        >
+          취소
         </button>
       </div>
     </form>

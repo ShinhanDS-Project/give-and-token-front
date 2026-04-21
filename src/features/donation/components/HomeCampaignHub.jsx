@@ -147,6 +147,14 @@ function toFeedItem(item, index) {
   };
 }
 
+function toArrayPayload(data) {
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data?.data)) return data.data;
+  if (Array.isArray(data?.result)) return data.result;
+  if (Array.isArray(data?.items)) return data.items;
+  return [];
+}
+
 function toHomeState(data) {
   const soonList = Array.isArray(data?.endingSoon)
     ? data.endingSoon.map(toCampaignCard)
@@ -239,11 +247,12 @@ function getDdayLabel(campaign) {
 
 function CampaignCard({ campaign, showDeadlinePill = false }) {
   const ddayLabel = showDeadlinePill ? getDdayLabel(campaign) : "";
+  const clampedProgress = Math.min(Math.max(campaign.progress, 0), 100);
 
   return (
     <Link
       to={`/campaign/${campaign.id}`}
-      className="group block overflow-hidden rounded-[2rem] border-2 border-line bg-white shadow-sm transition-all hover:-translate-y-1 hover:border-primary/40"
+      className="group block overflow-hidden rounded-[1.5rem] border-2 border-line bg-white shadow-sm transition-all hover:-translate-y-1 hover:border-primary/40"
     >
       <div className="relative aspect-[16/10] overflow-hidden">
         <img
@@ -258,13 +267,19 @@ function CampaignCard({ campaign, showDeadlinePill = false }) {
           </span>
         ) : null}
       </div>
+      <div className="h-1 w-full overflow-hidden bg-line">
+        <div
+          className="h-full bg-primary transition-all duration-500"
+          style={{ width: `${clampedProgress}%` }}
+        />
+      </div>
 
       <div className="p-6">
         <div className="mb-3 flex items-center justify-between text-xs font-bold text-stone-400">
           <span>{campaign.category}</span>
           <span>{campaign.progress}%</span>
         </div>
-        <h3 className="line-clamp-2 text-xl font-display font-bold text-ink">
+        <h3 className="line-clamp-2 text-xl font-bold text-ink">
           {campaign.shortTitle}
         </h3>
         <p className="mt-2 line-clamp-2 text-sm text-stone-500">
@@ -284,14 +299,16 @@ function CampaignCard({ campaign, showDeadlinePill = false }) {
 }
 
 function HorizontalCampaignCard({ campaign }) {
+  const clampedProgress = Math.min(Math.max(campaign.progress, 0), 100);
+
   return (
     <Link
       to={`/campaign/${campaign.id}`}
-      className="group block overflow-hidden rounded-[2rem] border-2 border-line bg-white shadow-sm transition-all hover:-translate-y-1 hover:border-primary/40"
+      className="group block overflow-hidden rounded-[1.5rem] border-2 border-line bg-white shadow-sm transition-all hover:-translate-y-1 hover:border-primary/40"
     >
       <div className="flex min-h-[260px] flex-col md:flex-row">
         <div className="w-full shrink-0 md:w-[220px]">
-          <div className="relative h-[160px] md:h-full overflow-hidden bg-[#FFF4EF]">
+          <div className="relative h-[160px] overflow-hidden bg-[#FFF4EF] md:h-full">
             {campaign.image ? (
               <img
                 src={campaign.image}
@@ -310,6 +327,12 @@ function HorizontalCampaignCard({ campaign }) {
                 이미지 없음
               </div>
             ) : null}
+          </div>
+          <div className="h-1 w-full overflow-hidden bg-line md:hidden">
+            <div
+              className="h-full bg-primary transition-all duration-500"
+              style={{ width: `${clampedProgress}%` }}
+            />
           </div>
         </div>
 
@@ -375,6 +398,7 @@ export default function HomeCampaignHub() {
       setSummary(homeState.summary);
       setEndingSoon(homeState.endingSoon);
       setTopProgress(homeState.topProgress);
+      setLatestCampaigns(homeState.latestOngoing);
       setCampaigns(homeState.campaigns);
     }
 
@@ -517,11 +541,8 @@ export default function HomeCampaignHub() {
           Array.isArray(data) ? data.map(toCampaignCard) : [],
         );
 
-        if (!ignore) {
-          setLatestCampaigns(
-            Array.isArray(data) ? data.map(toCampaignCard) : [],
-          );
-        }
+        const latestList = toArrayPayload(data).map(toCampaignCard);
+        if (!ignore) setLatestCampaigns(latestList);
       } catch (error) {
         console.error("현재 진행중인 캠페인 조회 실패:", error);
       }
@@ -604,18 +625,18 @@ export default function HomeCampaignHub() {
   return (
     <section
       id="home-hub"
-      className="home-snap-target bg-[#FFF9F5] pb-16 pt-28 md:pb-20 md:pt-32"
+      className="home-snap-target bg-[#FFFFFF] pb-16 pt-28 md:pb-20 md:pt-32"
     >
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-[85rem] px-4 sm:px-6 lg:px-8">
         <div className="grid gap-4 md:grid-cols-2">
-          <div className="rounded-[2rem] border border-primary/20 bg-primary px-8 py-7 text-white shadow-lg shadow-primary/20">
+          <div className="rounded-[1.5rem] border border-primary/20 bg-primary px-8 py-7 text-white shadow-lg shadow-primary/20">
             <p className="text-sm font-bold text-white/80">누적 기부 금액</p>
             <p className="mt-3 text-4xl font-display font-bold">
               {formatWon(totalRaisedAmount)}
             </p>
           </div>
 
-          <div className="rounded-[2rem] border border-line bg-ink px-8 py-7 text-white shadow-lg">
+          <div className="rounded-[1.5rem] border border-line bg-ink px-8 py-7 text-white shadow-lg">
             <p className="text-sm font-bold text-white/70">함께한 기부자들</p>
             <p className="mt-3 text-4xl font-display font-bold">
               {formatCount(summary.totalUserCount, "명")}
@@ -626,13 +647,13 @@ export default function HomeCampaignHub() {
         <div className="mt-10 grid gap-8 lg:grid-cols-12">
           <div className="lg:col-span-8">
             <div className="mb-5 flex items-center justify-between">
-              <h3 className="flex items-center gap-2 text-2xl font-display font-bold text-ink">
+              <h3 className="flex items-center gap-2 text-[1.7rem] font-display text-ink">
                 <Flame size={20} className="text-primary" />
                 마감 임박 캠페인
               </h3>
               <Link
                 to="/campaigns"
-                className="text-sm font-bold text-primary hover:underline"
+                className="text-m font-bold text-primary hover:underline"
               >
                 전체보기
               </Link>
@@ -649,13 +670,13 @@ export default function HomeCampaignHub() {
             </div>
 
             <div className="mb-5 mt-10 flex items-center justify-between">
-              <h3 className="flex items-center gap-2 text-2xl font-display font-bold text-ink">
+              <h3 className="flex items-center gap-2 text-[1.7rem] font-display text-ink">
                 <TrendingUp size={20} className="text-primary" />
                 참여율 높은 캠페인
               </h3>
               <Link
                 to="/campaigns"
-                className="text-sm font-bold text-primary hover:underline"
+                className="text-m font-bold text-primary hover:underline"
               >
                 전체보기
               </Link>
@@ -668,31 +689,37 @@ export default function HomeCampaignHub() {
             </div>
 
             <div className="mb-5 mt-10 flex items-center justify-between">
-              <h3 className="flex items-center gap-2 text-2xl font-display font-bold text-ink">
+              <h3 className="flex items-center gap-2 text-[1.7rem] font-display text-ink">
                 <Sparkles size={20} className="text-primary" />
                 현재 진행중인 캠페인
               </h3>
               <Link
                 to="/campaigns"
-                className="text-sm font-bold text-primary hover:underline"
+                className="text-m font-bold text-primary hover:underline"
               >
                 전체보기
               </Link>
             </div>
 
             <div className="grid gap-5">
-              {latestCampaigns.map((item) => (
-                <HorizontalCampaignCard
-                  key={`latest-${item.id}`}
-                  campaign={item}
-                />
-              ))}
+              {latestCampaigns.length > 0 ? (
+                latestCampaigns.map((item) => (
+                  <HorizontalCampaignCard
+                    key={`latest-${item.id}`}
+                    campaign={item}
+                  />
+                ))
+              ) : (
+                <div className="rounded-2xl border border-line bg-white p-6 text-sm font-bold text-stone-500">
+                  현재 진행중인 캠페인이 없습니다.
+                </div>
+              )}
             </div>
           </div>
 
           <aside className="lg:col-span-4">
-            <div className="rounded-[2rem] border-2 border-line bg-white p-6 shadow-sm">
-              <h4 className="mb-5 flex items-center gap-2 text-xl font-display font-bold text-ink">
+            <div className="rounded-[1.5rem] border-2 border-line bg-white p-6 shadow-sm">
+              <h4 className="mb-5 flex items-center gap-2 text-[1.3em] font-display font-bold text-ink">
                 <Sparkles size={16} className="text-primary" />
                 카테고리별 찾기
               </h4>
@@ -718,8 +745,8 @@ export default function HomeCampaignHub() {
               </div>
             </div>
 
-            <div className="mt-6 rounded-[2rem] border-2 border-line bg-white p-6 shadow-sm">
-              <h4 className="mb-4 flex items-center gap-2 text-xl font-display font-bold text-ink">
+            <div className="mt-6 rounded-[1.5rem] border-2 border-line bg-white p-6 shadow-sm">
+              <h4 className="mb-4 flex items-center gap-2 text-[1.3em] font-display font-bold text-ink">
                 <Bell size={16} className="text-primary" />
                 실시간 소식
               </h4>
@@ -754,7 +781,7 @@ export default function HomeCampaignHub() {
               </ul>
             </div>
 
-            <div className="mt-6 rounded-[2rem] border-2 border-line bg-white p-6 shadow-sm">
+            <div className="mt-6 rounded-[1.5rem] border-2 border-line bg-white p-6 shadow-sm">
               <span className="inline-flex items-center rounded-full border border-[#F3DDD3] bg-[#FFF4EF] px-3 py-1 text-xs font-bold text-[#F28C6D]">
                 + 투명한 나눔 보고서
               </span>

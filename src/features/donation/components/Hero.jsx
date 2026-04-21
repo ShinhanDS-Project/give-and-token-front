@@ -80,23 +80,15 @@ export default function Hero() {
               </span>
             </h1>
 
-            <p className="text-xl sm:text-[1.4rem] text-stone-500 mb-12 leading-relaxed max-w-xl font-medium">
+            <p className="text-xl sm:text-[1.3rem] text-stone-500 mb-12 leading-relaxed max-w-xl font-medium">
               우리의 작은 나눔이 모여 커다란 기적을 만듭니다.
               <br />
               동화처럼 아름다운 변화를 함께 만들어가요.
             </p>
 
-            <div className="flex flex-wrap gap-6 items-center">
+            <div className="flex flex-wrap gap-6 items-center ">
               <Link to="/campaigns" className="btn-fairytale !px-9 !py-4">
                 지금 사랑 전하기 <Heart size={20} fill="currentColor" />
-              </Link>
-
-              <Link
-                to="/campaigns"
-                className="text-ink font-bold hover:text-primary transition-colors flex items-center gap-2 group"
-              >
-                진행 중인 캠페인
-                <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
               </Link>
             </div>
           </motion.div>
@@ -120,11 +112,17 @@ export default function Hero() {
               <motion.div
                 animate={{ y: [0, -15, 0], rotate: [0, 5, 0] }}
                 transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-                className="absolute -top-8 -right-8 bg-accent p-6 rounded-[2.6rem] shadow-xl border-4 border-white max-w-[190px] text-center"
+                className="absolute -top-8 -right-8 bg-accent p-6 rounded-[2.6rem] shadow-xl border-4 border-white max-w-[220px]"
               >
-                <div className="text-3xl mb-2">✨</div>
-                <div className="text-ink font-display font-bold text-[1.55rem] leading-tight">투명한 나눔</div>
-                <p className="text-ink/60 text-xs font-medium mt-1">블록체인으로 믿음을 더해요</p>
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 bg-white/50 rounded-full flex items-center justify-center text-primary">
+                    <Sparkles size={20} fill="currentColor" />
+                  </div>
+                  <span className="font-display font-bold text-[1.55rem] text-ink leading-none">투명한 나눔</span>
+                </div>
+                <p className="text-ink/70 text-xs font-medium leading-relaxed">
+                  블록체인으로 믿음을 더해요
+                </p>
               </motion.div>
 
               <motion.div

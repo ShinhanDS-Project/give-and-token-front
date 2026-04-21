@@ -14,6 +14,7 @@ import {
   Settings,
   Wallet,
   Pencil,
+  X,
 } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import NotificationBell from "../../donation/components/NotificationBell";  //[가빈] 알림벨 추가
@@ -247,7 +248,7 @@ function NotificationPanel({ token }) {
   };
 
   return (
-    <div className="fd-panel">
+    <div className="fd-panel fd-panel--notification">
       <div className="fd-panel__header" style={{ marginBottom: 16 }}>
         <h2 style={{ fontSize: 16, fontWeight: 800, margin: 0, color: "#1a202c" }}>알림</h2>
         <button
@@ -359,6 +360,7 @@ function FoundationDashboardPage() {
   const [redeeming, setRedeeming] = useState(false);
   const [redemptionMessage, setRedemptionMessage] = useState("");
   const [redemptionError, setRedemptionError] = useState("");
+  const [isProfileImagePreviewOpen, setIsProfileImagePreviewOpen] = useState(false);
 
   useEffect(() => {
     const menu = searchParams.get("menu");
@@ -490,6 +492,10 @@ function FoundationDashboardPage() {
   );
 
   const recentCampaigns = useMemo(() => campaigns.slice(0, 2), [campaigns]);
+  const settingsProfileImageSrc = useMemo(
+    () => toImageSrc(foundation?.profilePath || ""),
+    [foundation?.profilePath],
+  );
 
   const filteredCampaigns = useMemo(
     () =>
@@ -657,6 +663,7 @@ function FoundationDashboardPage() {
 
   const handleSettingsSubmit = async (event) => {
     event.preventDefault();
+    if (!settingsEditMode) return;
 
     const feeRateNumber = Number(settingsForm.feeRate);
     if (
@@ -745,7 +752,9 @@ function FoundationDashboardPage() {
     }
   };
 
-  const handleStartSettingsEdit = () => {
+  const handleStartSettingsEdit = (event) => {
+    event?.preventDefault?.();
+    event?.stopPropagation?.();
     setSettingsMessage("");
     setSettingsError("");
     setPasswordForm({
@@ -753,7 +762,7 @@ function FoundationDashboardPage() {
       newPassword: "",
       confirmPassword: "",
     });
-    setSettingsEditMode(true);
+    setTimeout(() => setSettingsEditMode(true), 0);
   };
 
   const handleCancelSettingsEdit = () => {
@@ -861,6 +870,48 @@ function FoundationDashboardPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeMenu, foundation?.foundationNo]);
 
+  useEffect(() => {
+    if (activeMenu !== "home") {
+      return;
+    }
+
+    const foundationNoFromToken = getFoundationNoFromAccessToken();
+    const foundationNo = foundationNoFromToken || foundation?.foundationNo;
+    if (!foundationNo) {
+      return;
+    }
+
+    let ignore = false;
+    (async () => {
+      try {
+        const wallet = await fetchFoundationWalletInfo(foundationNo);
+        if (!ignore) {
+          setWalletInfo(wallet);
+        }
+      } catch {
+        // keep previous wallet info on transient errors
+      }
+    })();
+
+    return () => {
+      ignore = true;
+    };
+  }, [activeMenu, foundation?.foundationNo]);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    const body = document.body;
+    const prevRootOverflow = root.style.overflow;
+    const prevBodyOverflow = body.style.overflow;
+    root.style.overflow = "hidden";
+    body.style.overflow = "hidden";
+
+    return () => {
+      root.style.overflow = prevRootOverflow;
+      body.style.overflow = prevBodyOverflow;
+    };
+  }, []);
+
   if (loading) {
     return (
       <div style={{ padding: "40px", fontSize: "14px", color: "#64748b", fontFamily: "'Nanum Gothic', sans-serif" }}>
@@ -889,9 +940,19 @@ function FoundationDashboardPage() {
       <div className="fd-sidebar-wrapper" style={{ position: "relative" }}>
         <aside className="fd-sidebar">
           <div className="fd-sidebar__brand">
-            <div className="fd-sidebar__brand-logo">g</div>
+            <div className="fd-sidebar__brand-logo">
+              {foundation?.profilePath ? (
+                <img
+                  src={toImageSrc(foundation.profilePath)}
+                  alt="기부단체 로고"
+                  className="fd-sidebar__brand-logo-img"
+                />
+              ) : (
+                "g"
+              )}
+            </div>
             <div className="fd-sidebar__brand-info">
-              <span className="fd-sidebar__brand-name">give N token</span>
+              <span className="fd-sidebar__brand-name">{summary.foundationName}</span>
               <span className="fd-sidebar__brand-sub">기부단체 콘솔</span>
             </div>
             <div className="fd-notif-wrap">
@@ -1097,7 +1158,7 @@ function FoundationDashboardPage() {
 
           {/* 캠페인 */}
           {activeMenu === "campaign" && (
-            <div className="fd-panel">
+            <div className="fd-panel fd-panel--campaign">
               {selectedCampaignNo ? (
                 <>
                   <div className="fd-campaign-detail__toolbar">
@@ -1193,7 +1254,7 @@ function FoundationDashboardPage() {
                       <h2 style={{ fontSize: 20, fontWeight: 800, margin: "0 0 2px", color: "#1a202c" }}>캠페인 관리</h2>
                       <p style={{ fontSize: 12, color: "#374151", margin: 0 }}>단체에서 신청한 캠페인 진행 상태를 확인합니다.</p>
                     </div>
-                    <button type="button" className="fd-panel-action-btn" onClick={() => navigate("/foundation/register")}>
+                    <button type="button" className="fd-panel-action-btn fd-panel-action-btn--campaign-register" onClick={() => navigate("/foundation/register")}>
                       <CirclePlus size={14} /> 캠페인 등록
                     </button>
                   </div>
@@ -1252,7 +1313,7 @@ function FoundationDashboardPage() {
 
           {/* 정산 */}
           {activeMenu === "settlement" && (
-            <div className="fd-panel">
+            <div className="fd-panel fd-panel--settlement">
               <div className="fd-panel__header">
                 <div>
                   <h2 style={{ fontSize: 20, fontWeight: 800, margin: "0 0 2px", color: "#1a202c" }}>정산 관리</h2>
@@ -1264,36 +1325,56 @@ function FoundationDashboardPage() {
               {settlementLoading && <p style={{ fontSize: 13, color: "#94a3b8", marginBottom: 12 }}>정산 정보를 불러오는 중...</p>}
               {settlementError && <p className="fd-error-text" style={{ marginBottom: 12 }}>{settlementError}</p>}
 
-              <div className="fd-wallet-card">
-                <div className="fd-wallet-card__header">
-                  <h3 className="fd-wallet-card__title">기부단체 지갑 정보</h3>
-                  <button type="button" className="fd-panel-action-btn" onClick={handleRedemptionSubmit} disabled={redeeming}>
-                    {redeeming ? "신청 중..." : "현금화 신청"}
-                  </button>
-                </div>
-                <div className="fd-wallet-grid">
-                  <div>
-                    <p className="fd-info-label">지갑 주소</p>
-                    <p className="fd-info-value">{walletInfo?.walletAddress || "-"}</p>
-                    <p className="fd-info-label">잔액</p>
-                    <p className="fd-info-value fd-info-value--lg">
-                      {walletInfo?.balance !== undefined && walletInfo?.balance !== null ? formatWon(walletInfo.balance) : "-"}
-                    </p>
+              <div className="fd-settlement-top-grid">
+                <div className="fd-wallet-card">
+                  <div className="fd-wallet-card__header">
+                    <h3 className="fd-wallet-card__title">지갑 정보</h3>
                   </div>
-                  <label>
-                    <span className="fd-input-label">현금화 금액</span>
-                    <input
-                      type="number"
-                      min="1"
-                      value={redemptionAmount}
-                      onChange={(e) => { setRedemptionAmount(e.target.value); setRedemptionError(""); setRedemptionMessage(""); }}
-                      placeholder="금액 입력"
-                      className="fd-input"
-                    />
-                  </label>
+                  <div className="fd-wallet-grid">
+                    <div>
+                      <p className="fd-info-label">지갑 주소</p>
+                      <p className="fd-info-value">{walletInfo?.walletAddress || "-"}</p>
+                      <p className="fd-info-label">잔액</p>
+                      <p className="fd-info-value fd-info-value--lg">
+                        {walletInfo?.balance !== undefined && walletInfo?.balance !== null ? formatWon(walletInfo.balance) : "-"}
+                      </p>
+                    </div>
+                  </div>
                 </div>
-                {redemptionError && <p className="fd-error-text">{redemptionError}</p>}
-                {redemptionMessage && <p className="fd-success-text">{redemptionMessage}</p>}
+
+                <div className="fd-wallet-card fd-redemption-card">
+                  <div className="fd-wallet-card__header">
+                    <h3 className="fd-wallet-card__title">현금화 신청</h3>
+                  </div>
+                  <div className="fd-redemption-form">
+                    <label className="fd-redemption-form__field">
+                      <span className="fd-input-label"> 신청 후 1주에서 2주의 시간이 소요됩니다.</span>
+                      <input
+                        type="number"
+                        min="1"
+                        value={redemptionAmount}
+                        onChange={(e) => { setRedemptionAmount(e.target.value); setRedemptionError(""); setRedemptionMessage(""); }}
+                        placeholder="금액 입력"
+                        className="fd-input"
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      className="fd-redemption-form__submit"
+                      style={{ backgroundColor: BRAND_COLOR }}
+                      onClick={handleRedemptionSubmit}
+                      disabled={redeeming}
+                    >
+                      {redeeming ? "신청 중..." : "현금화 신청"}
+                    </button>
+                    {redemptionError ? (
+                      <p className="mt-2 text-sm text-rose-600">{redemptionError}</p>
+                    ) : null}
+                    {redemptionMessage ? (
+                      <p className="mt-2 text-sm text-emerald-600">{redemptionMessage}</p>
+                    ) : null}
+                  </div>
+                </div>
               </div>
 
               <p className="fd-section-title">정산 내역</p>
@@ -1342,34 +1423,39 @@ function FoundationDashboardPage() {
 
           {/* 설정 */}
           {activeMenu === "settings" && (
-            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-              <div className="fd-panel">
-                <div className="fd-settings-profile">
-                  <div style={{ position: "relative", flexShrink: 0 }}>
-                    <div className="fd-avatar">
-                      {foundation?.profilePath ? (
-                        <img src={toImageSrc(foundation.profilePath)} alt="기부단체 프로필" />
-                      ) : (
-                        <Building2 size={28} />
-                      )}
+            <div className="fd-settings-stack">
+              <div className="fd-panel fd-panel--settings-hero">
+                <div className="fd-settings-hero">
+                  {settingsProfileImageSrc ? (
+                    <img
+                      src={settingsProfileImageSrc}
+                      alt="기부단체 프로필"
+                      className="fd-settings-hero__img"
+                      onClick={() => setIsProfileImagePreviewOpen(true)}
+                    />
+                  ) : (
+                    <div className="fd-settings-hero__placeholder">
+                      <Building2 size={44} />
                     </div>
-                    <label
-                      className="fd-avatar-edit-label"
-                      style={{ backgroundColor: settingsEditMode ? BRAND_COLOR : "#e2e8f0", cursor: settingsEditMode ? "pointer" : "default" }}
-                      title={settingsEditMode ? "프로필 이미지 변경" : "정보 수정 모드에서 변경 가능"}
-                    >
-                      <Camera size={11} color={settingsEditMode ? "#fff" : "#94a3b8"} />
-                      <input type="file" accept="image/*" onChange={handleSettingsImageChange} style={{ display: "none" }} disabled={!settingsEditMode} />
-                    </label>
-                  </div>
-                  <div className="fd-profile-info">
-                    <p className="fd-profile-info__name">{foundation?.foundationName || "-"}</p>
-                    <p className="fd-profile-info__sub">{foundation?.foundationEmail || ""}</p>
+                  )}
+
+                  <div className="fd-settings-hero__overlay">
                     <span className="fd-verified-badge">인증된 단체</span>
+                    <p className="fd-settings-hero__name">{foundation?.foundationName || "-"}</p>
+                    <p className="fd-settings-hero__email">{foundation?.foundationEmail || ""}</p>
                     {settingsForm.profileImageFile && (
-                      <p style={{ fontSize: 11, color: "#64748b", marginTop: 4 }}>{settingsForm.profileImageFile.name}</p>
+                      <p className="fd-settings-hero__filename">{settingsForm.profileImageFile.name}</p>
                     )}
                   </div>
+
+                  <label
+                    className="fd-settings-hero__edit-label"
+                    style={{ backgroundColor: settingsEditMode ? BRAND_COLOR : "#e2e8f0", cursor: settingsEditMode ? "pointer" : "default" }}
+                    title={settingsEditMode ? "프로필 이미지 변경" : "정보 수정 모드에서 변경 가능"}
+                  >
+                    <Camera size={14} color={settingsEditMode ? "#fff" : "#94a3b8"} />
+                    <input type="file" accept="image/*" onChange={handleSettingsImageChange} style={{ display: "none" }} disabled={!settingsEditMode} />
+                  </label>
                 </div>
               </div>
 
@@ -1444,14 +1530,42 @@ function FoundationDashboardPage() {
                   <div className="fd-form-actions">
                     {settingsEditMode ? (
                       <>
-                        <button type="button" className="fd-btn-secondary" onClick={handleCancelSettingsEdit}>취소</button>
                         <button type="submit" className="fd-btn-primary" disabled={settingsSaving}>{settingsSaving ? "저장 중..." : "정보 저장하기"}</button>
+                        <button type="button" className="fd-btn-secondary" onClick={handleCancelSettingsEdit}>취소</button>
                       </>
                     ) : (
                       <button type="button" className="fd-btn-secondary" onClick={handleStartSettingsEdit}>정보 수정하기</button>
                     )}
                   </div>
                 </form>
+              </div>
+            </div>
+          )}
+          {isProfileImagePreviewOpen && settingsProfileImageSrc && (
+            <div
+              className="fd-image-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-label="프로필 이미지 전체보기"
+              onClick={() => setIsProfileImagePreviewOpen(false)}
+            >
+              <div
+                className="fd-image-modal__content"
+                onClick={(event) => event.stopPropagation()}
+              >
+                <button
+                  type="button"
+                  className="fd-image-modal__close"
+                  onClick={() => setIsProfileImagePreviewOpen(false)}
+                  aria-label="닫기"
+                >
+                  <X size={18} />
+                </button>
+                <img
+                  src={settingsProfileImageSrc}
+                  alt="기부단체 프로필 전체 이미지"
+                  className="fd-image-modal__img"
+                />
               </div>
             </div>
           )}

@@ -27,7 +27,7 @@ export default function FoundationChrome() {
 
   return (
     <aside className="foundation-chrome" aria-label="기부단체 메뉴">
-      <h1>기부엔토큰</h1>
+      <h1 className="font-display">기부엔토큰</h1>
       <nav className="foundation-chrome-nav">
         <a href="/foundation/me" className="foundation-chrome-link">
           <House size={14} /> 홈
