@@ -918,7 +918,7 @@ function FoundationDashboardPage() {
           </nav>
 
           <div className="fd-sidebar__bottom">
-            <a href="http://localhost:5173/" className="fd-sidebar__bottom-link" title="기부엔토큰 바로가기">
+            <a href="/" className="fd-sidebar__bottom-link" title="기부엔토큰 바로가기">
               <House size={13} /><span className="fd-sidebar__bottom-text">기부엔토큰 바로가기</span>
             </a>
             <button type="button" className="fd-sidebar__bottom-btn" onClick={handleLogout} title="로그아웃">

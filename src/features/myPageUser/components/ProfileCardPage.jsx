@@ -6,7 +6,7 @@ export default function ProfileCard({
   onChangePassword,
   onViewDonations,
 }) {
-  const IMAGE_BASE_URL = "http://localhost:8090/uploads/";
+  const IMAGE_BASE_URL = "/uploads/";
   
   const getProfileImage = () => {
     if (!myInfo?.profilePath) return null;

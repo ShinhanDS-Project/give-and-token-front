@@ -36,7 +36,7 @@ const GoogleSignupPage = () => {
 
       try {
         const response = await fetch(
-          "http://localhost:8090/api/auth/social-info",
+          "/api/auth/social-info",
           {
             method: "GET",
             headers: {
@@ -74,10 +74,14 @@ const GoogleSignupPage = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    let nextValue = value;
 
+    if (name === "phone") {
+      nextValue = value.replace(/\D/g, "").slice(0, 11);
+    }
     setFormData((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: nextValue,
     }));
 
     if (name === "nameHash") {

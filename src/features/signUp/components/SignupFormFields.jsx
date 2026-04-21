@@ -209,7 +209,7 @@ export default function SignupFormFields({
                 className="signup-input"
                 value={formData.phone}
                 onChange={onChange}
-                placeholder="010-0000-0000"
+                placeholder="01000000000"
                 required
               />
             </div>
@@ -261,7 +261,7 @@ export default function SignupFormFields({
                 className="signup-input"
                 value={formData.phone}
                 onChange={onChange}
-                placeholder="010-0000-0000"
+                placeholder="01000000000"
                 required
               />
             </div>
