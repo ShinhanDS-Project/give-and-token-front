@@ -67,8 +67,8 @@ function getWalletDisplayInfo(wallet) {
 
   if (wallet.ownerType === "DONOR") {
     return {
-      nameLabel: "기부자명",
-      nameValue: wallet.foundationName || "-"
+      nameLabel: "역할",
+      nameValue: wallet.ownerTypeLabel || OWNER_TYPE_LABELS.DONOR
     };
   }
 

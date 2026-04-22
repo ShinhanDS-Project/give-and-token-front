@@ -81,6 +81,8 @@ function WalletDetailPage() {
     return <div className="panel empty-state">{error || "지갑이 존재하지 않습니다."}</div>;
   }
 
+  const displayedBalance = data.wallet.ownerType === "DONOR" ? 0 : data.wallet.balance;
+
   return (
     <section className="detail-page">
       <div className="detail-header">
@@ -112,7 +114,7 @@ function WalletDetailPage() {
         </div>
         <div className="panel info-card">
           <span>잔액</span>
-          <strong> {data.wallet.balance.toLocaleString()} GNT</strong>
+          <strong> {displayedBalance.toLocaleString()} GNT</strong>
         </div>
         <div className="panel info-card">
           <span>연결된 트랜잭션 수</span>

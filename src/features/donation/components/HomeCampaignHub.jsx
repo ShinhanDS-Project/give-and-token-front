@@ -446,7 +446,11 @@ export default function HomeCampaignHub() {
         campaignsRes.json(),
       ]);
 
-      const rawList = Array.isArray(campaignListRaw) ? campaignListRaw : [];
+      const rawList = Array.isArray(campaignListRaw)
+        ? campaignListRaw
+        : Array.isArray(campaignListRaw?.content)
+          ? campaignListRaw.content
+          : [];
       const campaignList = rawList.map(toCampaignCard);
 
       const ongoingLatest = sortByLatest(rawList.filter(isOngoingCampaign))
