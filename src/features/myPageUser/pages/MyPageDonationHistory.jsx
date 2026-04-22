@@ -18,7 +18,7 @@ export default function MyPageDonationHistory() {
   const [isTrackingModalOpen, setTrackingModalOpen] = useState(false);
   const [trackingData, setTrackingData] = useState(null);
   const [isTrackingLoading, setTrackingLoading] = useState(false);
-
+  const [selectedCampaignNo, setSelectedCampaignNo] = useState(null);
   useEffect(() => {
     fetchDonationHistory();
   }, []);
@@ -40,6 +40,7 @@ export default function MyPageDonationHistory() {
 
   const handleOpenTrackingModal = async (campaignNo) => {
     if (!campaignNo) return;
+    setSelectedCampaignNo(campaignNo); // 1. 클릭한 캠페인 번호를 저장
     setTrackingLoading(true);
     setTrackingModalOpen(true);
     try {
@@ -52,10 +53,11 @@ export default function MyPageDonationHistory() {
       setTrackingLoading(false);
     }
   };
-
+// handleCloseTrackingModal 함수 수정
   const handleCloseTrackingModal = () => {
     setTrackingModalOpen(false);
     setTrackingData(null);
+    setSelectedCampaignNo(null); // 2. 닫을 때 번호 초기화
   };
 
   const formatDate = (dateValue) => {
@@ -176,6 +178,7 @@ export default function MyPageDonationHistory() {
         onClose={handleCloseTrackingModal}
         trackingData={trackingData}
         isLoading={isTrackingLoading}
+        campaignId={selectedCampaignNo}
       />
     </div>
   );

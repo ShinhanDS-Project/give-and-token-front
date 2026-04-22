@@ -212,12 +212,21 @@ const RecommendationPage = () => {
   const [error, setError] = useState(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
+  const checkLoginStatus = () => {
+    const cookies = document.cookie.split(';');
+    const hasCookieToken = cookies.some((cookie) =>
+      cookie.trim().startsWith('accessToken='),
+    );
+    const hasLocalStorageToken = !!localStorage.getItem('accessToken');
+    return hasCookieToken || hasLocalStorageToken;
+  };
+
   useEffect(() => {
-    const token = localStorage.getItem('accessToken');
-    setIsLoggedIn(!!token);
-    
-    if (token) {
-        fetchHistoryRecommendations();
+    const loggedIn = checkLoginStatus();
+    setIsLoggedIn(loggedIn);
+
+    if (loggedIn) {
+      fetchHistoryRecommendations();
     }
 
     fetchCampaignImageMap();
