@@ -25,7 +25,10 @@ export const recommendationApi = {
       headers['Authorization'] = `Bearer ${token}`;
     }
 
-    const response = await fetch(`${API_BASE_URL}/recommendations`, { headers });
+    const response = await fetch(`${API_BASE_URL}/recommendations`, {
+      headers,
+      credentials: 'include',
+    });
     if (!response.ok) {
         if (response.status === 401) {
             throw new Error('로그인이 필요합니다.');
