@@ -7,7 +7,7 @@ import noResultImage from '../../../img/noResult.png';
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
 const FALLBACK_CAMPAIGN_IMAGE = '/donation.jpg';
-const CAMPAIGN_LIST_API = '/api/foundation/campaigns?sort=deadline';
+const CAMPAIGN_LIST_API = '/api/foundation/campaigns';
 const CATEGORY_META = {
   '아동/청소년': {
     icon: BookOpen,
@@ -72,6 +72,14 @@ function normalizeImagePath(imagePath) {
   if (/^[a-zA-Z]:\//.test(normalized)) return FALLBACK_CAMPAIGN_IMAGE;
   if (!API_BASE_URL) return rawPath;
   return rawPath.startsWith('/') ? `${API_BASE_URL}${rawPath}` : `${API_BASE_URL}/${rawPath}`;
+}
+
+function extractCampaignItems(payload) {
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload?.content)) return payload.content;
+  if (Array.isArray(payload?.data?.content)) return payload.data.content;
+  if (Array.isArray(payload?.data)) return payload.data;
+  return [];
 }
 
 function getCampaignImageSource(campaign, campaignImageMap = {}) {
@@ -217,20 +225,40 @@ const RecommendationPage = () => {
 
   const fetchCampaignImageMap = async () => {
     try {
-      const response = await fetch(CAMPAIGN_LIST_API);
-      if (!response.ok) return;
+      const map = {};
+      let page = 1;
+      const size = 100;
+      let hasNext = true;
 
-      const data = await response.json();
-      if (!Array.isArray(data)) return;
+      while (hasNext) {
+        const query = new URLSearchParams({
+          page: String(page),
+          size: String(size),
+          sort: 'deadline',
+          includeClosed: 'true'
+        });
+        const response = await fetch(`${CAMPAIGN_LIST_API}?${query.toString()}`);
+        if (!response.ok) break;
 
-      const map = data.reduce((acc, item) => {
-        const campaignNo = Number(item?.campaignNo || item?.id || 0);
-        const imagePath = item?.imagePath || item?.image || item?.imageUrl || '';
-        if (campaignNo > 0 && imagePath) {
-          acc[campaignNo] = imagePath;
+        const data = await response.json();
+        const items = extractCampaignItems(data);
+
+        items.forEach((item) => {
+          const campaignNo = Number(item?.campaignNo || item?.id || 0);
+          const imagePath = item?.imagePath || item?.image || item?.imageUrl || '';
+          if (campaignNo > 0 && imagePath) {
+            map[campaignNo] = imagePath;
+          }
+        });
+
+        const pageInfo = data?.pageInfo;
+        hasNext = Boolean(pageInfo?.hasNext);
+        page += 1;
+
+        if (!Array.isArray(items) || items.length === 0) {
+          break;
         }
-        return acc;
-      }, {});
+      }
 
       setCampaignImageMap(map);
     } catch (e) {
