@@ -1,5 +1,5 @@
 ﻿import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { AnimatePresence } from "motion/react";
 import LoginRoleSelector from "../components/LoginRoleSelector";
 import LoginForm from "../components/LoginForm";
@@ -12,6 +12,7 @@ import loginImage from "../../../img/login.png";
 
 const LoginPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [loginData, setLoginData] = useState({
     role: "user",
@@ -44,6 +45,19 @@ const LoginPage = () => {
         navigate("/");
         break;
     }
+  };
+
+  const getSafeNextPath = () => {
+    const params = new URLSearchParams(location.search);
+    const nextFromQuery = params.get("next");
+    const nextFromState = location.state?.from;
+    const candidate = String(nextFromQuery || nextFromState || "").trim();
+
+    if (!candidate) return "";
+    if (!candidate.startsWith("/")) return "";
+    if (candidate.startsWith("//")) return "";
+
+    return candidate;
   };
 
   const handleLocalLogin = async (e) => {
@@ -99,6 +113,12 @@ const LoginPage = () => {
             tokenType: data?.tokenType ?? "Bearer",
           }),
         );
+      }
+
+      const nextPath = getSafeNextPath();
+      if (nextPath) {
+        navigate(nextPath, { replace: true });
+        return;
       }
 
       redirectByRole(loginData.role);

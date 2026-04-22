@@ -234,6 +234,9 @@ export default function CampaignDetail() {
   const safeDonors = Number(campaign.donors ?? 0);
   const safeRecentDonors = Array.isArray(campaign.recentDonors) ? campaign.recentDonors : [];
   const safeDocs = Array.isArray(campaign.documents) ? campaign.documents : [];
+  const isLoggedIn =
+    typeof window !== "undefined" &&
+    Boolean(window.localStorage.getItem("accessToken"));
   const numericDaysLeft = Number(campaign.daysLeft);
   const endAtTimestamp = toTimestamp(campaign.recruitEndDate);
   const campaignStatus = String(campaign.campaignStatus || "").toUpperCase();
@@ -560,6 +563,13 @@ export default function CampaignDetail() {
                   >
                     마감되었습니다
                   </button>
+                ) : !isLoggedIn ? (
+                  <Link
+                    to={`/login?next=${encodeURIComponent(`/campaign/${campaign.id}`)}`}
+                    className="mb-4 flex w-full items-center justify-center rounded-full bg-stone-700 py-4 text-base font-bold text-white transition-all hover:bg-stone-800"
+                  >
+                    로그인 후 기부하기
+                  </Link>
                 ) : (
                   <Link to={`/campaign/${campaign.id}/donate`} className="mb-4 flex w-full items-center justify-center rounded-full bg-primary py-4 text-base font-bold text-white shadow-m shadow-primary/20 transition-all hover:bg-primary/90">
                     지금 기부하기

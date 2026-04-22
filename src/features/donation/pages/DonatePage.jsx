@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Smile, UserRound } from "lucide-react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { campaigns, formatWon } from "../data/campaigns";
 
 const presets = [5000, 10000, 50000, 100000];
@@ -177,6 +177,8 @@ async function fetchCurrentUserProfile() {
 
 export default function DonatePage() {
   const { id } = useParams();
+  const location = useLocation();
+  const navigate = useNavigate();
   const staticCampaign = useMemo(
     () => campaigns.find((item) => item.id === Number(id)),
     [id],
@@ -190,6 +192,14 @@ export default function DonatePage() {
   const [paymentMethod, setPaymentMethod] = useState("CARD");
   const [paymentError, setPaymentError] = useState("");
   const [requestingPayment, setRequestingPayment] = useState(false);
+
+  useEffect(() => {
+    const token = window.localStorage.getItem("accessToken");
+    if (!token) {
+      const nextPath = `${location.pathname}${location.search || ""}`;
+      navigate(`/login?next=${encodeURIComponent(nextPath)}`, { replace: true });
+    }
+  }, [location.pathname, location.search, navigate]);
 
   useEffect(() => {
     if (staticCampaign) {
