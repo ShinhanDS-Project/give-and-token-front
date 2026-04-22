@@ -62,7 +62,8 @@ function toDetailCampaignModel(data, id) {
     title: data?.title || "",
     shortTitle: data?.title || "",
     category: data?.category || "기타",
-    daysLeft: Number.isFinite(Number(data?.daysLeft)) ? Number(data.daysLeft) : 0,
+    daysLeft: Number.isFinite(Number(data?.daysLeft)) ? Number(data.daysLeft) : null,
+    campaignStatus: data?.campaignStatus || data?.status || "",
     donors: Number.isFinite(Number(data?.donors)) ? Number(data.donors) : 0,
     raised,
     goal,
@@ -235,12 +236,16 @@ export default function CampaignDetail() {
   const safeDocs = Array.isArray(campaign.documents) ? campaign.documents : [];
   const numericDaysLeft = Number(campaign.daysLeft);
   const endAtTimestamp = toTimestamp(campaign.recruitEndDate);
+  const campaignStatus = String(campaign.campaignStatus || "").toUpperCase();
+  const isClosedByStatus = ["COMPLETED", "ENDED", "CLOSED", "FINISHED", "EXPIRED", "REJECTED"].includes(campaignStatus);
   const isClosedCampaign =
-    (Number.isFinite(numericDaysLeft) && numericDaysLeft <= 0) ||
+    isClosedByStatus ||
     (Number.isFinite(endAtTimestamp) && endAtTimestamp < Date.now());
   const daysLeftLabel = isClosedCampaign
     ? "마감"
-    : `${Number.isFinite(numericDaysLeft) ? Math.max(0, numericDaysLeft) : 0}일 남음`;
+    : Number.isFinite(numericDaysLeft)
+      ? `${Math.max(0, numericDaysLeft)}일 남음`
+      : "진행중";
   const safeReportImages = Array.isArray(finalReport?.images)
     ? finalReport.images
       .map((image) => normalizeImagePath(image?.imgPath || ""))
