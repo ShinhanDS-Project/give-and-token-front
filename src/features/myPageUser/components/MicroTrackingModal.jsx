@@ -33,71 +33,83 @@ export default function MicroTrackingModal({ isOpen, onClose, trackingData, isLo
         onClose();
     };
 
+    // 상태 메시지 생성 함수
+    const getStatusMessage = () => {
+        if (!report) return null;
+        const days = report.dayPassed || 0;
+        
+        switch (report.trackingStatus) {
+            case 'FUNDRAISING':
+                return `모금 종료까지 ${days}일 남았습니다.`;
+            case 'IN_PROGRESS':
+                return `사업 종료일까지 ${days}일 남았습니다.`;
+            case 'FINISHED':
+                return `사업 종료 후 ${days}일이 경과되었습니다.`;
+            default:
+                return report.isPassed 
+                    ? `캠페인 종료 후 ${days}일이 경과되었습니다.`
+                    : `캠페인 종료까지 ${days}일 남았습니다.`;
+        }
+    };
+
+    const statusMsg = getStatusMessage();
+
     return (
-        <div className="fixed inset-0 bg-black/50 z-50 flex justify-center items-center p-4">
-            <div className="bg-white rounded-lg shadow-xl w-full max-w-lg flex flex-col overflow-hidden">
+        <div className="fixed inset-0 bg-black/50 z-50 flex justify-center items-center p-4 backdrop-blur-sm">
+            <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-lg flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200">
                 {/* 헤더 */}
-                <div className="flex justify-between items-center p-5 border-b">
-                    <h2 className="text-2xl font-black text-gray-900">기부 트래킹 기록</h2>
-                    <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded">
+                <div className="flex justify-between items-center p-6 border-b">
+                    <h2 className="text-2xl font-black text-gray-900 tracking-tight">기부 트래킹 기록</h2>
+                    <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
                         <X size={24} />
                     </button>
                 </div>
 
-                <div className="p-6 space-y-8 overflow-y-auto max-h-[70vh]">
+                <div className="p-6 space-y-10 overflow-y-auto max-h-[75vh]">
                     {isLoading ? (
-                        <div className="text-center py-10 text-gray-500">불러오는 중...</div>
+                        <div className="text-center py-20 flex flex-col items-center gap-3">
+                            <div className="w-8 h-8 border-[3px] border-primary/20 border-t-primary rounded-full animate-spin"></div>
+                            <p className="font-bold text-gray-400 text-sm">기록을 불러오는 중...</p>
+                        </div>
                     ) : (
                         <>
-                            {/* 캠페인 진행 상태 문구 (보고서가 없을 때만 표시) */}
-                            {!report?.isExist && (
-                                <section className="p-5 bg-gray-50 rounded-xl border border-gray-200">
-                                    <p className="text-base font-bold text-gray-800">
-                                        {report?.isPassed 
-                                            ? `캠페인 종료 후 ${report?.dayPassed || 0}일이 경과되었습니다.`
-                                            : `캠페인 종료까지 ${report?.dayPassed || 0}일 남았습니다.`
-                                        }
-                                    </p>
-                                    <p className="text-sm text-gray-400 mt-1 font-medium">
-                                        {report?.isPassed 
-                                            ? "최종 보고서가 아직 등록되지 않았습니다."
-                                            : "캠페인 종료 후 최종 보고서가 게시될 예정입니다."
-                                        }
-                                    </p>
-                                </section>
-                            )}
-
-                            {/* 1. 정산 기록 (순서 변경: 정산 먼저) */}
-                            {settlement && (
-                                <section>
-                                    <h3 className="text-xl font-bold text-gray-900 mb-4">정산 내역</h3>
-                                    <div className="border-2 rounded-xl divide-y overflow-hidden shadow-sm">
+                            {/* 1. 정산 내역 섹션 (항상 위) */}
+                            <section>
+                                <h3 className="text-xl font-bold text-gray-900 mb-4">정산 내역</h3>
+                                {settlement ? (
+                                    <div className="border-2 rounded-2xl divide-y overflow-hidden shadow-sm">
                                         <div className="flex justify-between p-4 text-sm bg-gray-50/50">
-                                            <span className="text-gray-500 font-medium">정산 일시</span>
-                                            <span className="font-bold text-gray-900">{formatDate(settlement.settledAt)}</span>
+                                            <span className="text-gray-500 font-bold">정산 일시</span>
+                                            <span className="font-black text-gray-900">{formatDate(settlement.settledAt)}</span>
                                         </div>
                                         <div className="flex justify-between p-4 text-sm">
-                                            <span className="text-gray-500 font-medium">단체 수령액</span>
-                                            <span className="font-bold text-gray-900">{formatAmount(settlement.foundationAmount)}</span>
+                                            <span className="text-gray-500 font-bold">단체 수령액</span>
+                                            <span className="font-black text-gray-900">{formatAmount(settlement.foundationAmount)}</span>
                                         </div>
                                         <div className="flex justify-between p-4 text-sm">
-                                            <span className="text-gray-500 font-medium">수혜자 수령액</span>
-                                            <span className="font-bold text-primary text-base">{formatAmount(settlement.beneficiaryAmount)}</span>
+                                            <span className="text-gray-500 font-bold">수혜자 수령액</span>
+                                            <span className="font-black text-primary text-base">{formatAmount(settlement.beneficiaryAmount)}</span>
                                         </div>
                                     </div>
-                                </section>
-                            )}
+                                ) : (
+                                    <div className="p-8 border-2 border-dashed border-gray-100 rounded-2xl text-center">
+                                        <p className="text-sm font-bold text-gray-300">정산 내역이 아직 없습니다.</p>
+                                    </div>
+                                )}
+                            </section>
 
-                            {/* 2. 최종 보고서 기록 (순서 변경: 보고서 나중) */}
-                            {report?.isExist && report.reportData && (
-                                <section>
-                                    <h3 className="text-xl font-bold text-gray-900 mb-4">최종 보고서</h3>
-                                    <div className="bg-white border-2 border-gray-100 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                            {/* 2. 최종 보고서 섹션 (항상 아래) */}
+                            <section>
+                                <h3 className="text-xl font-bold text-gray-900 mb-4">최종 보고서</h3>
+                                
+                                {report?.isExist && report.reportData ? (
+                                    /* 보고서가 있는 경우: 카드 출력 */
+                                    <div className="bg-white border-2 border-gray-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
                                         <div className="p-6">
-                                            <h4 className="font-bold text-gray-900 text-lg mb-2 leading-snug">
+                                            <h4 className="font-black text-gray-900 text-lg mb-2 leading-snug">
                                                 {report.reportData.title}
                                             </h4>
-                                            <p className="text-sm text-gray-500 line-clamp-2 leading-relaxed mb-5">
+                                            <p className="text-sm text-gray-500 line-clamp-2 leading-relaxed mb-5 font-medium">
                                                 {report.reportData.content}
                                             </p>
                                             <button 
@@ -109,15 +121,20 @@ export default function MicroTrackingModal({ isOpen, onClose, trackingData, isLo
                                             </button>
                                         </div>
                                     </div>
-                                </section>
-                            )}
-
-                            {/* 데이터가 아예 없는 경우 */}
-                            {!report?.isExist && !settlement && (
-                                <div className="text-center py-10 text-gray-400 text-sm font-medium">
-                                    등록된 트래킹 기록이 없습니다.
-                                </div>
-                            )}
+                                ) : (
+                                    /* 보고서가 없는 경우: 상태 메시지만 깔끔하게 출력 */
+                                    <div className="p-6 bg-gray-50 rounded-2xl border-2 border-gray-100">
+                                        <p className="text-base font-black text-gray-700 leading-snug">
+                                            {statusMsg}
+                                        </p>
+                                        <p className="text-sm text-gray-400 mt-2 font-medium">
+                                            {report?.trackingStatus === 'FINISHED' 
+                                                ? "최종 보고서가 아직 등록되지 않았습니다." 
+                                                : "기한 종료 후 최종 보고서가 등록될 예정입니다."}
+                                        </p>
+                                    </div>
+                                )}
+                            </section>
                         </>
                     )}
                 </div>
