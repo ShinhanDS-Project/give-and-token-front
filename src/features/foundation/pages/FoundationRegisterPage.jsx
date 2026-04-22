@@ -472,7 +472,11 @@ export default function FoundationRegisterPage() {
 
   if (submitResult) {
     return (
-      <FoundationApplicationResult result={submitResult} authInfo={authInfo} />
+      <FoundationApplicationResult
+        result={submitResult}
+        authInfo={authInfo}
+        campaignTitle={formValues.title}
+      />
     );
   }
 
