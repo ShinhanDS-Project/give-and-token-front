@@ -90,38 +90,41 @@ export default function SignupFormFields({
             </div>
           </div>
         )}
+      {!isGoogleSignup && (
+          <>
+            <div className="field-group">
+              <label className="label-text">비밀번호</label>
+              <div className="input-wrapper">
+                <Lock className="input-icon" size={18} />
+                <input
+                    type="password"
+                    name="password"
+                    className="signup-input"
+                    value={formData.password}
+                    onChange={onChange}
+                    required
+                    placeholder="********"
+                />
+              </div>
+            </div>
 
-      <div className="field-group">
-        <label className="label-text">비밀번호</label>
-        <div className="input-wrapper">
-          <Lock className="input-icon" size={18} />
-          <input
-            type="password"
-            name="password"
-            className="signup-input"
-            value={formData.password}
-            onChange={onChange}
-            required
-            placeholder="********"
-          />
-        </div>
-      </div>
-
-      <div className="field-group">
-        <label className="label-text">비밀번호 확인</label>
-        <div className="input-wrapper">
-          <Lock className="input-icon" size={18} />
-          <input
-            type="password"
-            name="password2"
-            className="signup-input"
-            value={formData.password2}
-            onChange={onChange}
-            required
-            placeholder="********"
-          />
-        </div>
-      </div>
+            <div className="field-group">
+              <label className="label-text">비밀번호 확인</label>
+              <div className="input-wrapper">
+                <Lock className="input-icon" size={18} />
+                <input
+                    type="password"
+                    name="password2"
+                    className="signup-input"
+                    value={formData.password2}
+                    onChange={onChange}
+                    required
+                    placeholder="********"
+                />
+              </div>
+            </div>
+          </>
+      )}
     </>
   );
 
