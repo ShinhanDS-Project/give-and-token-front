@@ -34,6 +34,14 @@ function formatWon(value) {
   return `${num.toLocaleString("ko-KR")}\uC6D0`;
 }
 
+function formatFeeRate(value) {
+  const num = Number(value);
+  if (!Number.isFinite(num)) return "-";
+  const percent = num * 100;
+  const text = Number.isInteger(percent) ? String(percent) : percent.toFixed(2).replace(/\.?0+$/, "");
+  return `${text}%`;
+}
+
 function shortenAddress(address) {
   if (!address) return "";
   const addr = String(address);
@@ -327,7 +335,6 @@ export default function FoundationDetailPage() {
   }, [foundationNo]);
 
   const profileImage = useMemo(() => normalizeImagePath(foundation?.profilePath), [foundation?.profilePath]);
-  const totalRaised = Number(foundation?.monthlyRaisedAmount ?? foundation?.totalRaisedAmount ?? 0);
   const activeCampaignCount = campaigns.filter((item) => !isCampaignClosed(item)).length;
   const ongoingCampaigns = useMemo(
     () => campaigns.filter((item) => !isCampaignClosed(item)),
@@ -504,8 +511,8 @@ export default function FoundationDetailPage() {
               </p>
               <div className="grid gap-4 sm:grid-cols-3">
                 <div className="rounded-2xl border border-line bg-surface p-4">
-                  <div className="text-xs font-bold uppercase tracking-widest text-stone-400">{"\uB204\uC801 \uBAA8\uAE08\uC561"}</div>
-                  <div className="mt-2 text-lg font-display font-bold text-primary">{formatWon(totalRaised)}</div>
+                  <div className="text-xs font-bold uppercase tracking-widest text-stone-400">{"\uC218\uC218\uB8CC"}</div>
+                  <div className="mt-2 text-lg font-display font-bold text-primary">{formatFeeRate(foundation?.feeRate)}</div>
                 </div>
                 <div className="rounded-2xl border border-line bg-surface p-4">
                   <div className="text-xs font-bold uppercase tracking-widest text-stone-400">{"\uC804\uCCB4 \uCEA0\uD398\uC778"}</div>

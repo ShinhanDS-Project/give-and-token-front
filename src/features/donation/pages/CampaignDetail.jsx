@@ -1,7 +1,7 @@
 ﻿import { motion } from "motion/react";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ChevronLeft, Clock, Download, Heart, Loader2, MapPin, Share2, Users, X } from "lucide-react";
+import { ChevronLeft, Clock, Heart, Loader2, MapPin, Share2, Users, X } from "lucide-react";
 import { campaigns, formatWon } from "../data/campaigns";
 import FoundationProfileCard from "../../foundation/components/FoundationProfileCard";
 
@@ -132,21 +132,20 @@ export default function CampaignDetail() {
     if (localCampaign) {
       setCampaign(localCampaign);
       setIsLoading(false);
-      return () => {
-        ignore = true;
-      };
     }
 
     async function loadCampaignDetail() {
       try {
-        setIsLoading(true);
+        if (!localCampaign) {
+          setIsLoading(true);
+        }
         const campaignResponse = await fetch(`${API_BASE_URL}/api/foundation/campaigns/${id}/detail`);
 
         if (!campaignResponse.ok) throw new Error(`detail request failed: ${campaignResponse.status}`);
         const campaignData = await campaignResponse.json();
         if (!ignore) setCampaign(toDetailCampaignModel(campaignData, id));
       } catch {
-        if (!ignore) setCampaign(null);
+        if (!ignore && !localCampaign) setCampaign(null);
       } finally {
         if (!ignore) setIsLoading(false);
       }
@@ -303,7 +302,9 @@ export default function CampaignDetail() {
                 <div className="space-y-8">
                   <div className="pt-1">
                     <h3 className="mb-4 text-[1.7rem] font-bold text-ink">상세 설명</h3>
-                    <p className="text-lg leading-relaxed text-stone-600">{campaign.description}</p>
+                    <div className="rounded-[1.5rem] border border-line bg-white p-6">
+                      <p className="whitespace-pre-line text-lg leading-relaxed text-stone-600">{campaign.description}</p>
+                    </div>
                   </div>
 
                   <div>
@@ -335,11 +336,11 @@ export default function CampaignDetail() {
                   </div>
 
                   <div>
-                    <h3 className="mb-4 text-2xl font-display font-bold text-ink">활동 증빙 서류</h3>
+                    <h3 className="mb-4 text-2xl font-display font-bold text-ink">지출 계획</h3>
                     {safeDocs.length > 0 ? (
                       <div className="grid gap-4 sm:grid-cols-2">
                         {safeDocs.map((doc, index) => (
-                          <div key={`${doc.name}-${index}`} className="group flex items-center justify-between rounded-3xl border border-line bg-white p-6 transition-colors hover:border-primary/30">
+                          <div key={`${doc.name}-${index}`} className="group flex items-center rounded-3xl border border-line bg-white p-6 transition-colors hover:border-primary/30">
                             <div className="flex items-center gap-4">
                               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-stone-50 text-stone-400 transition-colors group-hover:text-primary">
                                 <FileText size={24} />
@@ -349,9 +350,6 @@ export default function CampaignDetail() {
                                 <div className="text-xs text-stone-400">{doc.size}</div>
                               </div>
                             </div>
-                            <a href={doc.href} download={doc.name} className="p-2 text-stone-400 transition-colors hover:text-primary">
-                              <Download size={20} />
-                            </a>
                           </div>
                         ))}
                       </div>

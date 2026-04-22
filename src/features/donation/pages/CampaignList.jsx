@@ -203,7 +203,7 @@ export default function CampaignList() {
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState("");
-  const [excludeClosed, setExcludeClosed] = useState(false);
+  const [excludeClosed, setExcludeClosed] = useState(true);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {

@@ -130,6 +130,7 @@ function TransactionDashboardPage() {
   });
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isGasInfoOpen, setIsGasInfoOpen] = useState(false);
   const [error, setError] = useState("");
   const [overviewError, setOverviewError] = useState("");
   const [noResultsKeyword, setNoResultsKeyword] = useState("");
@@ -287,18 +288,44 @@ function TransactionDashboardPage() {
       <div className="section-heading">
         <div>
           <p className="hero__eyebrow">Transactions</p>
-          <h3>최근 트랜잭션</h3>
+          <div className="section-heading__title-row">
+            <h3>최근 트랜잭션</h3>
+            <button
+              type="button"
+              className={`refresh-icon-button ${isRefreshing ? "is-spinning" : ""}`}
+              onClick={() => {
+                setIsGasInfoOpen(false);
+                handleRefreshTransactions();
+              }}
+              disabled={isRefreshing}
+              aria-label="최근 트랜잭션 새로고침"
+              title="최근 트랜잭션 새로고침"
+            >
+              <RefreshIcon />
+            </button>
+          </div>
         </div>
-        <button
-          type="button"
-          className={`refresh-icon-button ${isRefreshing ? "is-spinning" : ""}`}
-          onClick={handleRefreshTransactions}
-          disabled={isRefreshing}
-          aria-label="최근 트랜잭션 새로고침"
-          title="최근 트랜잭션 새로고침"
-        >
-          <RefreshIcon />
-        </button>
+        <div className="help-popover">
+          <button
+            type="button"
+            className={`help-icon-button ${isGasInfoOpen ? "is-active" : ""}`}
+            onClick={() => setIsGasInfoOpen((prev) => !prev)}
+            aria-label="가스비 설명 보기"
+            aria-expanded={isGasInfoOpen}
+            title="가스비 설명"
+          >
+            ?
+          </button>
+          {isGasInfoOpen && (
+            <div className="help-popover__panel" role="note">
+              <p className="help-popover__title">가스비란?</p>
+              <p>
+                블록체인에서 트랜잭션을 처리할 때 네트워크에 지급하는 수수료입니다.
+                쉽게 말해 거래를 기록하기 위한 처리 비용이며, 네트워크 혼잡도에 따라 달라질 수 있습니다.
+              </p>
+            </div>
+          )}
+        </div>
       </div>
 
       {loading && <div className="panel empty-state">트랜잭션 데이터를 불러오는 중입니다.</div>}
