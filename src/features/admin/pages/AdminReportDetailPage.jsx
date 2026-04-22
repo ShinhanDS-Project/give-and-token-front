@@ -11,7 +11,7 @@ function formatDate(v) {
 }
 
 const APPROVAL_LABEL = { APPROVED: "승인됨", PENDING: "검토중", REJECTED: "반려됨" };
-const APPROVAL_COLOR = { APPROVED: "#2563eb", PENDING: "#d97706", REJECTED: "#dc2626" };
+const APPROVAL_COLOR = { APPROVED: "#FF8A65", PENDING: "#d97706", REJECTED: "#dc2626" };
 
 const REPORT_ERROR_MSG = {
   REPORT_001: "존재하지 않는 활동 보고서입니다.",
@@ -157,7 +157,7 @@ export default function AdminReportDetailPage() {
               )}
               {actionResult && (
                 <p style={{ marginTop: "10px", fontSize: "13px", fontWeight: 700,
-                  color: approvalStatus === "APPROVED" ? "#2563eb" : "#dc2626" }}>
+                  color: approvalStatus === "APPROVED" ? "#FF8A65" : "#dc2626" }}>
                   {actionResult}
                 </p>
               )}

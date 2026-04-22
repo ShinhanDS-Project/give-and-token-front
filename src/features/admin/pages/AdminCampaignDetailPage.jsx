@@ -25,13 +25,13 @@ function formatPhone(v) {
 }
 
 const APPROVAL_LABEL = { APPROVED: "승인됨", PENDING: "대기", REJECTED: "반려됨" };
-const APPROVAL_COLOR = { APPROVED: "#2563eb", PENDING: "#d97706", REJECTED: "#dc2626" };
+const APPROVAL_COLOR = { APPROVED: "#FF8A65", PENDING: "#d97706", REJECTED: "#dc2626" };
 const CAMPAIGN_STATUS_LABEL = {
   PENDING: "대기", RECRUITING: "모집중", ACTIVE: "진행중",
   ENDED: "마감", SETTLED: "정산중", COMPLETED: "완료", CANCELLED: "취소",
 };
 const CAMPAIGN_STATUS_COLOR = {
-  PENDING: "#94a3b8", RECRUITING: "#2563eb", ACTIVE: "#16a34a",
+  PENDING: "#94a3b8", RECRUITING: "#FF8A65", ACTIVE: "#16a34a",
   ENDED: "#64748b", SETTLED: "#d97706", COMPLETED: "#7c3aed", CANCELLED: "#dc2626",
 };
 

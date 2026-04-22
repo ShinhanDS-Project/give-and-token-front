@@ -19,6 +19,7 @@
   color: #1a202c;
   font-family: 'Nanum Gothic', 'Apple SD Gothic Neo', sans-serif;
   transition: grid-template-columns 0.22s ease;
+  zoom: 1.1;
 }
 
 .admin-dashboard-page.sidebar-collapsed {
@@ -34,6 +35,7 @@
   top: 0;
   height: 100vh;
   flex-shrink: 0;
+  z-index: 100;
 }
 
 /* =============================================
@@ -55,14 +57,30 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 20px 16px 18px;
+  height: 58px;
+  padding: 0 16px;
   border-bottom: 1px solid #f0f2f7;
   margin-bottom: 8px;
+  box-sizing: border-box;
 }
 
 .admin-dashboard-sidebar__brand.is-collapsed {
   justify-content: center;
-  padding: 18px 8px;
+  padding: 0 8px;
+  gap: 0;
+}
+
+.admin-dashboard-sidebar__brand-text {
+  overflow: hidden;
+  transition: opacity 0.18s ease, max-width 0.22s ease;
+  opacity: 1;
+  max-width: 180px;
+  white-space: nowrap;
+}
+
+.sidebar-collapsed .admin-dashboard-sidebar__brand-text {
+  opacity: 0;
+  max-width: 0;
 }
 
 .admin-dashboard-sidebar__nav {
@@ -79,7 +97,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #2563eb;
+  background: #FF8A65;
   color: #fff;
   font-size: 16px;
   font-weight: 900;
@@ -180,10 +198,10 @@
 }
 
 .admin-sidebar-sub-item.is-active {
-  background: #eff4ff;
-  color: #2563eb;
+  background: #fff5f0;
+  color: #FF8A65;
   font-weight: 800;
-  border-left-color: #2563eb;
+  border-left-color: #FF8A65;
 }
 
 .admin-sidebar-sub-dot {
@@ -330,8 +348,65 @@
 .admin-sidebar-group__icon-btn:hover,
 .admin-sidebar-group__icon-btn.has-active,
 .admin-sidebar-group__icon-btn.is-flyout-open {
-  background: #eff4ff;
-  color: #2563eb;
+  background: #fff5f0;
+  color: #FF8A65;
+}
+
+/* 라벨 텍스트: 사이드바 접힘/펼침 시 페이드 */
+.admin-sidebar-label-text {
+  overflow: hidden;
+  white-space: nowrap;
+  transition: opacity 0.18s ease, max-width 0.22s ease;
+  opacity: 1;
+  max-width: 200px;
+}
+
+.sidebar-collapsed .admin-sidebar-label-text {
+  opacity: 0;
+  max-width: 0;
+}
+
+/* 헤더 버튼: 너비 고정하지 않고 내부 콘텐츠(라벨 텍스트)가 접히면서 자연스럽게 축소 */
+.admin-sidebar-group__header,
+.admin-sidebar-group__header-wrap {
+  transition: justify-content 0s, padding 0.22s ease, background 0.13s, color 0.13s;
+}
+
+.sidebar-collapsed .admin-sidebar-group__header,
+.sidebar-collapsed .admin-sidebar-group__header-wrap {
+  justify-content: center;
+  padding: 9px 0;
+}
+
+.sidebar-collapsed .admin-sidebar-group__header-left {
+  gap: 0;
+}
+
+.sidebar-collapsed .admin-sidebar-group__label-btn {
+  justify-content: center;
+  padding: 9px 0;
+  gap: 0;
+}
+
+.sidebar-collapsed .admin-sidebar-group__toggle-btn,
+.sidebar-collapsed .admin-sidebar-group__chevron {
+  display: none;
+}
+
+/* 접힘 상태 활성/호버 컬러 통일 */
+.sidebar-collapsed .admin-sidebar-group__header:hover,
+.sidebar-collapsed .admin-sidebar-group__header.has-active,
+.sidebar-collapsed .admin-sidebar-group__header.is-flyout-open,
+.sidebar-collapsed .admin-sidebar-group__header-wrap:hover,
+.sidebar-collapsed .admin-sidebar-group__header-wrap.has-active,
+.sidebar-collapsed .admin-sidebar-group__header-wrap.is-flyout-open {
+  background: #fff5f0;
+  color: #FF8A65;
+}
+
+.sidebar-collapsed .admin-sidebar-group__header.has-active .admin-sidebar-group__header-left,
+.sidebar-collapsed .admin-sidebar-group__header-wrap.has-active .admin-sidebar-group__label-btn {
+  color: #FF8A65;
 }
 
 /* =============================================
@@ -385,8 +460,8 @@
 }
 
 .admin-sidebar-flyout__item.is-active {
-  background: #eff4ff;
-  color: #2563eb;
+  background: #fff5f0;
+  color: #FF8A65;
   font-weight: 800;
 }
 
@@ -416,10 +491,10 @@
 }
 
 .admin-dashboard-sidebar__item.is-active {
-  background: #eff4ff;
-  color: #2563eb;
+  background: #fff5f0;
+  color: #FF8A65;
   font-weight: 800;
-  border-left-color: #2563eb;
+  border-left-color: #FF8A65;
 }
 
 /* 접힌 상태: 아이콘만 표시 */
@@ -432,8 +507,8 @@
 }
 
 .sidebar-collapsed .admin-dashboard-sidebar__item.is-active {
-  background: #eff4ff;
-  color: #2563eb;
+  background: #fff5f0;
+  color: #FF8A65;
   border-left: none;
 }
 
@@ -463,9 +538,9 @@
 }
 
 .admin-sidebar-collapse-btn:hover {
-  background: #f0f4ff;
-  color: #2563eb;
-  border-color: #2563eb;
+  background: #fff5f0;
+  color: #FF8A65;
+  border-color: #FF8A65;
 }
 
 .admin-dashboard-sidebar__logout {
@@ -494,6 +569,7 @@
 .sidebar-collapsed .admin-dashboard-sidebar__logout {
   justify-content: center;
   padding: 12px 0;
+  gap: 0;
 }
 
 /* =============================================
@@ -582,8 +658,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #ebf0ff;
-  color: #2563eb;
+  background: #fff5f0;
+  color: #FF8A65;
   font-size: 13px;
   font-weight: 900;
 }
@@ -600,8 +676,8 @@
 }
 
 .admin-sidebar-group__header.is-dashboard-active {
-  background: #eff4ff;
-  color: #2563eb;
+  background: #fff5f0;
+  color: #FF8A65;
   font-weight: 800;
 }
 
@@ -763,7 +839,7 @@
   letter-spacing: 0.02em;
 }
 
-.badge--blue   { background: transparent; color: #2563eb; }
+.badge--blue   { background: transparent; color: #FF8A65; }
 .badge--green  { background: transparent; color: #16a34a; }
 .badge--red    { background: transparent; color: #dc2626; }
 .badge--yellow { background: transparent; color: #ca8a04; }
@@ -874,8 +950,8 @@
 }
 
 .admin-row-btn:hover {
-  border-color: #2563eb;
-  color: #2563eb;
+  border-color: #FF8A65;
+  color: #FF8A65;
   background: #eff6ff;
 }
 
@@ -894,8 +970,8 @@
 }
 
 .admin-detail-btn:hover {
-  border-color: #2563eb;
-  color: #2563eb;
+  border-color: #FF8A65;
+  color: #FF8A65;
 }
 
 /* =============================================
@@ -932,8 +1008,8 @@
 }
 
 .admin-pagination button.is-active {
-  background: #2563eb;
-  border-color: #2563eb;
+  background: #FF8A65;
+  border-color: #FF8A65;
   color: #fff;
 }
 
@@ -973,8 +1049,8 @@
 }
 
 .admin-panel-tab.is-active {
-  color: #2563eb;
-  border-bottom-color: #2563eb;
+  color: #FF8A65;
+  border-bottom-color: #FF8A65;
   font-weight: 800;
 }
 
@@ -1028,7 +1104,7 @@
 }
 
 .admin-select:focus {
-  border-color: #2563eb;
+  border-color: #FF8A65;
 }
 
 .admin-filter-bar__search {
@@ -1051,7 +1127,7 @@
 }
 
 .admin-filter-bar__search input:focus {
-  border-color: #2563eb;
+  border-color: #FF8A65;
 }
 
 .admin-filter-bar__search button {
@@ -1059,7 +1135,7 @@
   padding: 0 14px;
   border: none;
   border-radius: 6px;
-  background: #2563eb;
+  background: #FF8A65;
   color: #fff;
   font-size: 12px;
   font-weight: 700;
@@ -1104,9 +1180,9 @@
 .admin-period-range__apply {
   height: 26px;
   padding: 0 10px;
-  border: 1px solid #2563eb;
+  border: 1px solid #FF8A65;
   border-radius: 6px;
-  background: #2563eb;
+  background: #FF8A65;
   color: #fff;
   font-size: 11px;
   font-weight: 700;
@@ -1135,8 +1211,8 @@
 
 .admin-period-btn.is-active {
   background: #eff6ff;
-  border-color: #2563eb;
-  color: #2563eb;
+  border-color: #FF8A65;
+  color: #FF8A65;
 }
 
 /* =============================================
@@ -1190,7 +1266,7 @@
   font-weight: 800;
 }
 
-.admin-chart-bubble--purple { background: #4c1d95; }
+.admin-chart-bubble--purple { background: #c85a32; }
 
 /* =============================================
    도넛 차트
@@ -1561,7 +1637,7 @@
 .admin-dashboard-detail-btn {
   border: 1px solid #e2e8f0;
   background: #fff;
-  color: #2563eb;
+  color: #FF8A65;
   font-size: 12px;
   font-weight: 700;
   border-radius: 6px;
@@ -1573,8 +1649,8 @@
 }
 
 .admin-dashboard-detail-btn:hover {
-  background: #ebf0ff;
-  border-color: #2563eb;
+  background: #fff5f0;
+  border-color: #FF8A65;
 }
 
 /* =============================================
@@ -1606,8 +1682,8 @@
 }
 
 .admin-dashboard-activity-item.is-clickable:hover {
-  border-color: #2563eb;
-  background: #ebf0ff;
+  border-color: #FF8A65;
+  background: #fff5f0;
 }
 
 .admin-dashboard-activity-item__type {
@@ -1808,8 +1884,8 @@
 }
 
 .admin-dashboard-request-row.is-clickable:hover {
-  border-color: #2563eb;
-  background: #ebf0ff;
+  border-color: #FF8A65;
+  background: #fff5f0;
 }
 
 .admin-dashboard-request-row__type {
@@ -1867,13 +1943,13 @@
 }
 
 .admin-dashboard-period-btn:hover {
-  border-color: #2563eb;
-  color: #2563eb;
+  border-color: #FF8A65;
+  color: #FF8A65;
 }
 
 .admin-dashboard-period-btn.is-active {
-  border-color: #2563eb;
-  background: #2563eb;
+  border-color: #FF8A65;
+  background: #FF8A65;
   color: #fff;
 }
 
@@ -1897,7 +1973,7 @@
 }
 
 .admin-dashboard-custom-period input[type="date"]:focus {
-  border-color: #2563eb;
+  border-color: #FF8A65;
 }
 
 .admin-dashboard-custom-period span {
@@ -1911,7 +1987,7 @@
   padding: 0 10px;
   border: none;
   border-radius: 6px;
-  background: #2563eb;
+  background: #FF8A65;
   color: #fff;
   font-size: 12px;
   font-weight: 800;
@@ -1967,13 +2043,13 @@
 }
 
 .admin-dashboard-pagination button:hover:not(:disabled) {
-  border-color: #2563eb;
-  color: #2563eb;
+  border-color: #FF8A65;
+  color: #FF8A65;
 }
 
 .admin-dashboard-pagination button.is-active {
-  border-color: #2563eb;
-  background: #2563eb;
+  border-color: #FF8A65;
+  background: #FF8A65;
   color: #fff;
 }
 
@@ -2154,7 +2230,7 @@
 
 .admin-event-detail-actions__approve {
   padding: 10px 24px;
-  background: #2563eb;
+  background: #FF8A65;
   color: #fff;
   border: none;
   border-radius: 7px;
@@ -2166,7 +2242,7 @@
 }
 
 .admin-event-detail-actions__approve:hover:not(:disabled) {
-  background: #1d4ed8;
+  background: #f06f47;
 }
 
 .admin-event-detail-actions__reject {
@@ -2225,9 +2301,9 @@
 
 .admin-modal__textarea:focus {
   outline: none;
-  border-color: #2563eb;
+  border-color: #FF8A65;
   background: #fff;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  box-shadow: 0 0 0 3px rgba(255, 138, 101, 0.1);
 }
 
 /* =============================================
@@ -2313,7 +2389,7 @@
 
 .admin-dashboard-list-controls__left select:focus,
 .admin-dashboard-list-controls__left input[type="datetime-local"]:focus {
-  border-color: #2563eb;
+  border-color: #FF8A65;
 }
 
 .admin-dashboard-list-controls__search {
@@ -2338,13 +2414,13 @@
 }
 
 .admin-dashboard-list-controls__search input:focus {
-  border-color: #2563eb;
+  border-color: #FF8A65;
 }
 
 .admin-dashboard-list-controls__search button {
   height: 32px;
   border: none;
-  background: #2563eb;
+  background: #FF8A65;
   color: #fff;
   border-radius: 6px;
   padding: 0 14px;
@@ -2356,7 +2432,7 @@
 }
 
 .admin-dashboard-list-controls__search button:hover {
-  background: #1d4ed8;
+  background: #f06f47;
 }
 
 /* =============================================
@@ -2387,8 +2463,8 @@
 }
 
 .admin-dashboard-list__item.is-clickable:hover {
-  border-color: #2563eb;
-  background: #ebf0ff;
+  border-color: #FF8A65;
+  background: #fff5f0;
 }
 
 .admin-dashboard-list__item strong {
@@ -2423,8 +2499,8 @@
   min-height: 20px;
   padding: 2px 8px;
   border-radius: 999px;
-  background: #ebf0ff;
-  color: #2563eb;
+  background: #fff5f0;
+  color: #FF8A65;
   font-size: 11px;
   font-weight: 800;
 }
@@ -2572,9 +2648,9 @@
 }
 
 .admin-foundation-table__row button:hover {
-  border-color: #2563eb;
-  color: #2563eb;
-  background: #ebf0ff;
+  border-color: #FF8A65;
+  color: #FF8A65;
+  background: #fff5f0;
 }
 
 /* =============================================
@@ -2598,8 +2674,8 @@
 }
 
 .admin-foundation-card:hover {
-  border-color: #2563eb;
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.1);
+  border-color: #FF8A65;
+  box-shadow: 0 4px 12px rgba(255, 138, 101, 0.1);
 }
 
 .admin-foundation-card__top {
@@ -2629,8 +2705,8 @@
   justify-content: center;
   font-size: 17px;
   font-weight: 900;
-  color: #2563eb;
-  background: #ebf0ff;
+  color: #FF8A65;
+  background: #fff5f0;
 }
 
 .admin-foundation-card__identity strong {
@@ -2654,8 +2730,8 @@
   min-height: 20px;
   padding: 0 8px;
   border-radius: 999px;
-  background: #ebf0ff;
-  color: #2563eb;
+  background: #fff5f0;
+  color: #FF8A65;
   font-size: 11px;
   font-weight: 800;
 }
@@ -2664,7 +2740,7 @@
   margin-top: 12px;
   border-top: 1px solid #f0f2f7;
   padding-top: 10px;
-  color: #2563eb;
+  color: #FF8A65;
   font-size: 12px;
   font-weight: 800;
 }
@@ -2717,8 +2793,8 @@
   justify-content: center;
   font-size: 26px;
   font-weight: 900;
-  color: #2563eb;
-  background: #ebf0ff;
+  color: #FF8A65;
+  background: #fff5f0;
 }
 
 .admin-foundation-detail-header h2 {
@@ -2807,12 +2883,12 @@
 }
 
 .admin-foundation-detail-approve {
-  background: #2563eb;
+  background: #FF8A65;
   color: #fff;
 }
 
 .admin-foundation-detail-approve:hover {
-  background: #1d4ed8;
+  background: #f06f47;
 }
 
 .admin-foundation-detail-reject {
@@ -2966,8 +3042,8 @@
   justify-content: center;
   font-size: 36px;
   font-weight: 900;
-  color: #2563eb;
-  background: #ebf0ff;
+  color: #FF8A65;
+  background: #fff5f0;
 }
 
 .afd-profile__info {
@@ -3049,8 +3125,8 @@
 }
 
 .afd-tab.is-active {
-  color: #2563eb;
-  border-bottom-color: #2563eb;
+  color: #FF8A65;
+  border-bottom-color: #FF8A65;
 }
 
 .afd-tab-content {
@@ -3239,12 +3315,12 @@
 
 .afd-btn--approve {
   background: none;
-  color: #2563eb;
+  color: #FF8A65;
   border: 1px solid #cbd5e1;
 }
 
 .afd-btn--approve:hover:not(:disabled) {
-  border-color: #2563eb;
+  border-color: #FF8A65;
 }
 
 .afd-btn--reject {
@@ -3332,7 +3408,7 @@
 }
 
 .admin-modal-textarea:focus {
-  border-color: #2563eb;
+  border-color: #FF8A65;
   background: #fff;
 }
 
@@ -3409,8 +3485,8 @@
   justify-content: center;
   font-size: 26px;
   font-weight: 900;
-  color: #2563eb;
-  background: #ebf0ff;
+  color: #FF8A65;
+  background: #fff5f0;
 }
 
 .admin-campaign-detail-header h2 {

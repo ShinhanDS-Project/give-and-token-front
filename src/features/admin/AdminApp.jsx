@@ -101,37 +101,37 @@ function SidebarGroup({ group, activeKey, onSelect, sidebarCollapsed, onOpenFlyo
     onOpenFlyout(isActiveFlyout ? null : { key: group.key, top: rect.top });
   };
 
-  if (sidebarCollapsed) {
-    return (
-      <div className="admin-sidebar-group">
-        <button
-          type="button"
-          className={`admin-sidebar-group__icon-btn ${hasActive ? "has-active" : ""} ${isActiveFlyout ? "is-flyout-open" : ""}`}
-          onClick={handleIconClick}
-          title={group.label}
-        >
-          <GroupIcon size={18} />
-        </button>
-      </div>
-    );
-  }
+  const handleLabelClick = (e) => {
+    if (sidebarCollapsed) {
+      handleIconClick(e);
+    } else if (hasGroupLink) {
+      onSelect(group.link);
+    } else {
+      setOpen((p) => !p);
+    }
+  };
+
+  const flyoutStateClass = isActiveFlyout ? "is-flyout-open" : "";
 
   return (
     <div className="admin-sidebar-group">
       {hasGroupLink ? (
-        <div className={`admin-sidebar-group__header-wrap ${hasActive ? "has-active" : ""}`}>
+        <div className={`admin-sidebar-group__header-wrap ${hasActive ? "has-active" : ""} ${flyoutStateClass}`}>
           <button
             type="button"
             className="admin-sidebar-group__label-btn"
-            onClick={() => onSelect(group.link)}
+            onClick={handleLabelClick}
+            title={group.label}
           >
             <GroupIcon size={16} />
-            <span>{group.label}</span>
+            <span className="admin-sidebar-label-text">{group.label}</span>
           </button>
           <button
             type="button"
             className="admin-sidebar-group__toggle-btn"
             onClick={() => setOpen((p) => !p)}
+            tabIndex={sidebarCollapsed ? -1 : 0}
+            aria-hidden={sidebarCollapsed}
           >
             {open ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
           </button>
@@ -139,17 +139,20 @@ function SidebarGroup({ group, activeKey, onSelect, sidebarCollapsed, onOpenFlyo
       ) : (
         <button
           type="button"
-          className={`admin-sidebar-group__header ${hasActive ? "has-active" : ""}`}
-          onClick={() => setOpen((p) => !p)}
+          className={`admin-sidebar-group__header ${hasActive ? "has-active" : ""} ${flyoutStateClass}`}
+          onClick={handleLabelClick}
+          title={group.label}
         >
           <div className="admin-sidebar-group__header-left">
             <GroupIcon size={16} />
-            <span>{group.label}</span>
+            <span className="admin-sidebar-label-text">{group.label}</span>
           </div>
-          {open ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+          <span className="admin-sidebar-group__chevron">
+            {open ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+          </span>
         </button>
       )}
-      {open && (
+      {open && !sidebarCollapsed && (
         <div className="admin-sidebar-group__items">
           {group.items.map(({ key, label }) => (
             <button
@@ -159,7 +162,7 @@ function SidebarGroup({ group, activeKey, onSelect, sidebarCollapsed, onOpenFlyo
               className={`admin-sidebar-sub-item ${activeKey === key ? "is-active" : ""}`}
             >
               <span className="admin-sidebar-sub-dot" />
-              <span>{label}</span>
+              <span className="admin-sidebar-label-text">{label}</span>
             </button>
           ))}
         </div>
@@ -239,40 +242,26 @@ function AdminShell() {
           {/* 브랜드 */}
           <div className={`admin-dashboard-sidebar__brand ${sidebarCollapsed ? "is-collapsed" : ""}`}>
             <div className="admin-dashboard-sidebar__logo">g</div>
-            {!sidebarCollapsed && (
-              <div>
-                <strong>give N token</strong>
-                <span>관리자 콘솔</span>
-              </div>
-            )}
+            <div className="admin-dashboard-sidebar__brand-text">
+              <strong>give N token</strong>
+              <span>관리자 콘솔</span>
+            </div>
           </div>
 
           {/* 대시보드 (단독 항목) */}
-          {!sidebarCollapsed ? (
-            <div className="admin-sidebar-dashboard-item">
-              <button
-                type="button"
-                className={`admin-sidebar-group__header ${activeKey === "dashboard" ? "has-active is-dashboard-active" : ""}`}
-                onClick={() => handleSelect("dashboard")}
-              >
-                <div className="admin-sidebar-group__header-left">
-                  <LayoutDashboard size={16} />
-                  <span>대시보드</span>
-                </div>
-              </button>
-            </div>
-          ) : (
-            <div className="admin-sidebar-group">
-              <button
-                type="button"
-                className={`admin-sidebar-group__icon-btn ${activeKey === "dashboard" ? "has-active" : ""}`}
-                onClick={() => handleSelect("dashboard")}
-                title="대시보드"
-              >
-                <LayoutDashboard size={18} />
-              </button>
-            </div>
-          )}
+          <div className="admin-sidebar-dashboard-item">
+            <button
+              type="button"
+              className={`admin-sidebar-group__header admin-sidebar-dashboard-btn ${activeKey === "dashboard" ? "has-active is-dashboard-active" : ""}`}
+              onClick={() => handleSelect("dashboard")}
+              title="대시보드"
+            >
+              <div className="admin-sidebar-group__header-left">
+                <LayoutDashboard size={16} />
+                <span className="admin-sidebar-label-text">대시보드</span>
+              </div>
+            </button>
+          </div>
 
           {/* 그룹 메뉴 */}
           <nav className="admin-dashboard-sidebar__nav">
@@ -296,7 +285,7 @@ function AdminShell() {
             title="로그아웃"
           >
             <LogOut size={16} />
-            {!sidebarCollapsed && <span>로그아웃</span>}
+            <span className="admin-sidebar-label-text">로그아웃</span>
           </button>
         </aside>
 

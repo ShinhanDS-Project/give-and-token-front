@@ -40,7 +40,7 @@ function normalizePageContent(payload) {
 }
 
 const REVIEW_LABEL = { ILLEGAL: "불법단체", SIMILAR: "유사단체", CLEAN: "이상없음", APPROVED: "승인됨", REJECTED: "반려됨" };
-const REVIEW_COLOR = { ILLEGAL: "#dc2626", SIMILAR: "#d97706", CLEAN: "#16a34a", APPROVED: "#2563eb", REJECTED: "#64748b" };
+const REVIEW_COLOR = { ILLEGAL: "#dc2626", SIMILAR: "#d97706", CLEAN: "#16a34a", APPROVED: "#FF8A65", REJECTED: "#64748b" };
 const ACCOUNT_LABEL = { ACTIVE: "활성", INACTIVE: "비활성", PRE_REGISTERED: "신규 신청" };
 const ACCOUNT_COLOR = { ACTIVE: "#16a34a", INACTIVE: "#64748b", PRE_REGISTERED: "#d97706" };
 

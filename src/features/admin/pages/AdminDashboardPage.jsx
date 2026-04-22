@@ -22,7 +22,7 @@ const PAGE_TITLES = {
   "send-history": "발송 내역",
 };
 
-const CATEGORY_COLORS = ["#3b82f6", "#60a5fa", "#2563eb", "#93c5fd", "#1d4ed8", "#0ea5e9"];
+const CATEGORY_COLORS = ["#FF8A65", "#ff9f80", "#f06f47", "#ffbfa6", "#d95a38", "#ff7043"];
 
 const DC = { W: 760, H: 280, pL: 46, pR: 16, pT: 16, pB: 36 };
 DC.cW = DC.W - DC.pL - DC.pR;
@@ -97,7 +97,7 @@ function DonutChart({ categories, field, label, formatValue }) {
             style={{ cursor: "pointer", transition: "opacity .15s" }}
             onMouseEnter={() => setHovered(i)}
           />
-        )) : <circle cx={CX} cy={CY} r={R} fill="#dbeafe" />}
+        )) : <circle cx={CX} cy={CY} r={R} fill="#ffe4d6" />}
         <circle cx={CX} cy={CY} r={r} fill="white" />
         <text x={CX} y={CY - 4} textAnchor="middle" fontSize="9" fontWeight="700" fill="#374151">{label}</text>
         {hovered !== null && segments[hovered] && (
@@ -423,12 +423,12 @@ function DashboardHome({ onNavigate, navigate, donationDays, userDays, onDonatio
       <section className="admin-summary-grid">
         <article className="admin-summary-card">
           <p className="admin-summary-card__label">전체 누적 기부액</p>
-          <strong className="admin-summary-card__value" style={{ color: "#2563eb" }}>{formatCurrency(summary.totalDonationAmount)}</strong>
-          <span className="admin-summary-card__sub"  style={{ color: "#2563eb" }}>{summary.totalUserCount.toLocaleString("ko-KR")}명</span>
+          <strong className="admin-summary-card__value" style={{ color: "#FF8A65" }}>{formatCurrency(summary.totalDonationAmount)}</strong>
+          <span className="admin-summary-card__sub"  style={{ color: "#FF8A65" }}>{summary.totalUserCount.toLocaleString("ko-KR")}명</span>
         </article>
         <article className="admin-summary-card">
           <p className="admin-summary-card__label">목표 달성 캠페인 비율</p>
-          <strong className="admin-summary-card__value" style={{ color: "#2563eb" }} >{summary.achievedCampaignRatio.toFixed(1)}%</strong>
+          <strong className="admin-summary-card__value" style={{ color: "#FF8A65" }} >{summary.achievedCampaignRatio.toFixed(1)}%</strong>
         </article>
         <article className="admin-summary-card">
           <p className="admin-summary-card__label">일 별 기부액</p>
@@ -477,11 +477,11 @@ function DashboardHome({ onNavigate, navigate, donationDays, userDays, onDonatio
                 {trend.map((p, i) => i % xStepD !== 0 ? null : (
                   <text key={i} x={ptXD(i)} y={DC.H - DC.pB + 14} textAnchor="middle" fontSize="10" fill="#94a3b8">{p.date.slice(5)}</text>
                 ))}
-                <path d={linePathD} fill="none" stroke="#3b82f6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                <path d={linePathD} fill="none" stroke="#FF8A65" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
                 {tooltip && (
                   <>
-                    <line x1={tooltip.x} y1={DC.pT} x2={tooltip.x} y2={DC.pT + DC.cH} stroke="#dbeafe" strokeWidth={1} strokeDasharray="4 3" />
-                    <circle cx={tooltip.x} cy={tooltip.y} r={4} fill="#2563eb" stroke="#fff" strokeWidth={2} />
+                    <line x1={tooltip.x} y1={DC.pT} x2={tooltip.x} y2={DC.pT + DC.cH} stroke="#ffe4d6" strokeWidth={1} strokeDasharray="4 3" />
+                    <circle cx={tooltip.x} cy={tooltip.y} r={4} fill="#FF8A65" stroke="#fff" strokeWidth={2} />
                   </>
                 )}
               </svg>
@@ -558,11 +558,11 @@ function DashboardHome({ onNavigate, navigate, donationDays, userDays, onDonatio
                 {userTrend.map((p, i) => i % xStepU !== 0 ? null : (
                   <text key={i} x={ptXU(i)} y={UC.H - UC.pB + 14} textAnchor="middle" fontSize="10" fill="#94a3b8">{p.date.slice(5)}</text>
                 ))}
-                <path d={linePathU} fill="none" stroke="#7c3aed" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                <path d={linePathU} fill="none" stroke="#FFB499" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
                 {userTooltip && (
                   <>
-                    <line x1={userTooltip.x} y1={UC.pT} x2={userTooltip.x} y2={UC.pT + UC.cH} stroke="#ede9fe" strokeWidth={1} strokeDasharray="4 3" />
-                    <circle cx={userTooltip.x} cy={userTooltip.y} r={4} fill="#7c3aed" stroke="#fff" strokeWidth={2} />
+                    <line x1={userTooltip.x} y1={UC.pT} x2={userTooltip.x} y2={UC.pT + UC.cH} stroke="#ffe4d6" strokeWidth={1} strokeDasharray="4 3" />
+                    <circle cx={userTooltip.x} cy={userTooltip.y} r={4} fill="#FFB499" stroke="#fff" strokeWidth={2} />
                   </>
                 )}
               </svg>
@@ -584,7 +584,7 @@ function DashboardHome({ onNavigate, navigate, donationDays, userDays, onDonatio
             <AdminTable
               columns={[
                 { key: "targetType", label: "유형", width: "60px", render: (r) => {
-                  const colorMap = { FOUNDATION: "#2563eb", CAMPAIGN: "#16a34a", FINAL_REPORT: "#ca8a04" };
+                  const colorMap = { FOUNDATION: "#FF8A65", CAMPAIGN: "#16a34a", FINAL_REPORT: "#ca8a04" };
                   return <span style={{ fontSize: "11px", fontWeight: 800, color: colorMap[r.targetType] ?? "#64748b" }}>{r.targetType}</span>;
                 }},
                 { key: "description", label: "내용", render: (r) => <strong>{r.description}</strong> },
@@ -613,7 +613,7 @@ function DashboardHome({ onNavigate, navigate, donationDays, userDays, onDonatio
         <AdminTable
           columns={[
             { key: "actionType", label: "액션", width: "110px", render: (r) => {
-              const colorMap = { APPROVE: "#2563eb", REJECT: "#dc2626", DISABLE: "#64748b", ENABLE: "#16a34a" };
+              const colorMap = { APPROVE: "#FF8A65", REJECT: "#dc2626", DISABLE: "#64748b", ENABLE: "#16a34a" };
               return <span style={{ fontSize: "11px", fontWeight: 800, color: colorMap[r.actionType] ?? "#374151" }}>{r.actionType}</span>;
             }},
             { key: "targetType", label: "대상 유형", width: "130px", render: (r) => (
@@ -684,7 +684,7 @@ function FoundationsPanel({ onOpenDetail }) {
     { key: "createdAt", label: "신청일", width: "130px", render: (r) => formatDate(r.createdAt) },
     { key: "_action", label: "관리", width: "160px", render: (r) => (
       <div style={{ display: "flex", gap: "4px", flexWrap: "nowrap" }}>
-        <button type="button" className="admin-row-btn" style={{ color: "#2563eb", borderColor: "#2563eb" }}
+        <button type="button" className="admin-row-btn" style={{ color: "#FF8A65", borderColor: "#FF8A65" }}
           onClick={(e) => { e.stopPropagation(); handleApprove(r.foundationNo); }}>승인</button>
         <button type="button" className="admin-row-btn" style={{ color: "#dc2626", borderColor: "#fca5a5" }}
           onClick={(e) => { e.stopPropagation(); handleReject(r.foundationNo); }}>반려</button>
@@ -737,7 +737,7 @@ function FoundationsPanel({ onOpenDetail }) {
 
 // ── 캠페인 조회 패널 ──────────────────────────────────────────────────────────
 const CAMPAIGN_STATUS_COLOR = {
-  PENDING: "#94a3b8", RECRUITING: "#2563eb", ACTIVE: "#16a34a",
+  PENDING: "#94a3b8", RECRUITING: "#FF8A65", ACTIVE: "#16a34a",
   ENDED: "#64748b", SETTLED: "#d97706", COMPLETED: "#7c3aed", CANCELLED: "#dc2626",
 };
 const CAMPAIGN_STATUS_LABEL = {
@@ -911,7 +911,7 @@ function CampaignsPanel({ onOpenDetail }) {
     { key: "createdAt", label: "신청일", width: "130px", render: (r) => formatDate(r.createdAt) },
     { key: "_action", label: "관리", width: "160px", render: (r) => (
       <div style={{ display: "flex", gap: "4px", flexWrap: "nowrap" }}>
-        <button type="button" className="admin-row-btn" style={{ color: "#2563eb", borderColor: "#2563eb" }}
+        <button type="button" className="admin-row-btn" style={{ color: "#FF8A65", borderColor: "#FF8A65" }}
           onClick={(e) => { e.stopPropagation(); handleApprove(r.campaignNo); }}>승인</button>
         <button type="button" className="admin-row-btn" style={{ color: "#dc2626", borderColor: "#fca5a5" }}
           onClick={(e) => { e.stopPropagation(); setRejectTarget(r); }}>반려</button>
@@ -987,7 +987,7 @@ function ReportListPanel({ onOpenDetail }) {
   };
 
   const REPORT_STATUS_LABEL = { PENDING: "검토중", APPROVED: "승인됨", REJECTED: "반려됨" };
-  const REPORT_STATUS_COLOR = { PENDING: "#d97706", APPROVED: "#2563eb", REJECTED: "#dc2626" };
+  const REPORT_STATUS_COLOR = { PENDING: "#d97706", APPROVED: "#FF8A65", REJECTED: "#dc2626" };
 
   const columns = [
     { key: "_no",          label: "번호",      width: "52px",  render: (r, i) => <span style={{ color: "#94a3b8", fontSize: "12px" }}>{page * PAGE_SIZE + i + 1}</span> },
@@ -1001,7 +1001,7 @@ function ReportListPanel({ onOpenDetail }) {
     { key: "createdAt",    label: "제출일",    width: "130px", render: (r) => formatDate(r.createdAt) },
     { key: "_action",      label: "관리",      width: "160px", render: (r) => (
       <div style={{ display: "flex", gap: "4px", flexWrap: "nowrap" }}>
-        <button type="button" className="admin-row-btn" style={{ color: "#2563eb", borderColor: "#2563eb" }}
+        <button type="button" className="admin-row-btn" style={{ color: "#FF8A65", borderColor: "#FF8A65" }}
           onClick={(e) => { e.stopPropagation(); handleApprove(r.reportNo); }}>승인</button>
         <button type="button" className="admin-row-btn" style={{ color: "#dc2626", borderColor: "#fca5a5" }}
           onClick={(e) => { e.stopPropagation(); setRejectTarget(r); }}>반려</button>
@@ -1080,12 +1080,16 @@ function ReportsPanel({ onOpenDetail }) {
     { key: "usagePurpose", label: "사용 목적" },
     { key: "approvalStatus", label: "상태", width: "80px", render: (r) => <StatusBadge text={r.approvalStatus === "PENDING" ? "검토중" : r.approvalStatus} /> },
     { key: "createdAt", label: "제출일", width: "130px", render: (r) => formatDate(r.createdAt) },
-    { key: "_action", label: "관리", width: "120px", render: (r) => (
+    { key: "_action", label: "관리", width: "160px", render: (r) => (
       <div style={{ display: "flex", gap: "4px", flexWrap: "nowrap" }}>
-        <button type="button" className="admin-row-btn" style={{ color: "#2563eb", borderColor: "#2563eb" }}
+        <button type="button" className="admin-row-btn" style={{ color: "#FF8A65", borderColor: "#FF8A65" }}
           onClick={(e) => { e.stopPropagation(); handleApprove(r.reportNo); }}>승인</button>
         <button type="button" className="admin-row-btn" style={{ color: "#dc2626", borderColor: "#fca5a5" }}
           onClick={(e) => { e.stopPropagation(); setRejectTarget(r); }}>반려</button>
+        {onOpenDetail && (
+          <button type="button" className="admin-row-btn"
+            onClick={(e) => { e.stopPropagation(); onOpenDetail(r); }}>상세</button>
+        )}
       </div>
     )},
   ];
@@ -1313,7 +1317,7 @@ function RequestsPanel({ onNavigate }) {
               columns={[
                 { key: "_no", label: "번호", width: "52px", render: (ev, i) => <span style={{ color: "#94a3b8", fontSize: "12px" }}>{page * PAGE_SIZE + i + 1}</span> },
                 { key: "targetType", label: "유형", width: "100px", render: (ev) => {
-                  const colorMap = { FOUNDATION: "#2563eb", CAMPAIGN: "#16a34a", FINAL_REPORT: "#ca8a04" };
+                  const colorMap = { FOUNDATION: "#FF8A65", CAMPAIGN: "#16a34a", FINAL_REPORT: "#ca8a04" };
                   const labelMap = { FOUNDATION: "기부단체", CAMPAIGN: "캠페인", FINAL_REPORT: "활동보고서" };
                   return (
                     <span style={{ fontSize: "11px", fontWeight: 800, color: colorMap[ev.targetType] ?? "#64748b" }}>
@@ -1648,7 +1652,7 @@ function WalletPanel() {
             </div>
             <div>
               <p style={{ margin: 0, fontSize: "11px", color: "#94a3b8", fontWeight: 700 }}>잔액</p>
-              <p style={{ margin: "4px 0 0", fontSize: "22px", fontWeight: 900, color: "#2563eb" }}>
+              <p style={{ margin: "4px 0 0", fontSize: "22px", fontWeight: 900, color: "#FF8A65" }}>
                 {walletInfo.balance != null ? `${Number(walletInfo.balance).toLocaleString()} GNT` : "-"}
               </p>
             </div>
