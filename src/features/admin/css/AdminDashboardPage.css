@@ -3858,6 +3858,40 @@
   object-fit: cover;
 }
 
+.acd-use-plans {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.acd-use-plan-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 14px;
+  border: 1px solid #edf0f5;
+  background: #f8f9fc;
+  border-radius: 8px;
+}
+
+.acd-use-plan-item__content {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: #1a202c;
+  flex: 1;
+  word-break: break-word;
+}
+
+.acd-use-plan-item__amount {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 800;
+  color: #FF8A65;
+  white-space: nowrap;
+}
+
 /* =============================================
    보고서 상세 레이아웃 (ard-*)
    ============================================= */

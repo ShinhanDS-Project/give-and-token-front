@@ -77,6 +77,17 @@ export default function AdminCampaignDetailPage() {
             .then((b) => { if (!cancelled) setBeneficiary(b); })
             .catch(() => {});
         }
+
+        // usePlans는 admin DTO에 포함되어 있지 않으므로 공개 엔드포인트에서 별도 조회
+        fetch(`/api/foundation/campaigns/${campaignNo}/detail`, {
+          headers: { Accept: "application/json" },
+        })
+          .then((r) => (r.ok ? r.json() : null))
+          .then((pub) => {
+            if (cancelled || !pub?.usePlans) return;
+            setDetail((prev) => (prev ? { ...prev, usePlans: pub.usePlans } : prev));
+          })
+          .catch(() => {});
       })
       .catch((err) => { if (!cancelled) setError(err.message); })
       .finally(() => { if (!cancelled) setLoading(false); });
@@ -221,6 +232,20 @@ export default function AdminCampaignDetailPage() {
                     <img key={idx} src={src} alt={`상세 이미지 ${idx + 1}`} className="acd-full__img" />
                   ))}
                 </div>
+              )}
+
+              <h3 className="acd-full__heading" style={{ marginTop: 24 }}>지출 계획</h3>
+              {detail.usePlans?.length > 0 ? (
+                <div className="acd-use-plans">
+                  {detail.usePlans.map((plan) => (
+                    <div key={plan.usePlanNo ?? plan.planContent} className="acd-use-plan-item">
+                      <p className="acd-use-plan-item__content">{plan.planContent}</p>
+                      <p className="acd-use-plan-item__amount">{formatCurrency(plan.planAmount)}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="admin-dashboard-empty-text">등록된 지출 계획이 없습니다.</p>
               )}
             </section>
 
