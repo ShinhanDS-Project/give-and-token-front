@@ -257,13 +257,30 @@ export default function AdminFoundationDetailPage() {
                 <div className="afd-tab-content">
                   {activeTab === "campaigns" && (
                     <div className="afd-campaign-list">
-                      {campaigns.length ? campaigns.slice(0, 8).map((c) => (
-                        <div key={c.campaignNo} className="afd-campaign-item">
-                          <strong>{c.title || "-"}</strong>
-                          <p>{formatCurrency(c.currentAmount)} / {formatCurrency(c.targetAmount)}</p>
-                          <span>마감: {formatDate(c.endAt)}</span>
-                        </div>
-                      )) : (
+                      {campaigns.length ? campaigns.slice(0, 8).map((c) => {
+                        const to = c.approvalStatus === "APPROVED"
+                          ? `/admin/campaign/${c.campaignNo}?from=list`
+                          : `/admin/campaign/${c.campaignNo}?from=approval`;
+                        return (
+                          <div
+                            key={c.campaignNo}
+                            className="afd-campaign-item afd-campaign-item--clickable"
+                            role="button"
+                            tabIndex={0}
+                            onClick={() => navigate(to)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" || e.key === " ") {
+                                e.preventDefault();
+                                navigate(to);
+                              }
+                            }}
+                          >
+                            <strong>{c.title || "-"}</strong>
+                            <p>{formatCurrency(c.currentAmount)} / {formatCurrency(c.targetAmount)}</p>
+                            <span>마감: {formatDate(c.endAt)}</span>
+                          </div>
+                        );
+                      }) : (
                         <p className="admin-dashboard-empty-text">캠페인 데이터가 없습니다.</p>
                       )}
                     </div>
