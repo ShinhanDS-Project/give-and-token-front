@@ -1696,7 +1696,7 @@ function SendHistoryPanel() {
   const [broadcastContent, setBroadcastContent] = useState("");
   const [broadcastLoading, setBroadcastLoading] = useState(false);
 
-  const PAGE_SIZE = 20;
+  const PAGE_SIZE = 10;
 
   useEffect(() => {
     let cancelled = false;
@@ -1763,7 +1763,7 @@ function SendHistoryPanel() {
     { key: "content", label: "내용", render: (r) => <strong>{r.content}</strong> },
     { key: "recipientType", label: "수신자 유형", width: "110px", render: (r) => <StatusBadge text={r.recipientType} /> },
     { key: "notificationType", label: "알림 유형", width: "110px", render: (r) => <span style={{ fontSize: "12px", color: "#64748b" }}>{r.notificationType}</span> },
-    { key: "isRead", label: "읽음 여부", width: "100px", render: (r) => <StatusBadge text={r.isRead ? "읽음" : "안읽음"} /> },
+    { key: "isRead", label: "읽음 여부", width: "100px", render: (r) => <StatusBadge text={r.read ? "읽음" : "안읽음"} /> },
     { key: "createdAt", label: "발송일", width: "130px", render: (r) => formatDate(r.createdAt) },
   ];
 
@@ -1894,13 +1894,13 @@ export default function AdminDashboardPage() {
         />
       );
     }
-    if (activeKey === "foundations" || activeKey === "foundations-approval") return <FoundationsPanel onOpenDetail={(no) => navigate(`/admin/foundation/${no}`)} />;
-    if (activeKey === "foundations-list") return <FoundationListPanel onOpenDetail={(no) => navigate(`/admin/foundation/${no}`)} />;
-    if (activeKey === "campaigns" || activeKey === "campaigns-approval") return <CampaignsPanel onOpenDetail={(item) => navigate(`/admin/campaign/${item.campaignNo}`, { state: { record: item } })} />;
-    if (activeKey === "campaigns-list") return <CampaignListPanel onOpenDetail={(item) => navigate(`/admin/campaign/${item.campaignNo}`, { state: { record: item } })} />;
-    if (activeKey === "reports" || activeKey === "reports-approval") return <ReportsPanel onOpenDetail={(item) => navigate(`/admin/report/${item.reportNo}`, { state: { record: item } })} />;
-    if (activeKey === "reports-list") return <ReportListPanel onOpenDetail={(item) => navigate(`/admin/report/${item.reportNo}`, { state: { record: item } })} />;
-    if (activeKey === "inactive") return <InactivePanel onOpenDetail={(no) => navigate(`/admin/foundation/${no}`)} />;
+    if (activeKey === "foundations" || activeKey === "foundations-approval") return <FoundationsPanel onOpenDetail={(no) => navigate(`/admin/foundation/${no}?from=approval`)} />;
+    if (activeKey === "foundations-list") return <FoundationListPanel onOpenDetail={(no) => navigate(`/admin/foundation/${no}?from=list`)} />;
+    if (activeKey === "campaigns" || activeKey === "campaigns-approval") return <CampaignsPanel onOpenDetail={(item) => navigate(`/admin/campaign/${item.campaignNo}?from=approval`, { state: { record: item } })} />;
+    if (activeKey === "campaigns-list") return <CampaignListPanel onOpenDetail={(item) => navigate(`/admin/campaign/${item.campaignNo}?from=list`, { state: { record: item } })} />;
+    if (activeKey === "reports" || activeKey === "reports-approval") return <ReportsPanel onOpenDetail={(item) => navigate(`/admin/report/${item.reportNo}?from=approval`, { state: { record: item } })} />;
+    if (activeKey === "reports-list") return <ReportListPanel onOpenDetail={(item) => navigate(`/admin/report/${item.reportNo}?from=list`, { state: { record: item } })} />;
+    if (activeKey === "inactive") return <InactivePanel onOpenDetail={(no) => navigate(`/admin/foundation/${no}?from=inactive`)} />;
     if (activeKey === "members") return <MembersPanel onOpenDetail={(r) => navigate(`/admin/member/${r.userNo}`)} />;
     if (activeKey === "requests") return <RequestsPanel onNavigate={(path) => navigate(path)} />;
     if (activeKey === "logs") return <LogsHubPanel />;

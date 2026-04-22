@@ -185,10 +185,21 @@ function AdminShell() {
     const sp = new URLSearchParams(location.search);
     const tab = sp.get("tab");
     const view = sp.get("view");
+    const from = sp.get("from");
 
-    if (location.pathname.startsWith("/admin/foundation/")) return "foundations-approval";
-    if (location.pathname.startsWith("/admin/campaign/")) return "campaigns-approval";
-    if (location.pathname.startsWith("/admin/report/")) return "reports-approval";
+    if (location.pathname.startsWith("/admin/foundation/")) {
+      if (from === "list") return "foundations-list";
+      if (from === "inactive") return "inactive";
+      return "foundations-approval";
+    }
+    if (location.pathname.startsWith("/admin/campaign/")) {
+      if (from === "list") return "campaigns-list";
+      return "campaigns-approval";
+    }
+    if (location.pathname.startsWith("/admin/report/")) {
+      if (from === "list") return "reports-list";
+      return "reports-approval";
+    }
     if (location.pathname.startsWith("/admin/request/")) return "requests";
     if (location.pathname.startsWith("/admin/log/")) return "logs";
     if (location.pathname.startsWith("/admin/member/")) return "members";
