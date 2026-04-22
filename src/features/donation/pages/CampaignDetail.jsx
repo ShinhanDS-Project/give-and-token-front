@@ -1,6 +1,6 @@
 ﻿import { motion } from "motion/react";
 import { useEffect, useMemo, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams,useLocation } from "react-router-dom";
 import { ChevronLeft, Clock, Heart, Loader2, MapPin, Share2, Users, X } from "lucide-react";
 import { campaigns, formatWon } from "../data/campaigns";
 import FoundationProfileCard from "../../foundation/components/FoundationProfileCard";
@@ -125,7 +125,11 @@ function FileText({ size, className }) {
 
 export default function CampaignDetail() {
   const { id } = useParams();
-  const [activeTab, setActiveTab] = useState("about");
+  const location = useLocation();
+  const [activeTab, setActiveTab] =useState(() => {
+    const params = new URLSearchParams(location.search);
+    return params.get("tab") || "about";
+  });
   const [shareMessage, setShareMessage] = useState("");
   const localCampaign = useMemo(() => campaigns.find((item) => item.id === Number(id)), [id]);
   const [campaign, setCampaign] = useState(localCampaign ?? null);
@@ -133,7 +137,20 @@ export default function CampaignDetail() {
   const [finalReport, setFinalReport] = useState(null);
   const [isFinalReportLoading, setIsFinalReportLoading] = useState(false);
   const [selectedReportImage, setSelectedReportImage] = useState("");
-
+// URL 쿼리 스트링 감지를 위해 추가
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const tabParam = params.get("tab");
+    if (tabParam) {
+      setActiveTab(tabParam);
+      // 보고서 섹션으로 부드럽게 스크롤 (선택 사항)
+      if (tabParam === "proof") {
+        setTimeout(() => {
+          window.scrollTo({ top: 500, behavior: "smooth" });
+        }, 100);
+      }
+    }
+  }, [location]);
   useEffect(() => {
     let ignore = false;
 

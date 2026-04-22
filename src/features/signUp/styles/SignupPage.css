@@ -1,4 +1,4 @@
-.signup-container {
+﻿.signup-container {
   min-height: 100vh;
   background: #fffdfb;
   display: flex;
@@ -155,7 +155,7 @@
 }
 
 .signup-input::placeholder {
-  color: #a29185;
+  color: #cfbeb2;
 }
 
 .signup-input:focus {
