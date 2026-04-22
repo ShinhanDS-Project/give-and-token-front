@@ -71,6 +71,7 @@ function DashboardLayout({ theme, onToggleTheme }) {
   };
 
   return (
+
     <div className="app-shell blockchain-default-font">
       <aside className="sidebar sidebar--thin">
         <div className="sidebar__brand-block">
