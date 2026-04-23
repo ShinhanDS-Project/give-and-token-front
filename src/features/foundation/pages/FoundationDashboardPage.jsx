@@ -14,6 +14,8 @@ import {
   Settings,
   Wallet,
   Pencil,
+  Eye,
+  EyeOff,
   X,
 } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -351,6 +353,11 @@ function FoundationDashboardPage() {
     newPassword: "",
     confirmPassword: "",
   });
+  const [passwordVisibility, setPasswordVisibility] = useState({
+    currentPassword: false,
+    newPassword: false,
+    confirmPassword: false,
+  });
   const [walletInfo, setWalletInfo] = useState(null);
   const [settlements, setSettlements] = useState([]);
   const [redemptions, setRedemptions] = useState([]);
@@ -661,11 +668,17 @@ function FoundationDashboardPage() {
     setSettingsMessage("");
   };
 
+  const togglePasswordVisibility = (fieldName) => {
+    setPasswordVisibility((previous) => ({
+      ...previous,
+      [fieldName]: !previous[fieldName],
+    }));
+  };
+
   const handleSettingsSubmit = async (event) => {
     event.preventDefault();
     if (!settingsEditMode) return;
 
-    const feeRateNumber = Number(settingsForm.feeRate);
     if (
       !settingsForm.description.trim() ||
       !settingsForm.contactPhone.trim() ||
@@ -673,11 +686,6 @@ function FoundationDashboardPage() {
       !settingsForm.bankName.trim()
     ) {
       setSettingsError("모든 필수 항목을 입력해주세요.");
-      return;
-    }
-
-    if (Number.isNaN(feeRateNumber) || feeRateNumber < 0 || feeRateNumber > 1) {
-      setSettingsError("수수료율은 0~1 사이 숫자로 입력해주세요.");
       return;
     }
 
@@ -712,7 +720,6 @@ function FoundationDashboardPage() {
         ...previous,
         ...updated,
         bankName: settingsForm.bankName,
-        feeRate: Number(settingsForm.feeRate),
       }));
       setSettingsForm((previous) => ({
         ...previous,
@@ -739,6 +746,11 @@ function FoundationDashboardPage() {
         newPassword: "",
         confirmPassword: "",
       });
+      setPasswordVisibility({
+        currentPassword: false,
+        newPassword: false,
+        confirmPassword: false,
+      });
       setSettingsEditMode(false);
       setSettingsMessage(
         shouldUpdatePassword
@@ -761,6 +773,11 @@ function FoundationDashboardPage() {
       currentPassword: "",
       newPassword: "",
       confirmPassword: "",
+    });
+    setPasswordVisibility({
+      currentPassword: false,
+      newPassword: false,
+      confirmPassword: false,
     });
     setTimeout(() => setSettingsEditMode(true), 0);
   };
@@ -785,6 +802,11 @@ function FoundationDashboardPage() {
       currentPassword: "",
       newPassword: "",
       confirmPassword: "",
+    });
+    setPasswordVisibility({
+      currentPassword: false,
+      newPassword: false,
+      confirmPassword: false,
     });
   };
 
@@ -1494,9 +1516,7 @@ function FoundationDashboardPage() {
                     </label>
                     <label className="fd-form-field">
                       <span className="fd-form-label">수수료율</span>
-                      {settingsEditMode
-                        ? <input name="feeRate" type="number" step="0.01" min="0" max="1" value={settingsForm.feeRate} onChange={handleSettingsChange} className="fd-form-input" />
-                        : <span className="fd-form-value">{settingsForm.feeRate || "-"}</span>}
+                      <span className="fd-form-value">{settingsForm.feeRate || "-"}</span>
                     </label>
                   </div>
 
@@ -1511,15 +1531,30 @@ function FoundationDashboardPage() {
                     <div className="fd-password-grid">
                       <label className="fd-form-field">
                         <span className="fd-form-label">현재 비밀번호</span>
-                        <input type="password" name="currentPassword" value={passwordForm.currentPassword} onChange={handlePasswordChange} autoComplete="current-password" className="fd-form-input" placeholder="변경 시 입력" />
+                        <div className="fd-password-input-wrap">
+                          <input type={passwordVisibility.currentPassword ? "text" : "password"} name="currentPassword" value={passwordForm.currentPassword} onChange={handlePasswordChange} autoComplete="current-password" className="fd-form-input fd-form-input--password" placeholder="변경 시 입력" />
+                          <button type="button" className="fd-password-toggle" onClick={() => togglePasswordVisibility("currentPassword")} aria-label={passwordVisibility.currentPassword ? "현재 비밀번호 숨기기" : "현재 비밀번호 보기"}>
+                            {passwordVisibility.currentPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                          </button>
+                        </div>
                       </label>
                       <label className="fd-form-field">
                         <span className="fd-form-label">새 비밀번호</span>
-                        <input type="password" name="newPassword" value={passwordForm.newPassword} onChange={handlePasswordChange} autoComplete="new-password" className="fd-form-input" placeholder="변경 시 입력" />
+                        <div className="fd-password-input-wrap">
+                          <input type={passwordVisibility.newPassword ? "text" : "password"} name="newPassword" value={passwordForm.newPassword} onChange={handlePasswordChange} autoComplete="new-password" className="fd-form-input fd-form-input--password" placeholder="변경 시 입력" />
+                          <button type="button" className="fd-password-toggle" onClick={() => togglePasswordVisibility("newPassword")} aria-label={passwordVisibility.newPassword ? "새 비밀번호 숨기기" : "새 비밀번호 보기"}>
+                            {passwordVisibility.newPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                          </button>
+                        </div>
                       </label>
                       <label className="fd-form-field">
                         <span className="fd-form-label">새 비밀번호 확인</span>
-                        <input type="password" name="confirmPassword" value={passwordForm.confirmPassword} onChange={handlePasswordChange} autoComplete="new-password" className="fd-form-input" placeholder="변경 시 입력" />
+                        <div className="fd-password-input-wrap">
+                          <input type={passwordVisibility.confirmPassword ? "text" : "password"} name="confirmPassword" value={passwordForm.confirmPassword} onChange={handlePasswordChange} autoComplete="new-password" className="fd-form-input fd-form-input--password" placeholder="변경 시 입력" />
+                          <button type="button" className="fd-password-toggle" onClick={() => togglePasswordVisibility("confirmPassword")} aria-label={passwordVisibility.confirmPassword ? "비밀번호 확인 숨기기" : "비밀번호 확인 보기"}>
+                            {passwordVisibility.confirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                          </button>
+                        </div>
                       </label>
                     </div>
                   )}

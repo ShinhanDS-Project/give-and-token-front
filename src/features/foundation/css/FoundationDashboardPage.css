@@ -902,6 +902,23 @@
 .fd-form-input:focus { border-color: #FF8A65; }
 .fd-form-input::placeholder { color: #9ca3af; font-weight: 500; }
 .fd-form-input:-webkit-autofill { -webkit-text-fill-color: #334155; }
+.fd-password-input-wrap { position: relative; width: min(100%, 340px); }
+.fd-form-input--password { width: 100%; padding-right: 36px; }
+.fd-password-toggle {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: #64748b;
+  cursor: pointer;
+  padding: 0;
+}
+.fd-password-toggle:hover { color: #334155; }
 .fd-form-textarea {
   border: 1px solid #e8ecf2;
   border-radius: 8px;

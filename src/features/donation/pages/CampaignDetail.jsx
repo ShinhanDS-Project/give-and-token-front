@@ -43,6 +43,60 @@ function toTimestamp(value) {
   return date.getTime();
 }
 
+function resolveDonorDisplayName(donor) {
+  const visited = new Set();
+  const nicknameValues = [];
+  const realNameValues = [];
+
+  const walk = (value) => {
+    if (!value || typeof value !== "object") return;
+    if (visited.has(value)) return;
+    visited.add(value);
+
+    for (const [rawKey, rawVal] of Object.entries(value)) {
+      const key = String(rawKey || "").toLowerCase();
+      if (typeof rawVal === "string") {
+        const normalized = rawVal.trim();
+        if (!normalized) continue;
+
+        const isNicknameKey =
+          key.includes("nickname") ||
+          key.includes("nick_name") ||
+          key.includes("namehash") ||
+          key.includes("name_hash") ||
+          key.includes("displayname") ||
+          key.includes("display_name");
+
+        if (isNicknameKey) {
+          nicknameValues.push(normalized);
+          continue;
+        }
+
+        const isRealNameKey =
+          key === "name" ||
+          key.endsWith("name") ||
+          key.includes("realname") ||
+          key.includes("real_name") ||
+          key.includes("username") ||
+          key.includes("user_name");
+
+        if (isRealNameKey) {
+          realNameValues.push(normalized);
+        }
+      } else if (rawVal && typeof rawVal === "object") {
+        walk(rawVal);
+      }
+    }
+  };
+
+  walk(donor);
+
+  if (nicknameValues.length > 0) return nicknameValues[0];
+  if (realNameValues.length > 0) return realNameValues[0];
+
+  return "익명";
+}
+
 function toDetailCampaignModel(data, id) {
   const representativeImage = normalizeImagePath(data?.representativeImagePath || "");
   const detailImages = Array.isArray(data?.detailImagePaths)
@@ -83,7 +137,7 @@ function toDetailCampaignModel(data, id) {
       : [],
     recentDonors: Array.isArray(data?.recentDonors)
       ? data.recentDonors.map((donor) => ({
-        name: donor?.name || "익명",
+        name: resolveDonorDisplayName(donor),
         amount: Number.isFinite(Number(donor?.amount)) ? Number(donor.amount) : 0,
         time: donor?.time || "-",
       }))

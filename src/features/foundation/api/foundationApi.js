@@ -323,12 +323,18 @@ export async function fetchFoundationMyStats() {
 
 export async function updateFoundationMyInfo(formValues) {
   const multipartData = new FormData();
+  const parsedFeeRate = Number(formValues.feeRate);
+
+  if (!Number.isFinite(parsedFeeRate)) {
+    throw new Error("기존 수수료율 정보를 확인할 수 없습니다. 다시 시도해주세요.");
+  }
+
   const requestData = {
     description: String(formValues.description || "").trim(),
     contactPhone: String(formValues.contactPhone || "").trim(),
     account: String(formValues.account || "").trim(),
     bankName: String(formValues.bankName || "").trim(),
-    feeRate: Number(formValues.feeRate),
+    feeRate: parsedFeeRate,
   };
 
   multipartData.append(
