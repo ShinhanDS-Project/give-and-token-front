@@ -43,6 +43,7 @@ export default function Navbar() {
 
       localStorage.removeItem('accessToken');
       localStorage.removeItem('userRole');
+      document.cookie = "accessToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
 
       setIsLoggedIn(false);
       setUserRole(null);
@@ -53,6 +54,7 @@ export default function Navbar() {
       console.error("로그아웃 중 오류 발생:", error);
       localStorage.removeItem('accessToken');
       localStorage.removeItem('userRole');
+      document.cookie = "accessToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
       window.location.href = "/";
     }
   };

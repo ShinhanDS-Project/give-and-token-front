@@ -335,15 +335,29 @@ export default function FoundationDetailPage() {
   }, [foundationNo]);
 
   const profileImage = useMemo(() => normalizeImagePath(foundation?.profilePath), [foundation?.profilePath]);
-  const activeCampaignCount = campaigns.filter((item) => !isCampaignClosed(item)).length;
+  const CLOSED_CAMPAIGN_STATUSES = ["COMPLETED", "ENDED", "CLOSED", "FINISHED"];
+  const isApprovedCampaign = (campaign) =>
+    String(campaign?.approvalStatus || "").toUpperCase() === "APPROVED";
+  const getCampaignStatus = (campaign) =>
+    String(campaign?.campaignStatus || campaign?.status || "").toUpperCase();
+
   const ongoingCampaigns = useMemo(
-    () => campaigns.filter((item) => !isCampaignClosed(item)),
+    () =>
+      campaigns.filter(
+        (item) => isApprovedCampaign(item) && getCampaignStatus(item) === "ACTIVE",
+      ),
     [campaigns],
   );
   const closedCampaigns = useMemo(
-    () => campaigns.filter((item) => isCampaignClosed(item)),
+    () =>
+      campaigns.filter(
+        (item) =>
+          isApprovedCampaign(item) &&
+          CLOSED_CAMPAIGN_STATUSES.includes(getCampaignStatus(item)),
+      ),
     [campaigns],
   );
+  const activeCampaignCount = ongoingCampaigns.length;
 
   const copyWallet = async () => {
     if (!wallet?.walletAddress) return;

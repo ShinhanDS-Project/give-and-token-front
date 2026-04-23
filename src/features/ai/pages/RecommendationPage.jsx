@@ -213,12 +213,24 @@ const RecommendationPage = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   const checkLoginStatus = () => {
-    const cookies = document.cookie.split(';');
-    const hasCookieToken = cookies.some((cookie) =>
-      cookie.trim().startsWith('accessToken='),
-    );
+    if (typeof window === 'undefined') return false;
+
     const hasLocalStorageToken = !!localStorage.getItem('accessToken');
-    return hasCookieToken || hasLocalStorageToken;
+    const hasCookieToken = typeof document !== 'undefined'
+      && document.cookie
+        .split(';')
+        .some((cookie) => cookie.trim().startsWith('accessToken='));
+
+    // 소셜 로그인은 쿠키 기반 접근을 사용자로 간주한다.
+    if (!hasLocalStorageToken && hasCookieToken) return true;
+
+    // 로컬 스토리지 토큰이 있는 경우에는 userRole이 user인지 확인한다.
+    if (hasLocalStorageToken) {
+      const role = String(localStorage.getItem('userRole') || '').toLowerCase();
+      return role === 'user';
+    }
+
+    return false;
   };
 
   useEffect(() => {

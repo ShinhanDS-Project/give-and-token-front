@@ -26,6 +26,8 @@ export default function MicroTrackingModal({ isOpen, onClose, trackingData, isLo
     const report = trackingData?.userFinalReportDTO;
     const settlement = trackingData?.userSettlementDTO;
     const campaignId = propCampaignId || trackingData?.campaignNo || report?.reportData?.campaignNo;
+    const isApprovedReport = report?.reportData?.approvalStatus === 'APPROVED';
+    const canShowReport = Boolean(report?.isExist && report?.reportData && isApprovedReport);
 
     const handleMoveToReport = () => {
         if (!campaignId) return;
@@ -102,7 +104,7 @@ export default function MicroTrackingModal({ isOpen, onClose, trackingData, isLo
                             <section>
                                 <h3 className="text-xl font-bold text-gray-900 mb-4">최종 보고서</h3>
                                 
-                                {report?.isExist && report.reportData ? (
+                                {canShowReport ? (
                                     /* 보고서가 있는 경우: 카드 출력 */
                                     <div className="bg-white border-2 border-gray-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
                                         <div className="p-6">

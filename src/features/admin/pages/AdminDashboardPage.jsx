@@ -780,7 +780,13 @@ function CampaignListPanel({ onOpenDetail }) {
     setLoading(true);
     const isCampaignStatus = CAMPAIGN_STATUS_FILTER_OPTIONS.includes(statusFilter);
     const endpoint = isCampaignStatus ? "/campaigns/approved" : (APPROVAL_ENDPOINT[statusFilter] ?? "/campaigns/approved");
-    const params = { page, size: PAGE_SIZE, sort: sortOrder, keyword: appliedKeyword };
+    const params = {
+      page,
+      size: PAGE_SIZE,
+      sort: sortOrder,
+      keyword: appliedKeyword,
+      ...(isCampaignStatus ? { campaignStatus: statusFilter } : {}),
+    };
     fetchAdminJson(endpoint, params)
       .then((json) => { if (!cancelled) { setRows(json.content ?? []); setTotalPages(json.totalPages ?? 0); } })
       .catch(() => { if (!cancelled) setRows([]); })
@@ -816,9 +822,7 @@ function CampaignListPanel({ onOpenDetail }) {
     )},
   ];
 
-  const isCampaignStatusFilter = CAMPAIGN_STATUS_FILTER_OPTIONS.includes(statusFilter);
-  const displayedRows = (isCampaignStatusFilter ? rows.filter((r) => r.campaignStatus === statusFilter) : rows)
-    .map((r) => ({ ...r, _key: r.campaignNo }));
+  const displayedRows = rows.map((r) => ({ ...r, _key: r.campaignNo }));
 
   return (
     <>
@@ -959,32 +963,21 @@ function CampaignsPanel({ onOpenDetail }) {
 function ReportListPanel({ onOpenDetail }) {
   const [page, setPage] = useState(0);
   const [sortOrder, setSortOrder] = useState("createdAt,DESC");
+  const [statusFilter, setStatusFilter] = useState("APPROVED");
   const [rows, setRows] = useState([]);
   const [totalPages, setTotalPages] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [refetch, setRefetch] = useState(0);
-  const [rejectTarget, setRejectTarget] = useState(null);
   const PAGE_SIZE = 10;
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    fetchAdminJson("/reports/approved", { page, size: PAGE_SIZE, sort: sortOrder })
+    fetchAdminJson("/reports", { page, size: PAGE_SIZE, sort: sortOrder, approvalStatus: statusFilter })
       .then((json) => { if (!cancelled) { setRows(json.content ?? []); setTotalPages(json.totalPages ?? 0); } })
       .catch(() => { if (!cancelled) setRows([]); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, [page, sortOrder, refetch]);
-
-  const handleApprove = async (no) => {
-    try { await patchAdminAction(`/reports/${no}/approve`); setRefetch((r) => r + 1); }
-    catch { alert("처리 중 오류가 발생했습니다."); }
-  };
-
-  const handleReject = async (no, reason) => {
-    try { await patchAdminAction(`/reports/${no}/reject`, { reason }); setRejectTarget(null); setRefetch((r) => r + 1); }
-    catch { alert("처리 중 오류가 발생했습니다."); }
-  };
+  }, [page, sortOrder, statusFilter]);
 
   const REPORT_STATUS_LABEL = { PENDING: "검토중", APPROVED: "승인됨", REJECTED: "반려됨" };
   const REPORT_STATUS_COLOR = { PENDING: "#d97706", APPROVED: "#FF8A65", REJECTED: "#dc2626" };
@@ -999,46 +992,38 @@ function ReportListPanel({ onOpenDetail }) {
       </span>
     )},
     { key: "createdAt",    label: "제출일",    width: "130px", render: (r) => formatDate(r.createdAt) },
-    { key: "_action",      label: "관리",      width: "160px", render: (r) => (
-      <div style={{ display: "flex", gap: "4px", flexWrap: "nowrap" }}>
-        <button type="button" className="admin-row-btn" style={{ color: "#FF8A65", borderColor: "#FF8A65" }}
-          onClick={(e) => { e.stopPropagation(); handleApprove(r.reportNo); }}>승인</button>
-        <button type="button" className="admin-row-btn" style={{ color: "#dc2626", borderColor: "#fca5a5" }}
-          onClick={(e) => { e.stopPropagation(); setRejectTarget(r); }}>반려</button>
-        {onOpenDetail && (
-          <button type="button" className="admin-row-btn"
+    { key: "_action",      label: "관리",      width: "70px", render: (r) => (
+      onOpenDetail
+        ? <button type="button" className="admin-row-btn"
             onClick={(e) => { e.stopPropagation(); onOpenDetail(r); }}>상세</button>
-        )}
-      </div>
+        : null
     )},
   ];
 
-  return (
-    <>
-      <section className="admin-panel admin-panel--list admin-panel--spacious">
-        <div className="admin-panel__header"><h2>승인된 보고서</h2></div>
-        <FilterBar
-          selects={[
-            { key: "sort", value: sortOrder, onChange: (v) => { setSortOrder(v); setPage(0); }, options: [
-              { value: "createdAt,DESC", label: "최신순" },
-              { value: "createdAt,ASC",  label: "오래된순" },
-            ]},
-          ]}
-        />
-        <div style={{ opacity: loading ? 0.45 : 1, transition: "opacity 0.15s", pointerEvents: loading ? "none" : "auto" }}>
-          <AdminTable columns={columns} rows={rows.map((r) => ({ ...r, _key: r.reportNo }))} emptyText="승인 대기 보고서가 없습니다." />
-        </div>
-        <Pagination page={page} totalPages={totalPages} onChange={setPage} />
-      </section>
+  const statusOptions = [
+    { value: "APPROVED", label: "승인됨" },
+    { value: "REJECTED", label: "반려됨" },
+  ];
+  const listTitle = statusFilter === "REJECTED" ? "반려된 보고서" : "승인된 보고서";
+  const emptyText = statusFilter === "REJECTED" ? "반려된 보고서가 없습니다." : "승인된 보고서가 없습니다.";
 
-      {rejectTarget && (
-        <RejectModal
-          title={`"${rejectTarget.title}" 반려`}
-          onConfirm={(reason) => handleReject(rejectTarget.reportNo, reason)}
-          onClose={() => setRejectTarget(null)}
-        />
-      )}
-    </>
+  return (
+    <section className="admin-panel admin-panel--list admin-panel--spacious">
+      <div className="admin-panel__header"><h2>{listTitle}</h2></div>
+      <FilterBar
+        selects={[
+          { key: "status", value: statusFilter, onChange: (v) => { setStatusFilter(v); setPage(0); }, options: statusOptions },
+          { key: "sort", value: sortOrder, onChange: (v) => { setSortOrder(v); setPage(0); }, options: [
+            { value: "createdAt,DESC", label: "최신순" },
+            { value: "createdAt,ASC",  label: "오래된순" },
+          ]},
+        ]}
+      />
+      <div style={{ opacity: loading ? 0.45 : 1, transition: "opacity 0.15s", pointerEvents: loading ? "none" : "auto" }}>
+        <AdminTable columns={columns} rows={rows.map((r) => ({ ...r, _key: r.reportNo }))} emptyText={emptyText} />
+      </div>
+      <Pagination page={page} totalPages={totalPages} onChange={setPage} />
+    </section>
   );
 }
 
