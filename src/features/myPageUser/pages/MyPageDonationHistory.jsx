@@ -60,6 +60,14 @@ export default function MyPageDonationHistory() {
     setSelectedCampaignNo(null); // 2. 닫을 때 번호 초기화
   };
 
+  const sortedTransactionList = [...transactionList].sort((a, b) => {
+    const aDate = a?.transaction?.sentAt || a?.transaction?.createdAt || a?.donatedAt || null;
+    const bDate = b?.transaction?.sentAt || b?.transaction?.createdAt || b?.donatedAt || null;
+    const aTs = aDate ? new Date(aDate).getTime() : 0;
+    const bTs = bDate ? new Date(bDate).getTime() : 0;
+    return (Number.isNaN(bTs) ? 0 : bTs) - (Number.isNaN(aTs) ? 0 : aTs);
+  });
+
   const formatDate = (dateValue) => {
     if (!dateValue) return "-";
     const date = new Date(dateValue);
@@ -88,14 +96,14 @@ export default function MyPageDonationHistory() {
           <h1 className="!mb-0 !text-left">나의 후원 내역</h1>
         </header>
 
-        {transactionList.length === 0 ? (
+        {sortedTransactionList.length === 0 ? (
           <section className="mypage-card mypage-sub-card py-24 text-center">
             <p className="text-slate-300 font-bold">후원 내역이 없습니다.</p>
           </section>
         ) : (
           <section className="mypage-card mypage-sub-card mypage-sub-card--scroll p-6">
             <div className="flex flex-col gap-6">
-              {transactionList.map((item, index) => (
+              {sortedTransactionList.map((item, index) => (
                 <section
                   key={item.transaction?.transactionNo ?? `${item.campaignNo}-${index}`}
                   className="bg-white rounded-[2rem] border border-slate-100 p-8 hover:shadow-xl hover:shadow-primary/5 transition-all duration-300 group relative overflow-hidden"

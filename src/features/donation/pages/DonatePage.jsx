@@ -17,6 +17,18 @@ const PAYMENT_METHOD_OPTIONS = [
 ];
 
 
+function hasAccessToken() {
+  if (typeof window === "undefined") return false;
+
+  const localStorageToken = window.localStorage.getItem("accessToken");
+  if (localStorageToken) return true;
+
+  if (typeof document === "undefined") return false;
+  return document.cookie
+    .split(";")
+    .some((cookie) => cookie.trim().startsWith("accessToken="));
+}
+
 function loadTossPaymentsSdk() {
   if (window.TossPayments) return Promise.resolve(window.TossPayments);
 
@@ -140,34 +152,13 @@ function normalizeCampaign(campaign) {
   };
 }
 
-// JWT 페이로드를 디코딩해 클레임 객체를 반환 (서명 검증 없이 읽기만)
-function decodeJwtPayload(token) {
-  try {
-    const payloadBase64 = token.split(".")[1];
-    const padded = payloadBase64.replace(/-/g, "+").replace(/_/g, "/");
-    return JSON.parse(atob(padded));
-  } catch {
-    return null;
-  }
-}
-
-// 토큰에서 userNo(no 클레임) 추출
-function getUserNoFromToken(token) {
-  const payload = decodeJwtPayload(token);
-  return payload?.no ?? null;
-}
-
 async function fetchCurrentUserProfile() {
   const token = window.localStorage.getItem("accessToken");
-  if (!token) throw new Error("토큰 없음");
-
-  const userNo = getUserNoFromToken(token);
-  if (!userNo) throw new Error("토큰에 userNo 없음");
 
   // userNo는 백엔드에서 authentication.getDetails()로 추출하므로
   // Authorization 헤더만 실어서 /users/support/mypage/my 호출
   const response = await fetch("/users/support/mypage/my", {
-    headers: { Authorization: `Bearer ${token}` },
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
     credentials: "include",
   });
 
@@ -194,8 +185,7 @@ export default function DonatePage() {
   const [requestingPayment, setRequestingPayment] = useState(false);
 
   useEffect(() => {
-    const token = window.localStorage.getItem("accessToken");
-    if (!token) {
+    if (!hasAccessToken()) {
       const nextPath = `${location.pathname}${location.search || ""}`;
       navigate(`/login?next=${encodeURIComponent(nextPath)}`, { replace: true });
     }

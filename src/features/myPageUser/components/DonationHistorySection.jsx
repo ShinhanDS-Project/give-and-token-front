@@ -24,6 +24,17 @@ function getCampaignId(item) {
   );
 }
 
+function getDonationTimestamp(item) {
+  const rawDate =
+    item?.transaction?.sentAt ||
+    item?.transaction?.createdAt ||
+    item?.donatedAt ||
+    null;
+  if (!rawDate) return 0;
+  const timestamp = new Date(rawDate).getTime();
+  return Number.isNaN(timestamp) ? 0 : timestamp;
+}
+
 export default function DonationHistorySection({
   donationHistory = [],
   onViewAll,
@@ -31,6 +42,9 @@ export default function DonationHistorySection({
 }) {
   const navigate = useNavigate();
   void onOpenTracking;
+  const sortedDonationHistory = [...donationHistory].sort(
+    (a, b) => getDonationTimestamp(b) - getDonationTimestamp(a),
+  );
 
   return (
     <section className="mypage-card h-full min-h-0 !pt-8 flex flex-col">
@@ -58,7 +72,7 @@ export default function DonationHistorySection({
         </div>
       ) : (
         <div className="flex-1 min-h-0 space-y-3">
-          {donationHistory.slice(0, 3).map((item, index) => {
+          {sortedDonationHistory.slice(0, 3).map((item, index) => {
             const campaignId = getCampaignId(item);
             const title = item?.title ?? "-";
 
